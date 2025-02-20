@@ -7,6 +7,7 @@ use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -24,22 +25,44 @@ class EmployeeResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('first_name')
+                    ->label('Nombres')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(100),
                 Forms\Components\TextInput::make('last_name')
+                    ->label('Apellidos')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(100),
                 Forms\Components\TextInput::make('phone_number')
+                    ->label('Télefono')
                     ->tel()
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(20),
                 Forms\Components\TextInput::make('address')
+                    ->label('Dirección')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(150),
                 Forms\Components\TextInput::make('identity')
+                    ->label('Identidad')
                     ->required()
-                    ->maxLength(255),
+                    ->unique('employees', 'identity') // Evita duplicados en la BD
+                    ->maxLength(13)
+                    ->numeric()
+                    ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
             ]);
+    }
+
+    /**
+     * Valida la identidad y lanza una notificación si ya existe.
+     */
+    protected static function validateIdentity($identity)
+    {
+        if (\App\Models\Employee::where('identity', $identity)->exists()) {
+            Notification::make()
+                ->title('Error')
+                ->body('La identidad ya está registrada en el sistema.')
+                ->danger()
+                ->send();
+        }
     }
 
     public static function table(Table $table): Table
