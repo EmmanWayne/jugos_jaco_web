@@ -58,10 +58,31 @@ class ClientResource extends Resource
                         Section::make('')
                             ->columns(4)
                             ->schema([
-                                Forms\Components\TextInput::make('department')
+                                Forms\Components\Select::make('department')
                                     ->label('Departamento')
-                                    ->required()
-                                    ->maxLength(50),
+                                    ->options([
+                                        'Atlántida' => 'Atlántida',
+                                        'Colón' => 'Colón',
+                                        'Comayagua' => 'Comayagua',
+                                        'Copán' => 'Copán',
+                                        'Cortés' => 'Cortés',
+                                        'Choluteca' => 'Choluteca',
+                                        'El Paraíso' => 'El Paraíso',
+                                        'Francisco Morazán' => 'Francisco Morazán',
+                                        'Gracias a Dios' => 'Gracias a Dios',
+                                        'Intibucá' => 'Intibucá',
+                                        'Islas de la Bahía' => 'Islas de la Bahía',
+                                        'La Paz' => 'La Paz',
+                                        'Lempira' => 'Lempira',
+                                        'Ocotepeque' => 'Ocotepeque',
+                                        'Olancho' => 'Olancho',
+                                        'Santa Bárbara' => 'Santa Bárbara',
+                                        'Valle' => 'Valle',
+                                        'Yoro' => 'Yoro',
+                                    ])
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(),
                                 Forms\Components\TextInput::make('township')
                                     ->label('Municipio')
                                     ->required()
