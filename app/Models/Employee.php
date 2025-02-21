@@ -18,4 +18,9 @@ class Employee extends Model
         'address',
         'identity',
     ];
+
+    public function getFullNameAttribute()
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
 }
