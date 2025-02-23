@@ -80,21 +80,20 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('first_name')
-                    ->label('Nombres')
+                Tables\Columns\TextColumn::make('full_name')
+                    ->label('Nombre completo')
+                    ->formatStateUsing(fn($record) => $record->first_name . ' ' . $record->last_name)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('last_name')
-                    ->label('Apellidos')
+                Tables\Columns\TextColumn::make('identity')
+                    ->label('Identidad')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->label('Dirección')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('identity')
-                    ->label('Identidad')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()
@@ -155,11 +154,11 @@ class EmployeeResource extends Resource
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-user-group';
+        return 'heroicon-o-identification';
     }
 
     public static function getNavigationSort(): int
     {
-        return 2;
+        return 4;
     }
 }
