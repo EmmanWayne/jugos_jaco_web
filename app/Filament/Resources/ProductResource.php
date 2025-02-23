@@ -48,30 +48,31 @@ class ProductResource extends Resource
                                     ->maxLength(20)
                                     ->afterStateUpdated(fn($state, callable $set) => self::validateCode($state)),
                             ]),
-                    ]),
-                Section::make('')
-                    ->columns(2)
-                    ->schema([
-                        Forms\Components\Select::make('content')
-                            ->label('Contenido')
-                            ->options([
-                                '15ml' => '15ml',
-                                '20ml' => '20ml',
-                            ])->searchable()
-                            ->preload()
-                            ->required(),
 
-                        Select::make('category_id')
-                            ->label('Categoría')
-                            ->relationship('category', 'name') // Relación con la tabla categories
-                            ->searchable()
-                            ->preload()
-                            ->createOptionForm([
-                                TextInput::make('name')
-                                    ->label('Nombre de la categoría')
+                        Section::make('')
+                            ->columns(2)
+                            ->schema([
+                                Forms\Components\Select::make('content')
+                                    ->label('Contenido')
+                                    ->options([
+                                        '15ml' => '15ml',
+                                        '20ml' => '20ml',
+                                    ])->searchable()
+                                    ->preload()
                                     ->required(),
-                            ])
-                            ->required(),
+
+                                Select::make('category_id')
+                                    ->label('Categoría')
+                                    ->relationship('category', 'name') // Relación con la tabla categories
+                                    ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Nombre de la categoría')
+                                            ->required(),
+                                    ])
+                                    ->required(),
+                            ]),
                     ]),
 
             ]);

@@ -25,28 +25,31 @@ class EmployeeResource extends Resource
             ->schema([
                 Section::make('Información del empleado')  // Título de la sección
                     ->description('En esta sección se registra la información personal del empleado.') // Descripción
-                    ->columns(2)
                     ->schema([
-                        Forms\Components\TextInput::make('first_name')
-                            ->label('Nombres')
-                            ->required()
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('last_name')
-                            ->label('Apellidos')
-                            ->required()
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('phone_number')
-                            ->label('Teléfono')
-                            ->tel()
-                            ->required()
-                            ->maxLength(15),
-                        Forms\Components\TextInput::make('identity')
-                            ->label('Identidad')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(13)
-                            ->numeric()
-                            ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
+                        Section::make('')
+                            ->columns(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('first_name')
+                                    ->label('Nombres')
+                                    ->required()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('last_name')
+                                    ->label('Apellidos')
+                                    ->required()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('phone_number')
+                                    ->label('Teléfono')
+                                    ->tel()
+                                    ->required()
+                                    ->maxLength(15),
+                                Forms\Components\TextInput::make('identity')
+                                    ->label('Identidad')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(13)
+                                    ->numeric()
+                                    ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
+                            ]),
 
                         Section::make('')
                             ->columns(1)
@@ -57,6 +60,10 @@ class EmployeeResource extends Resource
                                     ->maxLength(120),
                             ]),
                     ]),
+
+
+
+
 
             ]);
     }
