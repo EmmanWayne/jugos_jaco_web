@@ -43,7 +43,7 @@ class EmployeeResource extends Resource
                         Forms\Components\TextInput::make('identity')
                             ->label('Identidad')
                             ->required()
-                            ->unique('employees', 'identity') // Evita duplicados en la BD
+                            ->unique(ignoreRecord: true)
                             ->maxLength(13)
                             ->numeric()
                             ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
@@ -69,7 +69,7 @@ class EmployeeResource extends Resource
     {
         if (\App\Models\Employee::where('identity', $identity)->exists()) {
             Notification::make()
-                ->title('Error')
+                ->title('¡Atención!')
                 ->body('La identidad ya está registrada en el sistema.')
                 ->danger()
                 ->send();

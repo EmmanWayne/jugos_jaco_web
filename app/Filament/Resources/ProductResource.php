@@ -44,7 +44,7 @@ class ProductResource extends Resource
                                 Forms\Components\TextInput::make('code')
                                     ->label('Código')
                                     ->required()
-                                    ->unique('products', 'code') // Evita duplicados en la BD
+                                    ->unique(ignoreRecord: true)
                                     ->maxLength(20)
                                     ->afterStateUpdated(fn($state, callable $set) => self::validateCode($state)),
                             ]),
