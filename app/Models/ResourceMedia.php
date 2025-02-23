@@ -15,4 +15,9 @@ class ResourceMedia extends Model
         'model',
         'path',
     ];
+
+    public function model()
+    {
+        return $this->morphTo();
+    }
 }
