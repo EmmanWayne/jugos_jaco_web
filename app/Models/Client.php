@@ -33,11 +33,4 @@ class Client extends Model
     {
         return $this->belongsTo(TypePrice::class);
     }
-
-    protected $appends = ['full_name'];
-
-    public function getFullNameAttribute()
-    {
-        return "{$this->first_name} {$this->last_name}";
-    }
 }

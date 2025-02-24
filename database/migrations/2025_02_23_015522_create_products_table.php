@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name', 50);
             $table->string('code', 20)->unique();
             $table->enum('content', ['15ml', '20ml']);
-            $table->foreignId('category_id')->constrained('categories');
+            $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
             $table->timestamps();
         });
     }

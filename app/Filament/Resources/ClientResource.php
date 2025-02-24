@@ -129,14 +129,15 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('full_name')
-                    ->label('Nombre completo')
-                    ->formatStateUsing(fn($record) => $record->first_name . ' ' . $record->last_name)
+                Tables\Columns\TextColumn::make('first_name')
+                    ->label('Nombre Completo')
+                    ->formatStateUsing(fn($record) => "{$record->first_name} {$record->last_name}")
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('employee.full_name')
+                Tables\Columns\TextColumn::make('employee.first_name')
                     ->label('Empleado asignado')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('typePrice.name')
