@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('phone_number', 15);
             $table->string('address', 120);
             $table->string('identity', 13)->unique();
+            $table->foreignId('branch_id')->constrained('branches')->restrictOnDelete();
             $table->timestamps();
         });
     }

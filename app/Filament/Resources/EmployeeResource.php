@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
+use App\Models\Branch;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
@@ -47,7 +48,37 @@ class EmployeeResource extends Resource
                             ->maxLength(13)
                             ->numeric()
                             ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
-
+                        Forms\Components\Select::make('branch_id')
+                            ->label('Sucursal')
+                            ->relationship(
+                                name: 'branch',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn($query) => $query->orderBy('name')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nombre')
+                                    ->required()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('phone_number')
+                                    ->label('Teléfono')
+                                    ->tel()
+                                    ->required()
+                                    ->maxLength(15),
+                                Forms\Components\TextInput::make('address')
+                                    ->label('Dirección')
+                                    ->required()
+                                    ->maxLength(120),
+                            ])
+                            ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                return $action
+                                    ->modalHeading('Crear nueva sucursal')
+                                    ->modalButton('Crear sucursal')
+                                    ->modalWidth('lg');
+                            }),
                         Section::make('')
                             ->columns(1)
                             ->schema([
