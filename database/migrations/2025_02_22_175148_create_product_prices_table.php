@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('products_prices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('type_price_id')->constrained('types_prices');
-            $table->foreignId('product_id')->constrained('products');
+            $table->foreignId('type_price_id')->constrained('types_prices')->restrictOnDelete();
+            $table->foreignId('product_id')->constrained('products')->restrictOnDelete();
             $table->decimal('price', 8, 2);
             $table->timestamps();
         });
