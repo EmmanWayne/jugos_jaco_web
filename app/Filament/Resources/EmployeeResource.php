@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
+use App\Models\Branch;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
@@ -26,15 +27,39 @@ class EmployeeResource extends Resource
                 Section::make('Información del empleado')  // Título de la sección
                     ->description('En esta sección se registra la información personal del empleado.') // Descripción
                     ->schema([
-                        Section::make('')
-                            ->columns(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('first_name')
-                                    ->label('Nombres')
-                                    ->required()
-                                    ->maxLength(50),
-                                Forms\Components\TextInput::make('last_name')
-                                    ->label('Apellidos')
+                        Forms\Components\TextInput::make('first_name')
+                            ->label('Nombres')
+                            ->required()
+                            ->maxLength(50),
+                        Forms\Components\TextInput::make('last_name')
+                            ->label('Apellidos')
+                            ->required()
+                            ->maxLength(50),
+                        Forms\Components\TextInput::make('phone_number')
+                            ->label('Teléfono')
+                            ->tel()
+                            ->required()
+                            ->maxLength(15),
+                        Forms\Components\TextInput::make('identity')
+                            ->label('Identidad')
+                            ->required()
+                            ->unique('employees', 'identity') // Evita duplicados en la BD
+                            ->maxLength(13)
+                            ->numeric()
+                            ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
+                        Forms\Components\Select::make('branch_id')
+                            ->label('Sucursal')
+                            ->relationship(
+                                name: 'branch',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn($query) => $query->orderBy('name')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nombre')
                                     ->required()
                                     ->maxLength(50),
                                 Forms\Components\TextInput::make('phone_number')
@@ -42,15 +67,17 @@ class EmployeeResource extends Resource
                                     ->tel()
                                     ->required()
                                     ->maxLength(15),
-                                Forms\Components\TextInput::make('identity')
-                                    ->label('Identidad')
+                                Forms\Components\TextInput::make('address')
+                                    ->label('Dirección')
                                     ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->maxLength(13)
-                                    ->numeric()
-                                    ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
-                            ]),
-
+                                    ->maxLength(120),
+                            ])
+                            ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                return $action
+                                    ->modalHeading('Crear nueva sucursal')
+                                    ->modalButton('Crear sucursal')
+                                    ->modalWidth('lg');
+                            }),
                         Section::make('')
                             ->columns(1)
                             ->schema([
@@ -60,11 +87,6 @@ class EmployeeResource extends Resource
                                     ->maxLength(120),
                             ]),
                     ]),
-
-
-
-
-
             ]);
     }
 

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Branch;
 
 class Employee extends Model
 {
@@ -17,6 +19,7 @@ class Employee extends Model
         'phone_number',
         'address',
         'identity',
+        'branch_id',
     ];
 
     protected $appends = ['full_name'];
@@ -24,5 +27,10 @@ class Employee extends Model
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 }
