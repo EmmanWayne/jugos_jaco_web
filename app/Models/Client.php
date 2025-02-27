@@ -33,4 +33,9 @@ class Client extends Model
     {
         return $this->belongsTo(TypePrice::class);
     }
+
+    public function location()
+    {
+        return $this->morphOne(Location::class, 'model');
+    }
 }

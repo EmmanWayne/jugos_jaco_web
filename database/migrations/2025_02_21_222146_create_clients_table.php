@@ -20,8 +20,6 @@ return new class extends Migration
             $table->string('phone_number', 15);
             $table->string('department', 50);
             $table->string('township', 50);
-            $table->decimal('latitude', 10, 8)->nullable();
-            $table->decimal('longitude', 11, 8)->nullable();
             $table->foreignId('type_price_id')->constrained('types_prices')->restrictOnDelete();
             $table->timestamps();
         });
