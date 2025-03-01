@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\EmployeeController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
@@ -13,5 +14,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [ClientController::class, 'getClients']);
         Route::post('/', [ClientController::class, 'createClient']);
         Route::put('/{id}', [ClientController::class, 'updateClient']);
+    });
+
+    Route::prefix('employees')->group(function () {
+        Route::get('/{id}', [EmployeeController::class, 'getEmployee']);
+        Route::post('/{id}/location', [EmployeeController::class, 'createLocation']);
     });
 });
