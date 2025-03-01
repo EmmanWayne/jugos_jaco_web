@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Branch;
 
@@ -28,6 +29,11 @@ class Employee extends Model
         return "{$this->first_name} {$this->last_name}";
     }
 
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class);
+    }
+    
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
