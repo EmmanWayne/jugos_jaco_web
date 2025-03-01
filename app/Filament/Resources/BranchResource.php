@@ -58,19 +58,19 @@ class BranchResource extends Resource
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
-                    ->label('Dirección')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('employees.first_name')
-                    ->label('Empleados')
+                    ->label('Empleados de la sucursal')
                     ->formatStateUsing(function ($record) {
                         return $record->employees->map(function ($employee) {
                             return $employee->first_name . ' ' . $employee->last_name;
                         })->join(', ');
                     })
                     ->wrap()
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('address')
+                    ->label('Dirección')
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()

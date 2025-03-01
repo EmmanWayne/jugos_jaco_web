@@ -27,39 +27,15 @@ class EmployeeResource extends Resource
                 Section::make('Información del empleado')  // Título de la sección
                     ->description('En esta sección se registra la información personal del empleado.') // Descripción
                     ->schema([
-                        Forms\Components\TextInput::make('first_name')
-                            ->label('Nombres')
-                            ->required()
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('last_name')
-                            ->label('Apellidos')
-                            ->required()
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('phone_number')
-                            ->label('Teléfono')
-                            ->tel()
-                            ->required()
-                            ->maxLength(15),
-                        Forms\Components\TextInput::make('identity')
-                            ->label('Identidad')
-                            ->required()
-                            ->unique('employees', 'identity') // Evita duplicados en la BD
-                            ->maxLength(13)
-                            ->numeric()
-                            ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
-                        Forms\Components\Select::make('branch_id')
-                            ->label('Sucursal')
-                            ->relationship(
-                                name: 'branch',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: fn($query) => $query->orderBy('name')
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Nombre')
+                        Section::make('')
+                            ->columns(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('first_name')
+                                    ->label('Nombres')
+                                    ->required()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('last_name')
+                                    ->label('Apellidos')
                                     ->required()
                                     ->maxLength(50),
                                 Forms\Components\TextInput::make('phone_number')
@@ -67,17 +43,51 @@ class EmployeeResource extends Resource
                                     ->tel()
                                     ->required()
                                     ->maxLength(15),
-                                Forms\Components\TextInput::make('address')
-                                    ->label('Dirección')
+                                Forms\Components\TextInput::make('identity')
+                                    ->label('Identidad')
                                     ->required()
-                                    ->maxLength(120),
-                            ])
-                            ->createOptionAction(function (Forms\Components\Actions\Action $action) {
-                                return $action
-                                    ->modalHeading('Crear nueva sucursal')
-                                    ->modalButton('Crear sucursal')
-                                    ->modalWidth('lg');
-                            }),
+                                    ->unique('employees', 'identity') // Evita duplicados en la BD
+                                    ->maxLength(13)
+                                    ->numeric()
+                                    ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
+                            ]),
+
+                        Section::make('')
+                            ->columns(1)
+                            ->schema([
+                                Forms\Components\Select::make('branch_id')
+                                    ->label('Sucursal')
+                                    ->relationship(
+                                        name: 'branch',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn($query) => $query->orderBy('name')
+                                    )
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Nombre')
+                                            ->required()
+                                            ->maxLength(50),
+                                        Forms\Components\TextInput::make('phone_number')
+                                            ->label('Teléfono')
+                                            ->tel()
+                                            ->required()
+                                            ->maxLength(15),
+                                        Forms\Components\TextInput::make('address')
+                                            ->label('Dirección')
+                                            ->required()
+                                            ->maxLength(120),
+                                    ])
+                                    ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                        return $action
+                                            ->modalHeading('Crear nueva sucursal')
+                                            ->modalButton('Crear sucursal')
+                                            ->modalWidth('lg');
+                                    }),
+                            ]),
+
                         Section::make('')
                             ->columns(1)
                             ->schema([
@@ -119,6 +129,9 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('Teléfono')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('branch.name')
+                    ->label('Sucursal')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->label('Dirección')
