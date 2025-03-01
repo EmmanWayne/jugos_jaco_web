@@ -54,8 +54,8 @@ class User extends Authenticatable
     /**
      * Get the employed that owns the user.
      */
-    public function employed(): BelongsTo
+    public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'employed_id');
+        return $this->belongsTo(Employee::class);
     }
 }
