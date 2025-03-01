@@ -61,16 +61,6 @@ class BranchResource extends Resource
                 Tables\Columns\TextColumn::make('address')
                     ->label('Dirección')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('employees.first_name')
-                    ->label('Empleados')
-                    ->formatStateUsing(function ($record) {
-                        return $record->employees->map(function ($employee) {
-                            return $employee->first_name . ' ' . $employee->last_name;
-                        })->join(', ');
-                    })
-                    ->wrap()
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()

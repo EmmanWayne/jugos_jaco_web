@@ -22,7 +22,6 @@ class Employee extends Model
         'branch_id',
     ];
 
-    protected $appends = ['full_name'];
 
     public function getFullNameAttribute()
     {

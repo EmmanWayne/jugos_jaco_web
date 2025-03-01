@@ -5,14 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ResourceMedia extends Model
+class Location extends Model
 {
+
     use HasFactory;
 
-    protected $table = 'resources_media';
+    protected $table = 'locations';
 
     protected $fillable = [
-        'path',
+        'latitude',
+        'longitude',
         'model_id',
         'model_type',
     ];
