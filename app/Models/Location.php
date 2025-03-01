@@ -16,7 +16,7 @@ class Location extends Model
         'latitude',
         'longitude',
         'model_id',
-        'model',
+        'model_type',
     ];
 
     public function model()

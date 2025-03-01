@@ -12,8 +12,9 @@ class ResourceMedia extends Model
     protected $table = 'resources_media';
 
     protected $fillable = [
-        'model',
         'path',
+        'model_id',
+        'model_type',
     ];
 
     public function model()

@@ -56,7 +56,7 @@ class ClientResource extends Resource
                                     ->maxLength(120),
                             ]),
                         Section::make('')
-                            ->columns(4)
+                            ->columns(2)
                             ->schema([
                                 Forms\Components\Select::make('department')
                                     ->label('Departamento')
@@ -73,14 +73,6 @@ class ClientResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required(),
-                                Forms\Components\TextInput::make('latitude')
-                                    ->label('Latitud')
-                                    ->numeric()
-                                    ->default(null),
-                                Forms\Components\TextInput::make('longitude')
-                                    ->label('Longitud')
-                                    ->numeric()
-                                    ->default(null),
                             ]),
 
                         Section::make('')
@@ -115,15 +107,14 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('first_name')
+                Tables\Columns\TextColumn::make('full_name')
                     ->label('Nombre Completo')
-                    ->formatStateUsing(fn($record) => "{$record->first_name} {$record->last_name}")
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('employee.first_name')
+                Tables\Columns\TextColumn::make('employee.full_name')
                     ->label('Empleado asignado')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('typePrice.name')
@@ -136,16 +127,6 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('township')
                     ->label('Municipio')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('latitude')
-                    ->label('Latitud')
-                    ->numeric()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('longitude')
-                    ->label('Longitud')
-                    ->numeric()
-                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('address')
                     ->label('Dirección')
@@ -579,5 +560,30 @@ class ClientResource extends Resource
             'Valle' => 'Valle',
             'Yoro' => 'Yoro',
         ];
+    }
+
+    public static function create(array $data)
+    {
+        // Guardar el cliente primero sin latitude y longitude
+        $client = Client::create([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'phone_number' => $data['phone_number'],
+            'address' => $data['address'],
+            'department' => $data['department'],
+            'township' => $data['township'],
+            'employee_id' => $data['employee_id'],
+            'type_price_id' => $data['type_price_id'],
+        ]);
+
+        // Guardar la ubicación polimórficamente
+        $client->location()->create([
+            'latitude' => $data['latitude'],
+            'longitude' => $data['longitude'],
+            'model_id' => $client->id,
+            'model' => Client::class,
+        ]);
+
+        return $client;
     }
 }
