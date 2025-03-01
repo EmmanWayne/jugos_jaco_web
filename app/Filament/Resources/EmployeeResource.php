@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
 use App\Models\Employee;
+use App\Models\Branch;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
@@ -25,7 +26,6 @@ class EmployeeResource extends Resource
             ->schema([
                 Section::make('Información del empleado')  // Título de la sección
                     ->description('En esta sección se registra la información personal del empleado.') // Descripción
-                    ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('first_name')
                             ->label('Nombres')
@@ -47,7 +47,37 @@ class EmployeeResource extends Resource
                             ->maxLength(13)
                             ->numeric()
                             ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
-
+                        Forms\Components\Select::make('branch_id')
+                            ->label('Sucursal')
+                            ->relationship(
+                                name: 'branch',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: fn($query) => $query->orderBy('name')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nombre')
+                                    ->required()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('phone_number')
+                                    ->label('Teléfono')
+                                    ->tel()
+                                    ->required()
+                                    ->maxLength(15),
+                                Forms\Components\TextInput::make('address')
+                                    ->label('Dirección')
+                                    ->required()
+                                    ->maxLength(120),
+                            ])
+                            ->createOptionAction(function (Forms\Components\Actions\Action $action) {
+                                return $action
+                                    ->modalHeading('Crear nueva sucursal')
+                                    ->modalButton('Crear sucursal')
+                                    ->modalWidth('lg');
+                            }),
                         Section::make('')
                             ->columns(1)
                             ->schema([
@@ -57,7 +87,6 @@ class EmployeeResource extends Resource
                                     ->maxLength(120),
                             ]),
                     ]),
-
             ]);
     }
 
@@ -69,7 +98,7 @@ class EmployeeResource extends Resource
     {
         if (\App\Models\Employee::where('identity', $identity)->exists()) {
             Notification::make()
-                ->title('Error')
+                ->title('¡Atención!')
                 ->body('La identidad ya está registrada en el sistema.')
                 ->danger()
                 ->send();
@@ -81,20 +110,20 @@ class EmployeeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('first_name')
-                    ->label('Nombres')
+                    ->label('Nombre Completo')
+                    ->formatStateUsing(fn($record) => "{$record->first_name} {$record->last_name}")
+                    ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('last_name')
-                    ->label('Apellidos')
+                Tables\Columns\TextColumn::make('identity')
+                    ->label('Identidad')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->label('Dirección')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('identity')
-                    ->label('Identidad')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()
@@ -155,11 +184,11 @@ class EmployeeResource extends Resource
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-user-group';
+        return 'heroicon-o-identification';
     }
 
     public static function getNavigationSort(): int
     {
-        return 2;
+        return 4;
     }
 }

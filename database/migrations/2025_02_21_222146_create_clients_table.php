@@ -15,14 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('first_name', 50);
             $table->string('last_name', 50);
-            $table->foreignId('employee_id')->constrained('employees');
+            $table->foreignId('employee_id')->constrained('employees')->restrictOnDelete();
             $table->string('address', 120);
             $table->string('phone_number', 15);
             $table->string('department', 50);
             $table->string('township', 50);
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
-            $table->foreignId('type_price_id')->constrained('types_prices');
+            $table->foreignId('type_price_id')->constrained('types_prices')->restrictOnDelete();
             $table->timestamps();
         });
     }
