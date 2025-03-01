@@ -38,8 +38,9 @@ class AuthController extends Controller
         return response()->json([
             'messaje' => 'Inicio de sesión exitoso.',
             'token' => $token,
-            'token_type' => 'Bearer'
-        ]);
+            'token_type' => 'Bearer',
+            'employee_id' => $employee->id,
+        ], 200);
     }
 
     /**
@@ -90,7 +91,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Sesión cerrada exitosamente.'
-            ]);
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'messaje' => 'Ha ocurrido un error al cerrar la sesión.',

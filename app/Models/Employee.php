@@ -31,7 +31,7 @@ class Employee extends Model
 
     public function user(): HasOne
     {
-        return $this->hasOne(User::class, 'employed_id');
+        return $this->hasOne(User::class);
     }
     
     public function branch(): BelongsTo
