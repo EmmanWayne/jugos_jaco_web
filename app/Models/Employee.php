@@ -38,4 +38,9 @@ class Employee extends Model
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    public function locations()
+    {
+        return $this->morphMany(Location::class, 'model');
+    }
 }
