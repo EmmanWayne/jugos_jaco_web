@@ -17,10 +17,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->unsignedBigInteger('employed_id')->unique();
+            $table->foreignId('employee_id')->constrained('employees')->restrictOnDelete();
             $table->boolean('status')->default(true);
 
-            $table->foreignId('employed_id')->constrained('employees')->restrictOnUpdate();
             $table->rememberToken();
             $table->timestamps();
         });

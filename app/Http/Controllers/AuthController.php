@@ -76,4 +76,25 @@ class AuthController extends Controller
             ], $e->getCode());
         }
     }
+
+    /**
+     * Método encargado de cerrar la sesión del usuario
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        try {
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json([
+                'message' => 'Sesión cerrada exitosamente.'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'messaje' => 'Ha ocurrido un error al cerrar la sesión.',
+            ], $e->getCode());
+        }
+    }
 }
