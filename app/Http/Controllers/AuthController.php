@@ -2,84 +2,64 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
+use App\Http\Requests\LoginRequest;
 use App\Models\Employee;
-use App\Models\User;
-use Exception;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * 
-     * Metodo encargado de realizar el inicio de sesión
-     * 
-     * @param Request $request 
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function login(Request $request)
-    {
-        $request->validate([
-            'identity' => 'required|string',
-            'password' => 'required|string',
-        ]);
-
-        $employee = Employee::where('identity', $request->identity)->first();
-
-        if (! $employee || ! Hash::check($request->password, $employee->user->password)) {
-            throw ValidationException::withMessages([
-                'identity' => ['Las credenciales son incorrectas.'],
-            ]);
-        }
-
-        $token = $employee->user->createToken($request->device_name)->plainTextToken;
-
-        return response()->json([
-            'messaje' => 'Inicio de sesión exitoso.',
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'employee_id' => $employee->id,
-        ], 200);
-    }
+    use ApiResponse;
 
     /**
-     * Metodo encargado de realizar el registro de un usuario
-     * 
-     * @param Request $request
-     * 
+     * Login a user and return a token
+     *
+     * @param LoginRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(Request $request)
+    public function login(LoginRequest $request)
     {
         try {
-            $request->validate([
-                'name' => 'required|string',
-                'email' => 'required|string|email|unique:users',
-                'employed_id' => 'required|exists:employees,id',
-                'password' => 'required|string|confirmed',
-            ]);
+            $employee = Employee::with('user')
+                ->where('identity', $request->identity)
+                ->first();
 
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'employed_id' => $request->employed_id,
-                'password' => Hash::make($request->password),
-            ]);
+            if (!$employee) {
+                return $this->errorResponse(
+                    new ValidationException(null, ['Las credenciales son incorrectas.']),
+                    'Credenciales inválidas',
+                    401
+                );
+            }
 
-            return response()->json([
-                'messaje' => 'Usuario registrado exitosamente.',
-                'user_id' => $user->id,
-            ], 201);
-        } catch (Exception $e) {
-            return response()->json([
-                'messaje' => 'Ha ocurrido un error al registrar el usuario.',
-            ], $e->getCode());
+            $this->validateUserStatus($employee);
+            $this->validateUserRole($employee);
+
+            if (!Hash::check($request->password, $employee->user->password)) {
+                throw ValidationException::withMessages([
+                    'identity' => 'Las credenciales son incorrectas.'
+                ]);
+            }
+
+            $token = $employee->user->createToken($request->device_name)->plainTextToken;
+
+            return $this->successResponse([
+                'token' => $token,
+                'token_type' => 'Bearer',
+                'employee_id' => $employee->id,
+            ], 'Inicio de sesión exitoso');
+        } catch (ValidationException $e) {
+            return $this->errorResponse($e, $e->getMessage(), 401);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
         }
     }
 
     /**
-     * Método encargado de cerrar la sesión del usuario
+     * Logout a user and delete the token
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -88,14 +68,40 @@ class AuthController extends Controller
     {
         try {
             $request->user()->currentAccessToken()->delete();
+            return $this->successResponse(
+                null,
+                'Sesión cerrada exitosamente'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
 
-            return response()->json([
-                'message' => 'Sesión cerrada exitosamente.'
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'messaje' => 'Ha ocurrido un error al cerrar la sesión.',
-            ], $e->getCode());
+    /**
+     * Validate status of the user
+     * 
+     * `status` must be true
+     */
+    private function validateUserStatus(Employee $employee): void
+    {
+        if (!$employee->user->status) {
+            throw ValidationException::withMessages([
+                'status' => 'El usuario se encuentra inactivo.'
+            ]);
+        }
+    }
+
+    /**
+     * Validate role of the user
+     * 
+     * `role` must be in the allowed roles
+     */
+    private function validateUserRole(Employee $employee): void
+    {
+        if (!$employee->user->hasAnyRole(UserRole::getAllowedRoles())) {
+            throw ValidationException::withMessages([
+                'role' => 'El usuario no tiene los permisos necesarios para acceder.'
+            ]);
         }
     }
 }
