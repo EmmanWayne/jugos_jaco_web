@@ -10,12 +10,16 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
-    protected static ?string $title = 'Editar Usuario';
-
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()->label('Eliminar usuario'),
+            Actions\ViewAction::make(),
+            Actions\DeleteAction::make(),
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('view', ['record' => $this->record]);
     }
 }

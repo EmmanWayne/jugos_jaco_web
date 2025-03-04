@@ -15,7 +15,7 @@ class ViewUser extends ViewRecord
     protected function getActions(): array
     {
         return [
-            Actions\EditAction::make()->label('Editar usuario'),
+            Actions\EditAction::make(),
         ];
     }
 }

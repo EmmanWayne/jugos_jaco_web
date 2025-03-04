@@ -9,12 +9,13 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-s-user';
 
     public static function form(Form $form): Form
     {
@@ -32,9 +33,24 @@ class UserResource extends Resource
                     ->required()
                     ->maxLength(64),
                 Forms\Components\TextInput::make('password')
+                    ->label('Contraseña')
                     ->password()
-                    ->required()
-                    ->maxLength(16),
+                    ->revealable(true)
+                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                    ->rules(['min:8'])
+                    ->autocomplete('new-password')
+                    ->helperText('La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y símbolos')
+                    ->live(),
+                Forms\Components\TextInput::make('password_confirmation')
+                    ->label('Confirmar contraseña')
+                    ->password()
+                    ->revealable(true)
+                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
+                    ->dehydrated(false)
+                    ->same('password')
+                    ->validationAttribute('confirmación de contraseña'),
                 Forms\Components\Select::make('employee_id')
                     ->label('Empleado')
                     ->placeholder('Seleccionar empleado')
@@ -42,6 +58,8 @@ class UserResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn($record) => $record->full_name)
                     ->searchable()
                     ->preload()
+                    ->validationAttribute('employee_id')
+                    ->unique(ignoreRecord: true)
                     ->required(),
                 Forms\Components\Select::make('roles')
                     ->label('Roles')
@@ -104,6 +122,7 @@ class UserResource extends Resource
             ]);
     }
 
+    
     public static function getRelations(): array
     {
         return [

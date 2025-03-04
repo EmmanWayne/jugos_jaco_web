@@ -17,9 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Models\SystemSetting;
-use App\Helpers\AppHelper;
-use Illuminate\Support\Facades\Storage;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -53,6 +51,11 @@ class AdminPanelProvider extends PanelProvider
                     900 => '#001233',
                     950 => '#001233',
                 ],
+            ])
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Ubicaciones')
+                    ->icon('heroicon-o-map-pin'),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
