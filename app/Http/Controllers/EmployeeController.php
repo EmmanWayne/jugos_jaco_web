@@ -3,47 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
-use App\Models\Location;
+use App\Traits\ApiResponse;
+use App\Http\Resources\EmployeeResource;
+use App\Http\Resources\LocationResource;
 use Illuminate\Http\Request;
+use Locale;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class EmployeeController extends Controller
 {
+    use ApiResponse;
+
     /**
-     * Obtener un empleado por ID
+     * Get employee by ID
      *
-     * @param int $id Employee ID
+     * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function getEmployee($id)
     {
         try {
-            $employee = Employee::with(['branch:id,name,address,phone_number'])->find($id);
+            $employee = Employee::with(['branch'])->find($id);
             
             if (!$employee) {
-                return response()->json([
-                    'message' => 'Empleado no encontrado',
-                ], 404);
+                throw new NotFoundHttpException('Empleado no encontrado');
             }
             
-            // Return employee data
-            return response()->json([
-                'message' => 'Empleado obtenido correctamente',
-                'employee' => $employee,
-            ]);
+            return $this->successResponse(
+                new EmployeeResource($employee),
+                'Empleado obtenido correctamente'
+            );
         } catch (\Exception $e) {
-            // Handle any exceptions
-            return response()->json([
-                'message' => 'Error al obtener el empleado',
-                'error' => $e->getMessage(),
-                'code' => 500
-            ], 500);
+            return $this->errorResponse($e, 'Error al obtener el empleado');
         }
     }
 
     /**
-     * Crear una ubicación para un empleado
+     * Create employee location
      *
-     * @param int $id Employee ID
+     * @param int $id
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -53,30 +51,22 @@ class EmployeeController extends Controller
             $employee = Employee::find($id);
             
             if (!$employee) {
-                return response()->json([
-                    'message' => 'Empleado no encontrado',
-                ], 404);
+                throw new NotFoundHttpException('Empleado no encontrado');
             }
             
-            $request->validate([
-                'latitude' => 'required|numeric',
-                'longitude' => 'required|numeric',
+            $validated = $request->validate([
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
             ]);
 
-            $employee->locations()->create([
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-            ]);
+            $location = $employee->locations()->create($validated);
             
-            return response()->json([
-                'message' => 'Ubicación creada correctamente',
-            ]);
+            return $this->successResponse(
+                new LocationResource($location),
+                'Ubicación creada correctamente'
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error al crear la ubicación',
-                'error' => $e->getMessage(),
-                'code' => 500
-            ], 500);
+            return $this->errorResponse($e);
         }
     }
 }
