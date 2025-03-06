@@ -14,11 +14,13 @@ trait ApiResponse
      */
     protected function errorResponse(\Exception $e, $statusCode = 500, string $message = 'Error en la operación.')
     {
+        $code = $statusCode && $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
         return response()->json([
             'message' => $message,
             'error' => $e->getMessage(),
             'code' => $e->getCode()
-        ], $statusCode);
+        ], $code);
     }
 
     /**
