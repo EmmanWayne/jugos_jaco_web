@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,6 +22,6 @@ class UserSeeder extends Seeder
             'employee_id' => Employee::first()->id,
             'status' => true
         ]);
-        $adminUser->assignRole('admin');
+        $adminUser->assignRole(UserRole::ADMIN);
     }
 }

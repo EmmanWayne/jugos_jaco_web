@@ -2,8 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\DepartmentEnum;
+use App\Enums\MunicipalityEnum;
+use Faker\Provider\sv_SE\Municipality;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Client extends Model
 {
@@ -22,22 +27,40 @@ class Client extends Model
         'type_price_id',
     ];
 
-    public function employee()
+    /**
+     * The attributes that should be cast.
+     * 
+     * @return array<string, string>
+     */
+    protected function cast(): array
+    {
+        return [
+            'department' => DepartmentEnum::class,
+            'township' => MunicipalityEnum::getByDepartment($this->department),
+        ];
+    }
+
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
-    public function typePrice()
+    public function typePrice(): BelongsTo
     {
         return $this->belongsTo(TypePrice::class);
     }
 
-    public function location()
+    /**
+     * Define a polymorphic relationship with the location model.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
+    public function location(): MorphOne
     {
         return $this->morphOne(Location::class, 'model');
     }
 
-    public function getFullNameAttribute()
+    public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
     }
