@@ -14,11 +14,16 @@ class ClientController extends Controller
 {
     use ApiResponse;
 
+    /**
+     * Get clients of the authenticated employee.
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getClients()
     {
         try {
             $clients = Client::where('employee_id', Auth::user()->id)
-                ->with(['location:model_id,latitude,longitude', 'typePrice:id,name'])
+                ->with(['location', 'typePrice'])
                 ->get();
 
             return $this->successResponse(
@@ -30,6 +35,12 @@ class ClientController extends Controller
         }
     }
 
+    /**
+     * Create a new client.
+     * 
+     * @param ClientRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function createClient(ClientRequest $request)
     {
         try {
@@ -62,6 +73,13 @@ class ClientController extends Controller
         }
     }
 
+    /**
+     * Update a client.
+     * 
+     * @param ClientRequest $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateClient(ClientRequest $request, $id)
     {
         try {
@@ -96,10 +114,12 @@ class ClientController extends Controller
         }
     }
 
+    /**
+     * Validate if there is an existing client with the same name and phone number.
+     */
     private function validateExistingClient($request, $client_id = null)
     {
-        $query = Client::where('employee_id', Auth::user()->id)
-            ->where('last_name', $request->last_name)
+        $query = Client::where('last_name', $request->last_name)
             ->where('first_name', $request->first_name)
             ->where('phone_number', $request->phone_number);
 
