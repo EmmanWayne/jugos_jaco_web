@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LocationRequest;
 use App\Models\Employee;
 use App\Traits\ApiResponse;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\LocationResource;
-use Illuminate\Http\Request;
-use Locale;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class EmployeeController extends Controller
@@ -26,7 +25,7 @@ class EmployeeController extends Controller
             $employee = Employee::with(['branch'])->find($id);
             
             if (!$employee) {
-                throw new NotFoundHttpException('Empleado no encontrado');
+                throw new NotFoundHttpException('Empleado no encontrado', null, 404);
             }
             
             return $this->successResponse(
@@ -34,7 +33,7 @@ class EmployeeController extends Controller
                 'Empleado obtenido correctamente'
             );
         } catch (\Exception $e) {
-            return $this->errorResponse($e, 'Error al obtener el empleado');
+            return $this->errorResponse($e, $e->getCode());
         }
     }
 
@@ -42,31 +41,26 @@ class EmployeeController extends Controller
      * Create employee location
      *
      * @param int $id
-     * @param Request $request
+     * @param LocationRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createLocation($id, Request $request)
+    public function createLocation($id, LocationRequest $request)
     {
         try {
             $employee = Employee::find($id);
             
             if (!$employee) {
-                throw new NotFoundHttpException('Empleado no encontrado');
+                throw new NotFoundHttpException('Empleado no encontrado', null, 404);
             }
-            
-            $validated = $request->validate([
-                'latitude' => 'required|numeric|between:-90,90',
-                'longitude' => 'required|numeric|between:-180,180',
-            ]);
 
-            $location = $employee->locations()->create($validated);
+            $location = $employee->locations()->create($request->validated());
             
             return $this->successResponse(
                 new LocationResource($location),
                 'Ubicación creada correctamente'
             );
         } catch (\Exception $e) {
-            return $this->errorResponse($e);
+            return $this->errorResponse($e, $e->getCode());
         }
     }
 }
