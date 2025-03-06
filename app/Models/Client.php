@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DepartmentEnum;
+use App\Enums\MunicipalityEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,11 @@ class Client extends Model
         'department',
         'township',
         'type_price_id',
+    ];
+
+    protected $casts = [
+        'department' => DepartmentEnum::class,
+        'township' => MunicipalityEnum::class,
     ];
 
     /**

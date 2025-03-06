@@ -25,6 +25,6 @@ enum DepartmentEnum: string
 
     public static function toArray(): array
     {
-        return array_column(self::cases(), 'value', 'value');
+        return collect(self::cases())->pluck('value', 'value')->toArray();
     }
 }
