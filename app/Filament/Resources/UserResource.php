@@ -21,55 +21,59 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nombre de usuario')
-                    ->placeholder('Nombre de usuario')
-                    ->required()
-                    ->maxLength(32),
-                Forms\Components\TextInput::make('email')
-                    ->label('Correo electrónico')
-                    ->placeholder('example@examplo.com')
-                    ->email()
-                    ->required()
-                    ->maxLength(64),
-                Forms\Components\TextInput::make('password')
-                    ->label('Contraseña')
-                    ->password()
-                    ->revealable(true)
-                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                    ->rules(['min:8'])
-                    ->autocomplete('new-password')
-                    ->helperText('La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y símbolos')
-                    ->live(),
-                Forms\Components\TextInput::make('password_confirmation')
-                    ->label('Confirmar contraseña')
-                    ->password()
-                    ->revealable(true)
-                    ->required(fn ($livewire) => $livewire instanceof Pages\CreateUser)
-                    ->dehydrated(false)
-                    ->same('password')
-                    ->validationAttribute('confirmación de contraseña'),
-                Forms\Components\Select::make('employee_id')
-                    ->label('Empleado')
-                    ->placeholder('Seleccionar empleado')
-                    ->relationship('employee')
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record->full_name)
-                    ->searchable()
-                    ->preload()
-                    ->validationAttribute('employee_id')
-                    ->unique(ignoreRecord: true)
-                    ->required(),
-                Forms\Components\Select::make('roles')
-                    ->label('Roles')
-                    ->relationship('roles', 'name')
-                    ->preload()
-                    ->searchable(),
-                Forms\Components\Toggle::make('status')
-                    ->label('Estado')
-                    ->default(true)
-                    ->required()
+                Forms\Components\Section::make('Información del usuario')
+                    ->description('Información básica del usuario')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nombre de usuario')
+                            ->placeholder('Nombre de usuario')
+                            ->required()
+                            ->maxLength(32),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Correo electrónico')
+                            ->placeholder('example@examplo.com')
+                            ->email()
+                            ->required()
+                            ->maxLength(64),
+                        Forms\Components\TextInput::make('password')
+                            ->label('Contraseña')
+                            ->password()
+                            ->revealable(true)
+                            ->required(fn($livewire) => $livewire instanceof Pages\CreateUser)
+                            ->dehydrated(fn($state) => filled($state))
+                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            ->rules(['min:8'])
+                            ->autocomplete('new-password')
+                            ->helperText('La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y símbolos')
+                            ->live(),
+                        Forms\Components\TextInput::make('password_confirmation')
+                            ->label('Confirmar contraseña')
+                            ->password()
+                            ->revealable(true)
+                            ->required(fn($livewire) => $livewire instanceof Pages\CreateUser)
+                            ->dehydrated(false)
+                            ->same('password')
+                            ->validationAttribute('confirmación de contraseña'),
+                        Forms\Components\Select::make('employee_id')
+                            ->label('Empleado')
+                            ->placeholder('Seleccionar empleado')
+                            ->relationship('employee')
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->full_name)
+                            ->searchable()
+                            ->preload()
+                            ->validationAttribute('employee_id')
+                            ->unique(ignoreRecord: true)
+                            ->required(),
+                        Forms\Components\Select::make('roles')
+                            ->label('Roles')
+                            ->relationship('roles', 'name')
+                            ->preload()
+                            ->searchable(),
+                        Forms\Components\Toggle::make('status')
+                            ->label('Estado')
+                            ->default(true)
+                            ->required()
+                    ])->columns(2),
             ]);
     }
 
@@ -86,6 +90,12 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('employee.full_name')
                     ->label('Empleado')
                     ->numeric()
+                    ->sortable(),
+                Tables\Columns\BadgeColumn::make('roles.name')
+                    ->label('Rol')
+                    ->color('primary')
+                    ->formatStateUsing(fn ($state) => ucfirst($state))
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
                     ->label('Estado')
@@ -109,7 +119,12 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TernaryFilter::make('status')
+                    ->label('Estado')
+                    ->placeholder('Todos los estados')
+                    ->trueLabel('Activo')
+                    ->falseLabel('Inactivo')
+                    ->nullable(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -122,7 +137,7 @@ class UserResource extends Resource
             ]);
     }
 
-    
+
     public static function getRelations(): array
     {
         return [

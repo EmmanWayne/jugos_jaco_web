@@ -28,11 +28,9 @@ class AuthController extends Controller
                 ->first();
 
             if (!$employee) {
-                return $this->errorResponse(
-                    new ValidationException(null, ['Las credenciales son incorrectas.']),
-                    'Credenciales inválidas',
-                    401
-                );
+                throw ValidationException::withMessages([
+                    'identity' => 'Las credenciales son incorrectas.'
+                ]);
             }
 
             $this->validateUserStatus($employee);
@@ -52,9 +50,9 @@ class AuthController extends Controller
                 'employee_id' => $employee->id,
             ], 'Inicio de sesión exitoso');
         } catch (ValidationException $e) {
-            return $this->errorResponse($e, $e->getMessage(), 401);
+            return $this->errorResponse($e, 401, $e->getMessage());
         } catch (\Exception $e) {
-            return $this->errorResponse($e);
+            return $this->errorResponse($e, $e->getCode(), 'Error al iniciar sesión');
         }
     }
 
@@ -73,7 +71,7 @@ class AuthController extends Controller
                 'Sesión cerrada exitosamente'
             );
         } catch (\Exception $e) {
-            return $this->errorResponse($e);
+            return $this->errorResponse($e, $e->getCode(), 'Error al cerrar sesión');
         }
     }
 

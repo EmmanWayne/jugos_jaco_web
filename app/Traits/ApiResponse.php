@@ -4,20 +4,36 @@ namespace App\Traits;
 
 trait ApiResponse
 {
-    protected function errorResponse(\Exception $e, string $message = 'Error en la operación.', $code = 500)
+    /**
+     * Return an error response
+     *
+     * @param string $message
+     * @param int $statusCode
+     * @param mixed $errors
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function errorResponse(\Exception $e, $statusCode = 500, string $message = 'Error en la operación.')
     {
         return response()->json([
             'message' => $message,
             'error' => $e->getMessage(),
-            'code' => $e->getCode() || $code
-        ], 500);
+            'code' => $e->getCode()
+        ], $statusCode);
     }
 
-    protected function successResponse($data, string $message = 'Operación exitosa.', int $code = 200)
+    /**
+     * Return a success response with data
+     *
+     * @param mixed $data
+     * @param string $message
+     * @param int $statusCode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function successResponse($data, string $message = 'Operación exitosa.', int $statusCode = 200)
     {
         return response()->json([
             'data' => $data,
             'message' => $message
-        ], $code);
+        ], $statusCode);
     }
 }
