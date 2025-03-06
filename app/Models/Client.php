@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\DepartmentEnum;
 use App\Enums\MunicipalityEnum;
+use Faker\Provider\sv_SE\Municipality;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,11 +27,6 @@ class Client extends Model
         'type_price_id',
     ];
 
-    protected $casts = [
-        'department' => DepartmentEnum::class,
-        'township' => MunicipalityEnum::class,
-    ];
-
     /**
      * The attributes that should be cast.
      * 
@@ -40,6 +36,7 @@ class Client extends Model
     {
         return [
             'department' => DepartmentEnum::class,
+            'township' => MunicipalityEnum::getByDepartment($this->department),
         ];
     }
 

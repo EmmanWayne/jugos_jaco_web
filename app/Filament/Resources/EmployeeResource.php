@@ -15,6 +15,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeResource extends Resource
 {
@@ -46,8 +47,8 @@ class EmployeeResource extends Resource
                                 Forms\Components\TextInput::make('identity')
                                     ->label('Identidad')
                                     ->required()
-                                    ->unique('employees', 'identity') // Evita duplicados en la BD
                                     ->maxLength(13)
+                                    ->unique(ignoreRecord: true)
                                     ->numeric()
                                     ->afterStateUpdated(fn($state, callable $set) => self::validateIdentity($state)),
                             ]),
@@ -106,7 +107,8 @@ class EmployeeResource extends Resource
      */
     protected static function validateIdentity($identity)
     {
-        if (\App\Models\Employee::where('identity', $identity)->exists()) {
+        $employee_id = request()->route('record');
+        if (\App\Models\Employee::where([['identity', $identity], ['id', '!=', $employee_id]])->exists()) {
             Notification::make()
                 ->title('¡Atención!')
                 ->body('La identidad ya está registrada en el sistema.')

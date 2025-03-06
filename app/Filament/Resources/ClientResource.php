@@ -71,7 +71,7 @@ class ClientResource extends Resource
                                     })
                                     ->required(),
 
-                                Forms\Components\Select::make('municipality')
+                                Forms\Components\Select::make('township')
                                     ->label('Municipio')
                                     ->options(function (callable $get) {
                                         $department = $get('department');
