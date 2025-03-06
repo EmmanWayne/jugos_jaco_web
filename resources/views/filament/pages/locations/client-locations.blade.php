@@ -23,14 +23,6 @@
             </div>
         </div>
 
-        {{-- Lista de Clientes --}}
-        <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Clientes</h3>
-            <div class="overflow-y-auto max-h-48 space-y-2" id="clientsList">
-                {{-- La lista se llenará dinámicamente con JavaScript --}}
-            </div>
-        </div>
-
         {{-- Mapa --}}
         <div class="bg-white rounded-lg shadow relative z-0">
             <div id="map" style="height: 700px; width: 100%; border-radius: 0.5rem;"></div>
@@ -77,10 +69,11 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
+        
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const clients = @json($clients);
-                const center = @json($center);
+                const clients = JSON.parse('{!! json_encode($clients) !!}');
+                const center = JSON.parse('{!! json_encode($center) !!}');
                 let map, markers = {};
                 const ITEMS_PER_PAGE = 5;
                 let currentPage = 0;

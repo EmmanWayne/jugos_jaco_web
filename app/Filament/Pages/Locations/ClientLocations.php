@@ -67,10 +67,10 @@ class ClientLocations extends Page
     {
         $mapsUrl = "https://www.google.com/maps?q={$client->location->latitude},{$client->location->longitude}";
         $message = "*Información del Cliente*\n" .
-            "📋 Nombre: {$client->full_name}\n" .
-            "📍 Dirección: {$client->address}\n" .
-            "📌 Ubicación: {$mapsUrl}\n" .
-            "👤 Empleado: " . (optional($client->employee)->full_name ?? "Sin asignar");
+            "Nombre: {$client->full_name}\n" .
+            "Dirección: {$client->address}\n" .
+            "Ubicación: {$mapsUrl}\n" .
+            "Empleado: " . (optional($client->employee)->full_name ?? "Sin asignar");
 
         return "https://wa.me/?text=" . urlencode($message);
     }
