@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\DepartmentEnum;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Filament\Resources\ClientResource\RelationManagers;
 use App\Models\Client;
@@ -60,7 +61,9 @@ class ClientResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('department')
                                     ->label('Departamento')
-                                    ->options(self::getDepartments())
+                                    ->options(DepartmentEnum::toArray())
+                                    ->enum(DepartmentEnum::class)
+                                    ->placeholder('Seleccione un departamento')
                                     ->searchable()
                                     ->preload()
                                     ->required()
@@ -535,30 +538,6 @@ class ClientResource extends Resource
                 'Victoria' => 'Victoria',
                 'Yorito' => 'Yorito',
             ],
-        ];
-    }
-
-    public static function getDepartments()
-    {
-        return [
-            'Atlántida' => 'Atlántida',
-            'Colón' => 'Colón',
-            'Comayagua' => 'Comayagua',
-            'Copán' => 'Copán',
-            'Cortés' => 'Cortés',
-            'Choluteca' => 'Choluteca',
-            'El Paraíso' => 'El Paraíso',
-            'Francisco Morazán' => 'Francisco Morazán',
-            'Gracias a Dios' => 'Gracias a Dios',
-            'Intibucá' => 'Intibucá',
-            'Islas de la Bahía' => 'Islas de la Bahía',
-            'La Paz' => 'La Paz',
-            'Lempira' => 'Lempira',
-            'Ocotepeque' => 'Ocotepeque',
-            'Olancho' => 'Olancho',
-            'Santa Bárbara' => 'Santa Bárbara',
-            'Valle' => 'Valle',
-            'Yoro' => 'Yoro',
         ];
     }
 
