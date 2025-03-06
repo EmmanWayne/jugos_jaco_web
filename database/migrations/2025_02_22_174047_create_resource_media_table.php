@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('resources_media', function (Blueprint $table) {
             $table->id();
+            $table->string('type', 10);
             $table->morphs('model');
             $table->string('path', 50);
             $table->timestamps();
