@@ -4,8 +4,9 @@ namespace App\Enums;
 
 enum UserRole: string
 {
-    case ADMIN = 'admin';
-    case EMPLOYED = 'employed';
+    case ADMIN = 'administrador';
+    case EMPLOYED = 'empleados';
+    case CASHEER = 'cajero';
 
     public static function getAllowedRoles(): array
     {
