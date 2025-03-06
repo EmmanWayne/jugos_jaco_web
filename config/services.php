@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Eliminar o comentar la configuración de Google Maps
+    // 'google' => [
+    //     'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
+    // ],
+
 ];
