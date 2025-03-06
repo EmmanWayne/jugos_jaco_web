@@ -13,10 +13,14 @@ class ResourceMedia extends Model
 
     protected $fillable = [
         'path',
+        'type',
         'model_id',
         'model_type',
     ];
 
+    /**
+     * Define relationship polymorphic with model.
+     */
     public function model()
     {
         return $this->morphTo();
