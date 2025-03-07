@@ -64,4 +64,24 @@ class Client extends Model
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    /**
+     * Get the profile photo of the client with polimorphic relationship.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
+    public function profileImage()
+    {
+        return $this->morphOne(ResourceMedia::class, 'model')->where('type', 'profile');
+    }
+
+    /**
+     * Get the images of the client with polimorphic relationship.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function businessImages()
+    {
+        return $this->morphMany(ResourceMedia::class, 'model')->where('type', 'business');
+    }
 }
