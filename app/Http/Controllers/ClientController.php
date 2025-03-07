@@ -210,6 +210,28 @@ class ClientController extends Controller
     }
 
     /**
+     * Get business images of the client.
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getImagesBusiness($id)
+    {
+        try {
+            $client = Client::findOrFail($id);
+
+            return $this->successResponse(
+                ClientImageResource::collection($client->businessImages),
+                'Imágenes del cliente obtenidas correctamente'
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse($e, 404, 'Cliente no encontrado');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
      * Validate if there is an existing client with the same name and phone number.
      */
     private function validateExistingClient($request, $client_id = null)
