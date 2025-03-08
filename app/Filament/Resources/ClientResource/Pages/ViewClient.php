@@ -23,4 +23,9 @@ class ViewClient extends ViewRecord
             \App\Filament\Resources\ClientResource\Widgets\BusinessImagesWidget::class,
         ];
     }
+
+    public function getFooterWidgetsColumns(): int|string|array
+    {
+        return 1;
+    }
 }

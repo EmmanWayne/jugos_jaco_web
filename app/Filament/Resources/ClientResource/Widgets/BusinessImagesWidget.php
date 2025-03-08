@@ -19,4 +19,9 @@ class BusinessImagesWidget extends Widget
     {
         return $this->record->businessImages;
     }
+
+    public static function getMaxWith(): string
+    {
+        return 'full';
+    }
 }
