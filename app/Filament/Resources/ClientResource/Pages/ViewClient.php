@@ -16,4 +16,11 @@ class ViewClient extends ViewRecord
             Actions\EditAction::make(),
         ];
     }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\ClientResource\Widgets\BusinessImagesWidget::class,
+        ];
+    }
 }

@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Enums\DepartmentEnum;
 use App\Enums\MunicipalityEnum;
 use App\Filament\Resources\ClientResource\Pages;
-use App\Filament\Resources\ClientResource\RelationManagers;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\TypePrice;
@@ -15,8 +14,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ImageColumn;
 
 class ClientResource extends Resource
 {
@@ -25,14 +24,11 @@ class ClientResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-
-
             ->schema([
-                Section::make('Información del cliente')  // Título de la sección
-                    ->description('En esta sección se registra la información del cliente.') // Descripción
+                Section::make('Información del cliente')
+                    ->description('En esta sección se registra la información del cliente.')
                     ->schema([
-                        Section::make('')
-                            ->columns(3)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('first_name')
                                     ->label('Nombres')
@@ -48,17 +44,14 @@ class ClientResource extends Resource
                                     ->required()
                                     ->maxLength(15),
                             ]),
-
-                        Section::make('')
-                            ->columns(1)
+                        Forms\Components\Grid::make(1)
                             ->schema([
                                 Forms\Components\TextInput::make('address')
                                     ->label('Dirección')
                                     ->required()
                                     ->maxLength(120),
                             ]),
-                        Section::make('')
-                            ->columns(2)
+                        Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('department')
                                     ->label('Departamento')
@@ -66,11 +59,9 @@ class ClientResource extends Resource
                                     ->options(DepartmentEnum::toArray())
                                     ->live()
                                     ->afterStateUpdated(function ($state, callable $set) {
-                                        // Limpiamos la selección de municipio cuando cambia el departamento
                                         $set('municipality', null);
                                     })
                                     ->required(),
-
                                 Forms\Components\Select::make('township')
                                     ->label('Municipio')
                                     ->options(function (callable $get) {
@@ -78,7 +69,6 @@ class ClientResource extends Resource
                                         if (!$department) {
                                             return [];
                                         }
-
                                         return collect(MunicipalityEnum::getByDepartment(DepartmentEnum::from($department)))
                                             ->mapWithKeys(fn($municipality) => [$municipality => $municipality]);
                                     })
@@ -86,9 +76,7 @@ class ClientResource extends Resource
                                     ->preload()
                                     ->required(),
                             ]),
-
-                        Section::make('')
-                            ->columns(2)
+                        Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('employee_id')
                                     ->label('Empleado asignado')
@@ -96,7 +84,6 @@ class ClientResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required(),
-
                                 Forms\Components\Select::make('type_price_id')
                                     ->label('Tipo de Precio')
                                     ->options(TypePrice::query()->pluck('name', 'id'))
@@ -107,11 +94,10 @@ class ClientResource extends Resource
                                             ->label('Nombre del Tipo de Precio')
                                             ->required(),
                                     ])
-                                    ->createOptionUsing(fn(array $data) => TypePrice::create($data)->id) // Guarda el nuevo tipo de precio
+                                    ->createOptionUsing(fn(array $data) => TypePrice::create($data)->id)
                                     ->required(),
                             ]),
                     ]),
-
             ]);
     }
 
@@ -119,37 +105,40 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('full_name')
+                ImageColumn::make('profileImage.path')
+                    ->label('Foto de perfil')
+                    ->circular(),
+                TextColumn::make('full_name')
                     ->label('Nombre Completo')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('phone_number')
+                TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('employee.full_name')
+                TextColumn::make('employee.full_name')
                     ->label('Empleado asignado')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('typePrice.name')
+                TextColumn::make('typePrice.name')
                     ->label('Tipo de precio')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('department')
+                TextColumn::make('department')
                     ->label('Departamento')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('township')
+                TextColumn::make('township')
                     ->label('Municipio')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('address')
+                TextColumn::make('address')
                     ->label('Dirección')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label('Fecha de edición')
                     ->dateTime()
                     ->sortable()
