@@ -5,7 +5,6 @@ namespace App\Filament\Resources\ClientResource\Pages;
 use App\Filament\Resources\ClientResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Forms\Components\Section;
 
 class ViewClient extends ViewRecord
 {
@@ -21,13 +20,7 @@ class ViewClient extends ViewRecord
     protected function getFooterWidgets(): array
     {
         return [
-            Section::make('Fotografías del negocio')
-                ->description('En esta sección se muestran las fotografías del negocio.')
-                ->columns(4)
-                ->schema([
-                    \App\Filament\Resources\ClientResource\Widgets\BusinessImagesWidget::class,
-                ]),
-
+            \App\Filament\Resources\ClientResource\Widgets\BusinessImagesWidget::class,
         ];
     }
 }
