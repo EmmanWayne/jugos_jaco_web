@@ -98,12 +98,6 @@ class ClientResource extends Resource
                                     ->required(),
                             ]),
                     ]),
-                Section::make('Fotos del Negocio')
-                    ->description('Esta sección muestra las fotos del negocio del cliente.')
-                    ->columns(4)
-                    ->schema([
-                        Forms\Components\View::make('filament.resources.client-resource.widgets.business-images-widget')
-                    ]),
             ]);
     }
 
@@ -142,11 +136,13 @@ class ClientResource extends Resource
                 TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
                     ->label('Fecha de edición')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
