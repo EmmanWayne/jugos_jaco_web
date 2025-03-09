@@ -16,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
+use Illuminate\Support\Facades\Storage;
 
 class ClientResource extends Resource
 {
@@ -106,7 +107,9 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('profileImage.path')
-                    ->label('Foto de perfil')
+                    ->defaultImageUrl(url('storage\images\avatar.png'))
+                    ->label('')
+                    ->size(30)
                     ->circular(),
                 TextColumn::make('full_name')
                     ->label('Nombre Completo')
