@@ -9,10 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ClientLocations extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-s-map-pin';
-    protected static ?string $navigationLabel = 'Ubicaciones de Clientes';
     protected static ?string $title = 'Mapa de Clientes';
-    protected static ?int $navigationSort = 7;
     protected static string $view = 'filament.pages.locations.client-locations';
 
     public function getViewData(): array
@@ -74,4 +71,20 @@ class ClientLocations extends Page
 
         return "https://wa.me/?text=" . urlencode($message);
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Ubicaciones';
+    }
+
+    public static function getNavigationIcon(): string
+    {
+        return 'heroicon-s-map-pin';
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 6;
+    }
+
 }

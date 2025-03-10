@@ -120,11 +120,11 @@ class BranchResource extends Resource
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-building-office-2';
+        return 'heroicon-o-building-storefront';
     }
 
     public static function getNavigationSort(): int
     {
-        return 2;
+        return 5;
     }
 }

@@ -107,10 +107,11 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('profileImage.path')
-                    ->defaultImageUrl(url('storage\images\avatar.png'))
-                    ->label('')
-                    ->size(30)
-                    ->circular(),
+                    ->defaultImageUrl(url('/images/avatar.png'))
+                    ->label('Foto')
+                    ->height(30)
+                    ->width(30)
+                    ->extraImgAttributes(['style' => 'object-fit: contain;']),
                 TextColumn::make('full_name')
                     ->label('Nombre Completo')
                     ->sortable()
@@ -200,7 +201,7 @@ class ClientResource extends Resource
 
     public static function getNavigationSort(): int
     {
-        return 3;
+        return 2;
     }
 
     public static function create(array $data)

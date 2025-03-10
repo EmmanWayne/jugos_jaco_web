@@ -199,11 +199,11 @@ class EmployeeResource extends Resource
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-identification';
+        return 'heroicon-o-users';
     }
 
     public static function getNavigationSort(): int
     {
-        return 4;
+        return 3;
     }
 }
