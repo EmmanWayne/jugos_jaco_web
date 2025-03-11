@@ -117,7 +117,7 @@ class SystemSetting extends Model
             return $this->logo_path;
         }
 
-        return Storage::disk('public')->url($this->logo_path);
+        return asset('storage/' . $this->logo_path);
     }
 
     public function getThemeColors()
