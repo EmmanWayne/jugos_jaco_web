@@ -18,15 +18,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Insertar configuración por defecto
-        DB::table('system_settings')->insert([
-            'company_name' => 'JAC',
-            'logo_path' => 'https://github.com/EmmanWayne/logos_publicos/blob/main/logo_jac.png?raw=true',
-            'theme_color' => '#001C4D',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 
     public function down()
