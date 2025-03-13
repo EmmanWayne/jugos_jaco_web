@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->decimal('latitude', 10, 7);
             $table->decimal('longitude', 10, 7);
+            $table->string('plus_code', 13)->nullable();
             $table->morphs('model');
             $table->timestamps();
         });

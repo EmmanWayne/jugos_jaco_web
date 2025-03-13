@@ -15,6 +15,7 @@ class Location extends Model
     protected $fillable = [
         'latitude',
         'longitude',
+        'plus_code',
         'model_id',
         'model_type',
     ];

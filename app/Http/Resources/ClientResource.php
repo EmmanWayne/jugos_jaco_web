@@ -26,6 +26,7 @@ class ClientResource extends JsonResource
                 'id' => $this->location?->id,
                 'latitude' => $this->location?->latitude,
                 'longitude' => $this->location?->longitude,
+                'plus_code' => $this->location?->plus_code,
                 'model_id' => $this->location?->model_id,
             ],
             'type_price' => $this->typePrice?->name,

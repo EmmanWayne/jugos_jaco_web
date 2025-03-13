@@ -8,6 +8,7 @@ use App\Http\Requests\ClientRequest;
 use App\Http\Requests\ImageRequest;
 use App\Http\Resources\ClientImageResource;
 use App\Http\Resources\ClientResource;
+use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,13 @@ use Illuminate\Validation\ValidationException;
 class ClientController extends Controller
 {
     use ApiResponse;
+
+    protected $plusCodeService;
+
+    public function __construct()
+    {
+        $this->plusCodeService = new PlusCodeService();
+    }
 
     /**
      * Get clients of the authenticated employee.
@@ -61,7 +69,8 @@ class ClientController extends Controller
             if ($request->filled(['latitude', 'longitude'])) {
                 $client->location()->create([
                     'latitude' => $request->latitude,
-                    'longitude' => $request->longitude
+                    'longitude' => $request->longitude,
+                    'plus_code' => $this->plusCodeService->encode($request->latitude, $request->longitude)
                 ]);
             }
 
@@ -97,10 +106,10 @@ class ClientController extends Controller
 
             if ($request->filled(['latitude', 'longitude'])) {
                 $client->location()->updateOrCreate(
-                    ['model_id' => $client->id],
                     [
                         'latitude' => $request->latitude,
-                        'longitude' => $request->longitude
+                        'longitude' => $request->longitude,
+                        'plus_code' => $this->plusCodeService->encode($request->latitude, $request->longitude)
                     ]
                 );
             }

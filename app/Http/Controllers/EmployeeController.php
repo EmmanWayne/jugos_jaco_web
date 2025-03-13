@@ -7,11 +7,19 @@ use App\Models\Employee;
 use App\Traits\ApiResponse;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\LocationResource;
+use App\Services\PlusCodeService;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class EmployeeController extends Controller
 {
     use ApiResponse;
+
+    protected $plusCodeService;
+
+    public function __construct()
+    {
+        $this->plusCodeService = new PlusCodeService();
+    }
 
     /**
      * Get employee by ID
@@ -53,7 +61,10 @@ class EmployeeController extends Controller
                 throw new NotFoundHttpException('Empleado no encontrado', null, 404);
             }
 
-            $location = $employee->locations()->create($request->validated());
+            $location = $employee->locations()->create([
+                ...$request->validated(),
+                'plus_code' => $this->plusCodeService->encode($request->latitude, $request->longitude)
+            ]);
             
             return $this->successResponse(
                 new LocationResource($location),
