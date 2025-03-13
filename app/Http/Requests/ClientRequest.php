@@ -28,8 +28,8 @@ class ClientRequest extends FormRequest
             'phone_number' => 'required|string|max:8',
             'department' => 'required|string|max:32',
             'township' => 'required|string|max:32',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180'
         ];
     }
 }
