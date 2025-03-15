@@ -103,12 +103,14 @@
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div class="bg-gray-50 p-3 rounded-lg">
                             <div class="text-sm text-gray-500">Total Empleados</div>
-                            <div class="text-lg font-semibold text-primary-600" id="totalEmployees">0</div>
+                            <div class="text-lg font-semibold text-primary-600">
+                                {{ $statistics['employees']['total'] }}
+                            </div>
                         </div>
                         <div class="bg-gray-50 p-3 rounded-lg">
                             <div class="text-sm text-gray-500">Empleados Activos Hoy</div>
                             <div class="text-lg font-semibold text-primary-600">
-                                {{ $statistics['employees']['active_today'] }} / {{ $statistics['employees']['total'] }}
+                                {{ $statistics['employees']['active_today'] }}
                             </div>
                         </div>
                     </div>
@@ -290,9 +292,9 @@
                         const marker = L.marker([lastLocation.lat, lastLocation.lng], {
                             icon: L.divIcon({
                                 className: 'employee-marker',
-                                html: `<div class="w-8 h-8 flex items-center justify-center text-white rounded-full" 
-                                      style="background-color: ${routeColor}">
-                                        ${employee.nombre.charAt(0)}
+                                html: `<div class="bg-white px-2 py-1 rounded-lg shadow text-sm border-2" 
+                                       style="border-color: ${routeColor}">
+                                        ${employee.nombre}
                                       </div>`
                             })
                         }).addTo(map);
@@ -355,9 +357,48 @@
             function addClientMarker(client) {
                 const marker = L.marker([client.location.lat, client.location.lng])
                     .bindPopup(`
-                        <div class="p-2">
-                            <h3 class="font-bold">${client.nombre}</h3>
-                            <p class="text-sm">${client.direccion || ''}</p>
+                        <div class="p-3">
+                            <h3 class="font-bold text-lg mb-2">${client.nombre}</h3>
+                            <div class="space-y-2">
+                                <p class="text-sm">
+                                    <span class="font-medium">Dirección:</span><br>
+                                    ${client.direccion}
+                                </p>
+                                <p class="text-sm">
+                                    <span class="font-medium">Departamento:</span><br>
+                                    ${client.department}
+                                </p>
+                                <p class="text-sm">
+                                    <span class="font-medium">Municipio:</span><br>
+                                    ${client.township}
+                                </p>
+                                <p class="text-sm">
+                                    <span class="font-medium">Teléfono:</span><br>
+                                    ${client.phone_number}
+                                </p>
+                                <p class="text-sm">
+                                    <span class="font-medium">Empleado Asignado:</span><br>
+                                    ${client.empleado}
+                                </p>
+                                <div class="mt-3 pt-2 border-t flex space-x-2">
+                                    <a href="${client.location.maps_url}" 
+                                       target="_blank"
+                                       class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 0C4.477 0 0 4.477 0 10c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10zm0 18c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8zm-1-13v6h2V5H9zm0 8v2h2v-2H9z"/>
+                                        </svg>
+                                        Ver en Maps
+                                    </a>
+                                    <a href="${client.location.whatsapp_url}" 
+                                       target="_blank"
+                                       class="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 0C4.477 0 0 4.477 0 10c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10zm0 18c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8zm-1-13v6h2V5H9zm0 8v2h2v-2H9z"/>
+                                        </svg>
+                                        Compartir por WhatsApp
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     `)
                     .addTo(map);

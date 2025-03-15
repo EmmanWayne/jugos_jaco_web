@@ -39,12 +39,12 @@ class ClientLocations extends Page
                     'tipo' => 'cliente',
                     'nombre' => $client->full_name,
                     'direccion' => $client->address,
-                    'empleado' => optional($client->employee)->full_name ?? 'Sin asignar',
-                    'employee_id' => $client->employee_id,
-                    'has_location' => $client->location !== null,
                     'department' => $client->department,
                     'township' => $client->township,
-                    'phone_number' => $client->phone_number
+                    'phone_number' => $client->phone_number,
+                    'empleado' => optional($client->employee)->full_name ?? 'Sin asignar',
+                    'employee_id' => $client->employee_id,
+                    'has_location' => $client->location !== null
                 ];
 
                 if ($client->location) {
@@ -98,6 +98,9 @@ class ClientLocations extends Page
     {
         $clients = Client::withCount('location')->get();
         $employees = Employee::withCount('locations')->get();
+        $activeToday = Employee::whereHas('locations', function ($query) {
+            $query->whereDate('created_at', Carbon::today());
+        })->count();
 
         return [
             'clients' => [
@@ -107,11 +110,7 @@ class ClientLocations extends Page
             ],
             'employees' => [
                 'total' => $employees->count(),
-                'with_routes' => $employees->where('locations_count', '>', 0)->count(),
-                'without_routes' => $employees->where('locations_count', 0)->count(),
-                'active_today' => Employee::whereHas('locations', function ($query) {
-                    $query->whereDate('created_at', Carbon::today());
-                })->count()
+                'active_today' => $activeToday
             ]
         ];
     }
@@ -131,7 +130,7 @@ class ClientLocations extends Page
             "Municipio: {$client->township}\n" .
             "Teléfono: {$client->phone_number}\n" .
             "Ubicación: {$mapsUrl}\n" .
-            "Empleado: " . (optional($client->employee)->full_name ?? "Sin asignar");
+            "Empleado Asignado: " . (optional($client->employee)->full_name ?? "Sin asignar");
 
         return "https://wa.me/?text=" . urlencode($message);
     }
