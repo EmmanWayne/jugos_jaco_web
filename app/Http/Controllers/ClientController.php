@@ -148,16 +148,18 @@ class ClientController extends Controller
                 $fileName = "{$timestamp}_{$id}.{$extension}";
                 $path = $image->storeAs(StoragePath::CLIENTS_BUSINESS_IMAGES->value, $fileName, StoragePath::ROOT_DIRECTORY->value);
 
-                $image = $client->businessImages()->create([
-                    'path' => $path,
-                    'type' => 'business',
-                ]);
+                if ($client->businessImages()->where('path', $path)->count() == 0) {
+                    $image = $client->businessImages()->create([
+                        'path' => $path,
+                        'type' => 'business',
+                    ]);
+                }
             }
 
             DB::commit();
 
             return $this->successResponse(
-                 new ClientImageResource($image),
+                new ClientImageResource($image),
                 'Imagen del cliente agregada correctamente'
             );
         } catch (ModelNotFoundException $e) {
