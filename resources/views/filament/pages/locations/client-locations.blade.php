@@ -1,275 +1,442 @@
 <x-filament::page>
-    <div class="space-y-4">
-        {{-- Filtros --}}
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {{-- Buscador de clientes --}}
-            <div class="p-4 bg-white rounded-lg shadow relative z-50">
-                <label for="clientSearch" class="block text-sm font-medium text-gray-700">Buscar Cliente</label>
-                <select id="clientSearch" class="w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    <option value="">Todos los clientes</option>
-                </select>
-                <div id="locationStatus" class="mt-2 text-sm text-gray-500 hidden"></div>
+    @push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+    <style>
+        .mode-button {
+            @apply border-2 border-transparent transition-all duration-200;
+        }
+        .mode-button.active {
+            @apply bg-primary-100 text-primary-700 border-primary-300;
+        }
+        #map {
+            height: calc(100vh - 12rem);
+            width: 100%;
+            z-index: 1;
+        }
+        .employee-marker {
+            background: white;
+            border-radius: 50%;
+            text-align: center;
+        }
+        .map-container {
+            position: sticky;
+            top: 2rem;
+        }
+        .search-result {
+            @apply p-2 hover:bg-gray-100 cursor-pointer;
+        }
+    </style>
+    @endpush
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {{-- Panel de Control (Izquierda) --}}
+        <div class="space-y-4">
+            {{-- Selector de modo --}}
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex justify-center space-x-4">
+                    <button id="clientModeBtn" class="mode-button active flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
+                        <x-heroicon-s-users class="w-4 h-4" />
+                        <span>Clientes</span>
+                    </button>
+                    <button id="employeeModeBtn" class="mode-button flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
+                        <x-heroicon-s-map class="w-4 h-4" />
+                        <span>Empleados</span>
+                    </button>
+                </div>
             </div>
 
-            {{-- Filtro de empleados --}}
-            <div class="p-4 bg-white rounded-lg shadow relative z-50">
-                <label for="employeeFilter" class="block text-sm font-medium text-gray-700">Filtrar por Empleado</label>
-                <select id="employeeFilter" class="w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    <option value="">Todos los empleados</option>
-                    @foreach($employees as $employee)
-                        <option value="{{ $employee['id'] }}">{{ $employee['nombre'] }}</option>
-                    @endforeach
-                </select>
+            {{-- Filtros --}}
+            <div class="bg-white rounded-lg shadow p-4">
+                <div id="clientFilters" class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Buscar Cliente
+                        </label>
+                        <input type="text" 
+                            id="clientSearch" 
+                            class="w-full rounded-lg border-gray-300"
+                            placeholder="Ingrese el nombre del cliente..."
+                        />
+                        <div id="clientSearchResults" class="hidden absolute z-50 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+                        </div>
+                    </div>
+                    
+                    {{-- Estadísticas de Clientes --}}
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500">Clientes con Ubicación</div>
+                            <div class="text-lg font-semibold text-primary-600">
+                                {{ $statistics['clients']['with_location'] }} / {{ $statistics['clients']['total'] }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500">Sin Ubicación</div>
+                            <div class="text-lg font-semibold text-gray-600" id="clientsWithoutLocation">0</div>
+                        </div>
+                    </div>
+
+                    {{-- Lista de Clientes sin Ubicación --}}
+                    <div class="mt-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Clientes sin Ubicación</h3>
+                        <div id="clientsWithoutLocationList" class="max-h-48 overflow-y-auto bg-gray-50 rounded-lg p-2">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="employeeFilters" class="hidden space-y-4">
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Buscar Empleado
+                        </label>
+                        <input type="text" 
+                            id="employeeSearch" 
+                            class="w-full rounded-lg border-gray-300"
+                            placeholder="Ingrese el nombre del empleado..."
+                        />
+                        <div id="employeeSearchResults" class="hidden absolute z-50 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1">
+                        </div>
+                    </div>
+
+                    {{-- Estadísticas de Empleados --}}
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500">Total Empleados</div>
+                            <div class="text-lg font-semibold text-primary-600" id="totalEmployees">0</div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500">Empleados Activos Hoy</div>
+                            <div class="text-lg font-semibold text-primary-600">
+                                {{ $statistics['employees']['active_today'] }} / {{ $statistics['employees']['total'] }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        {{-- Mapa --}}
-        <div class="bg-white rounded-lg shadow relative z-0">
-            <div id="map" style="height: 700px; width: 100%; border-radius: 0.5rem;"></div>
+        {{-- Mapa (Derecha) --}}
+        <div class="map-container">
+            <div class="bg-white rounded-lg shadow">
+                <div id="map"></div>
+            </div>
         </div>
     </div>
 
-    @push('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-        <style>
-            .leaflet-popup-content {
-                margin: 8px;
-            }
-            .client-popup {
-                min-width: 200px;
-                text-align: center;
-            }
-            /* Asegurar que los dropdowns de TomSelect aparezcan sobre el mapa */
-            .ts-dropdown {
-                z-index: 1000 !important;
-            }
-            /* Asegurar que el contenedor de TomSelect esté sobre el mapa */
-            .ts-wrapper {
-                position: relative;
-                z-index: 100;
-            }
-            .client-card {
-                padding: 1rem;
-                border-radius: 0.5rem;
-                border: 1px solid #e5e7eb;
-                margin-bottom: 0.5rem;
-            }
-            .client-card:hover {
-                background-color: #f3f4f6;
-            }
-            .client-card.selected {
-                background-color: #e5e7eb;
-                border-color: #d1d5db;
-            }
-        </style>
-    @endpush
-
     @push('scripts')
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
 
-        
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const clients = JSON.parse('{!! json_encode($clients) !!}');
-                const center = JSON.parse('{!! json_encode($center) !!}');
-                let map, markers = {};
-                const ITEMS_PER_PAGE = 5;
-                let currentPage = 0;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar el mapa
+            const map = L.map('map').setView([14.6349, -86.9315], 7);
+            
+            // Agregar capa base del mapa
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
 
-                // Inicializar mapa
-                initMap();
-                initFilters();
-                updateClientsList();
+            // Variables globales
+            let currentMode = 'clients';
+            let currentMarkers = [];
+            let currentRoute = null;
+            let employeeRoutes = {};
+            let clientMarkers = {};
+            let bounds;
 
-                function initMap() {
-                    map = L.map('map').setView([center.lat, center.lng], 7);
+            // Colores para las rutas
+            const routeColors = [
+                '#3B82F6', '#EF4444', '#10B981', '#F59E0B', 
+                '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'
+            ];
+
+            // Manejadores de eventos para los botones de modo
+            document.getElementById('clientModeBtn').addEventListener('click', () => switchMode('clients'));
+            document.getElementById('employeeModeBtn').addEventListener('click', () => switchMode('employees'));
+
+            // Buscador de clientes mejorado
+            const clientSearch = document.getElementById('clientSearch');
+            const clientSearchResults = document.getElementById('clientSearchResults');
+
+            function updateClientStats(clients) {
+                const withLocation = clients.filter(c => c.has_location).length;
+                const withoutLocation = clients.length - withLocation;
+                
+                document.getElementById('clientsWithLocation').textContent = withLocation;
+                document.getElementById('clientsWithoutLocation').textContent = withoutLocation;
+
+                // Actualizar lista de clientes sin ubicación
+                const withoutLocationList = document.getElementById('clientsWithoutLocationList');
+                withoutLocationList.innerHTML = clients
+                    .filter(c => !c.has_location)
+                    .map(client => `
+                        <div class="text-sm p-2 hover:bg-gray-100 rounded">
+                            ${client.nombre}
+                            <div class="text-xs text-gray-500">${client.direccion}</div>
+                        </div>
+                    `).join('');
+            }
+
+            clientSearch.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const clients = @json($clients);
+                
+                if (searchTerm.length < 2) {
+                    clientSearchResults.classList.add('hidden');
+                    showAllClients(); // Mostrar todos los clientes cuando no hay búsqueda
+                    return;
+                }
+
+                const filteredClients = clients.filter(client => 
+                    client.nombre.toLowerCase().includes(searchTerm)
+                );
+
+                clientSearchResults.innerHTML = filteredClients.map(client => `
+                    <div class="search-result p-2 hover:bg-gray-100 cursor-pointer" data-client-id="${client.id}">
+                        <div class="font-medium">${client.nombre}</div>
+                        <div class="text-xs text-gray-500">${client.direccion}</div>
+                        ${client.has_location ? 
+                            '<span class="text-xs text-green-600">Con ubicación</span>' : 
+                            '<span class="text-xs text-red-600">Sin ubicación</span>'}
+                    </div>
+                `).join('');
+
+                clientSearchResults.classList.remove('hidden');
+            });
+
+            // Selección de cliente
+            clientSearchResults.addEventListener('click', function(e) {
+                const result = e.target.closest('.search-result');
+                if (result) {
+                    const clientId = result.dataset.clientId;
+                    const clients = @json($clients);
+                    const selectedClient = clients.find(c => c.id == clientId);
+
+                    if (selectedClient && selectedClient.has_location) {
+                        clearMap();
+                        const marker = addClientMarker(selectedClient);
+                        map.setView([selectedClient.location.lat, selectedClient.location.lng], 15);
+                        marker.openPopup();
+                    }
+
+                    clientSearch.value = selectedClient.nombre;
+                    clientSearchResults.classList.add('hidden');
+                }
+            });
+
+            // Buscador de empleados mejorado
+            const employeeSearch = document.getElementById('employeeSearch');
+            const employeeSearchResults = document.getElementById('employeeSearchResults');
+
+            function updateEmployeeStats(employees) {
+                const total = employees.length;
+                const withRoutes = employees.filter(e => e.locations && e.locations.length > 0).length;
+                
+                document.getElementById('totalEmployees').textContent = total;
+                document.getElementById('employeesWithRoutes').textContent = withRoutes;
+            }
+
+            employeeSearch.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const employees = @json($employeeLocations);
+                
+                if (searchTerm.length < 2) {
+                    employeeSearchResults.classList.add('hidden');
+                    showEmployeeRoutes(); // Mostrar todas las rutas cuando no hay búsqueda
+                    return;
+                }
+
+                const filteredEmployees = employees.filter(employee => 
+                    employee.nombre.toLowerCase().includes(searchTerm)
+                );
+
+                employeeSearchResults.innerHTML = filteredEmployees.map(employee => `
+                    <div class="search-result p-2 hover:bg-gray-100 cursor-pointer" data-employee-id="${employee.id}">
+                        <div class="font-medium">${employee.nombre}</div>
+                        ${employee.locations.length > 0 ? 
+                            `<span class="text-xs text-green-600">${employee.locations.length} puntos registrados</span>` : 
+                            '<span class="text-xs text-red-600">Sin rutas registradas</span>'}
+                    </div>
+                `).join('');
+
+                employeeSearchResults.classList.remove('hidden');
+            });
+
+            // Selección de empleado
+            employeeSearchResults.addEventListener('click', function(e) {
+                const result = e.target.closest('.search-result');
+                if (result) {
+                    const employeeId = result.dataset.employeeId;
+                    const employee = @json($employeeLocations).find(e => e.id == employeeId);
                     
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors'
-                    }).addTo(map);
+                    clearMap();
+                    
+                    if (employee.locations.length > 0) {
+                        const routeColor = routeColors[0];
+                        const routePoints = employee.locations.map(loc => [loc.lat, loc.lng]);
+                        
+                        // Dibujar la ruta
+                        currentRoute = L.polyline(routePoints, {
+                            color: routeColor,
+                            weight: 3,
+                            opacity: 0.7
+                        }).addTo(map);
 
-                    // Agregar marcadores solo para clientes con ubicación
-                    clients.forEach(client => {
-                        if (client.has_location) {
-                            addMarker(client);
-                        }
-                    });
-                }
+                        // Agregar marcador en la última ubicación
+                        const lastLocation = employee.locations[0];
+                        const marker = L.marker([lastLocation.lat, lastLocation.lng], {
+                            icon: L.divIcon({
+                                className: 'employee-marker',
+                                html: `<div class="w-8 h-8 flex items-center justify-center text-white rounded-full" 
+                                      style="background-color: ${routeColor}">
+                                        ${employee.nombre.charAt(0)}
+                                      </div>`
+                            })
+                        }).addTo(map);
 
-                function updateClientsList(filteredClients = null) {
-                    const clientsList = document.getElementById('clientsList');
-                    const displayClients = filteredClients || clients;
-                    clientsList.innerHTML = '';
-
-                    const start = currentPage * ITEMS_PER_PAGE;
-                    const end = start + ITEMS_PER_PAGE;
-                    const pageClients = displayClients.slice(start, end);
-
-                    pageClients.forEach(client => {
-                        const card = document.createElement('div');
-                        card.className = 'client-card';
-                        card.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="font-medium text-gray-900">${client.nombre}</h4>
-                                    <p class="text-sm text-gray-600">${client.direccion}</p>
-                                    <p class="text-sm text-gray-600">Empleado: ${client.empleado}</p>
-                                </div>
-                                <div class="text-sm">
-                                    ${client.has_location ? 
-                                        `<span class="text-green-600">✓ Con ubicación</span>` : 
-                                        `<span class="text-red-600">✗ Sin ubicación</span>`}
-                                </div>
-                            </div>
-                        `;
-
-                        if (client.has_location) {
-                            card.onclick = () => {
-                                map.setView([client.location.lat, client.location.lng], 15);
-                                markers[client.id].openPopup();
-                                document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
-                                card.classList.add('selected');
-                            };
-                        }
-
-                        clientsList.appendChild(card);
-                    });
-
-                    // Agregar controles de paginación si hay más páginas
-                    if (displayClients.length > ITEMS_PER_PAGE) {
-                        const totalPages = Math.ceil(displayClients.length / ITEMS_PER_PAGE);
-                        const pagination = document.createElement('div');
-                        pagination.className = 'flex justify-between items-center mt-4';
-                        pagination.innerHTML = `
-                            <button class="px-3 py-1 text-sm bg-gray-100 rounded-md ${currentPage === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
-                                    ${currentPage === 0 ? 'disabled' : ''}>
-                                Anterior
-                            </button>
-                            <span class="text-sm text-gray-600">
-                                Página ${currentPage + 1} de ${totalPages}
-                            </span>
-                            <button class="px-3 py-1 text-sm bg-gray-100 rounded-md ${currentPage >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}"
-                                    ${currentPage >= totalPages - 1 ? 'disabled' : ''}>
-                                Siguiente
-                            </button>
-                        `;
-
-                        const [prevBtn, nextBtn] = pagination.querySelectorAll('button');
-                        prevBtn.onclick = () => {
-                            if (currentPage > 0) {
-                                currentPage--;
-                                updateClientsList(displayClients);
-                            }
-                        };
-                        nextBtn.onclick = () => {
-                            if (currentPage < totalPages - 1) {
-                                currentPage++;
-                                updateClientsList(displayClients);
-                            }
-                        };
-
-                        clientsList.appendChild(pagination);
-                    }
-                }
-
-                function initFilters() {
-                    // Inicializar búsqueda de clientes
-                    const clientSelect = new TomSelect('#clientSearch', {
-                        valueField: 'id',
-                        labelField: 'nombre',
-                        searchField: ['nombre', 'direccion'],
-                        options: clients,
-                        render: {
-                            option: function(item, escape) {
-                                return `<div>
-                                    <div class="font-medium">${escape(item.nombre)}</div>
-                                    <div class="text-sm text-gray-500">${escape(item.direccion)}</div>
-                                    <div class="text-sm text-gray-500">Empleado: ${escape(item.empleado)}</div>
-                                </div>`;
-                            }
-                        },
-                        onChange: function(value) {
-                            const statusDiv = document.getElementById('locationStatus');
-                            if (value) {
-                                const selectedClient = clients.find(c => c.id == value);
-                                if (!selectedClient.has_location) {
-                                    statusDiv.textContent = '⚠️ Este cliente no tiene ubicación registrada';
-                                    statusDiv.classList.remove('hidden');
-                                } else {
-                                    statusDiv.classList.add('hidden');
-                                }
-                            } else {
-                                statusDiv.classList.add('hidden');
-                            }
-                            filterMarkers();
-                        }
-                    });
-
-                    // Inicializar filtro de empleados
-                    const employeeSelect = new TomSelect('#employeeFilter', {
-                        onChange: function(value) {
-                            filterMarkers();
-                        }
-                    });
-
-                    function filterMarkers() {
-                        const selectedClient = clientSelect.getValue();
-                        const selectedEmployee = employeeSelect.getValue();
-
-                        // Filtrar clientes
-                        const filteredClients = clients.filter(client => {
-                            const matchesClient = !selectedClient || client.id == selectedClient;
-                            const matchesEmployee = !selectedEmployee || client.employee_id == selectedEmployee;
-                            return matchesClient && matchesEmployee;
-                        });
-
-                        // Actualizar lista de clientes
-                        currentPage = 0; // Reset a la primera página
-                        updateClientsList(filteredClients);
-
-                        // Actualizar marcadores en el mapa
-                        Object.values(markers).forEach(marker => marker.remove());
-                        filteredClients.forEach(client => {
-                            if (client.has_location) {
-                                const marker = markers[client.id];
-                                marker.addTo(map);
-                                if (selectedClient && client.id == selectedClient) {
-                                    map.setView([client.location.lat, client.location.lng], 15);
-                                    marker.openPopup();
-                                }
-                            }
-                        });
-
-                        if (!selectedClient && !selectedEmployee) {
-                            map.setView([center.lat, center.lng], 7);
-                        }
-                    }
-                }
-
-                function addMarker(client) {
-                    const marker = L.marker([client.location.lat, client.location.lng])
-                        .bindPopup(`
-                            <div class="client-popup">
-                                <h3 class="font-medium">${client.nombre}</h3>
-                                <p class="text-sm">${client.direccion}</p>
-                                <p class="text-sm">Empleado: ${client.empleado}</p>
+                        marker.bindPopup(`
+                            <div class="p-2">
+                                <h3 class="font-bold">${employee.nombre}</h3>
+                                <p class="text-sm">Última actualización: ${lastLocation.timestamp}</p>
                                 <div class="mt-2">
-                                    <a href="${client.location.maps_url}" target="_blank" 
-                                       class="text-blue-600 hover:text-blue-800">Ver en Google Maps</a>
-                                </div>
-                                <div class="mt-1">
-                                    <a href="${client.location.whatsapp_url}" target="_blank" 
-                                       class="text-green-600 hover:text-green-800">Compartir por WhatsApp</a>
+                                    <a href="${lastLocation.maps_url}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                        Ver en Google Maps
+                                    </a>
                                 </div>
                             </div>
                         `);
-                    
-                    marker.addTo(map);
-                    markers[client.id] = marker;
+
+                        currentMarkers.push(marker);
+                        
+                        // Ajustar el mapa para mostrar toda la ruta
+                        const bounds = L.latLngBounds(routePoints);
+                        map.fitBounds(bounds, { padding: [50, 50] });
+                    }
+
+                    employeeSearch.value = employee.nombre;
+                    employeeSearchResults.classList.add('hidden');
                 }
             });
-        </script>
+
+            // Funciones principales
+            function switchMode(mode) {
+                currentMode = mode;
+                clearMap();
+                updateUI();
+                if (mode === 'clients') {
+                    showAllClients();
+                } else {
+                    showEmployeeRoutes();
+                }
+            }
+
+            function showAllClients() {
+                const clients = @json($clients);
+                bounds = L.latLngBounds();
+                clearMap();
+                
+                clients.forEach(client => {
+                    if (client.has_location) {
+                        const marker = addClientMarker(client);
+                        bounds.extend([client.location.lat, client.location.lng]);
+                    }
+                });
+
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+
+                updateClientStats(clients);
+            }
+
+            function addClientMarker(client) {
+                const marker = L.marker([client.location.lat, client.location.lng])
+                    .bindPopup(`
+                        <div class="p-2">
+                            <h3 class="font-bold">${client.nombre}</h3>
+                            <p class="text-sm">${client.direccion || ''}</p>
+                        </div>
+                    `)
+                    .addTo(map);
+                
+                clientMarkers[client.id] = marker;
+                return marker;
+            }
+
+            function showEmployeeRoutes() {
+                const employees = @json($employeeLocations);
+                bounds = L.latLngBounds();
+                clearMap();
+
+                employees.forEach((employee, index) => {
+                    if (employee.locations && employee.locations.length > 0) {
+                        const routeColor = routeColors[index % routeColors.length];
+                        addEmployeeRoute(employee, routeColor);
+                    }
+                });
+
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+
+                updateEmployeeStats(employees);
+            }
+
+            function addEmployeeRoute(employee, color) {
+                const routePoints = employee.locations.map(loc => [loc.lat, loc.lng]);
+                
+                const route = L.polyline(routePoints, {
+                    color: color,
+                    weight: 3,
+                    opacity: 0.7
+                }).addTo(map);
+
+                const lastLocation = employee.locations[0];
+                const marker = L.marker([lastLocation.lat, lastLocation.lng], {
+                    icon: L.divIcon({
+                        className: 'employee-marker',
+                        html: `<div class="w-8 h-8 flex items-center justify-center text-white rounded-full" 
+                              style="background-color: ${color}">
+                                ${employee.nombre.charAt(0)}
+                              </div>`
+                    })
+                }).addTo(map);
+
+                employeeRoutes[employee.id] = { route, marker };
+                routePoints.forEach(point => bounds.extend(point));
+            }
+
+            function clearMap() {
+                Object.values(clientMarkers).forEach(marker => marker.remove());
+                Object.values(employeeRoutes).forEach(route => {
+                    route.route.remove();
+                    route.marker.remove();
+                });
+                clientMarkers = {};
+                employeeRoutes = {};
+                currentMarkers = [];
+                if (currentRoute) {
+                    currentRoute.remove();
+                    currentRoute = null;
+                }
+            }
+
+            function updateUI() {
+                document.getElementById('clientFilters').classList.toggle('hidden', currentMode !== 'clients');
+                document.getElementById('employeeFilters').classList.toggle('hidden', currentMode !== 'employees');
+                
+                document.getElementById('clientModeBtn').classList.toggle('active', currentMode === 'clients');
+                document.getElementById('employeeModeBtn').classList.toggle('active', currentMode === 'employees');
+            }
+
+            
+
+            // Inicializar mostrando todos los clientes
+            showAllClients();
+        });
+    </script>
     @endpush
 </x-filament::page>
