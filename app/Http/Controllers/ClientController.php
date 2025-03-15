@@ -10,6 +10,7 @@ use App\Http\Resources\ClientImageResource;
 use App\Http\Resources\ClientResource;
 use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -143,11 +144,11 @@ class ClientController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $extension = $image->getClientOriginalExtension();
-                $timestamp = time();
+                $timestamp = Carbon::now()->timestamp;
                 $fileName = "{$timestamp}_{$id}.{$extension}";
                 $path = $image->storeAs(StoragePath::CLIENTS_BUSINESS_IMAGES->value, $fileName, StoragePath::ROOT_DIRECTORY->value);
 
-                $client->businessImages()->create([
+                $image = $client->businessImages()->create([
                     'path' => $path,
                     'type' => 'business',
                 ]);
@@ -156,7 +157,7 @@ class ClientController extends Controller
             DB::commit();
 
             return $this->successResponse(
-                null,
+                 new ClientImageResource($image),
                 'Imagen del cliente agregada correctamente'
             );
         } catch (ModelNotFoundException $e) {
