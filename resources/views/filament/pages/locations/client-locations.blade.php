@@ -378,15 +378,24 @@
             function showAllClients() {
                 const clients = @json($clients);
                 bounds = L.latLngBounds();
+                let lastLocation = null;
                 
                 clients.forEach(client => {
                     if (client.has_location) {
                         const marker = addClientMarker(client);
                         bounds.extend([client.location.lat, client.location.lng]);
+                        
+                        // Guardar la ubicación más reciente
+                        if (!lastLocation || client.location.updated_at > lastLocation.updated_at) {
+                            lastLocation = client.location;
+                        }
                     }
                 });
 
-                if (!bounds.isEmpty()) {
+                if (lastLocation) {
+                    // Centrar en la última ubicación con un zoom razonable
+                    map.setView([lastLocation.lat, lastLocation.lng], 13);
+                } else if (!bounds.isEmpty()) {
                     map.fitBounds(bounds, { padding: [50, 50] });
                 }
 
@@ -396,6 +405,8 @@
             function showAllEmployees() {
                 const employees = @json($employeeLocations);
                 bounds = L.latLngBounds();
+                let lastLocation = null;
+                let lastUpdateTime = null;
                 
                 employees.forEach((employee, index) => {
                     if (employee.locations && employee.locations.length > 0) {
@@ -417,6 +428,7 @@
                                     <div class="employee-label px-3 py-1.5 rounded-full shadow-md text-white"
                                          style="background-color: ${routeColor}; border: 2px solid white;">
                                         <span class="font-medium">${employee.nombre}</span>
+                                        ${employee.en_ruta ? '<span class="ml-1 text-xs">●</span>' : ''}
                                     </div>
                                 `
                             })
@@ -424,12 +436,24 @@
 
                         employeeRoutes[employee.id] = { route, marker };
                         routePoints.forEach(point => bounds.extend(point));
+
+                        // Verificar si esta es la ubicación más reciente
+                        const currentUpdateTime = new Date(employee.locations[0].timestamp);
+                        if (!lastUpdateTime || currentUpdateTime > lastUpdateTime) {
+                            lastUpdateTime = currentUpdateTime;
+                            lastLocation = employee.locations[0];
+                        }
                     }
                 });
 
-                if (!bounds.isEmpty()) {
+                if (lastLocation) {
+                    // Centrar en la última ubicación con un zoom razonable
+                    map.setView([lastLocation.lat, lastLocation.lng], 13);
+                } else if (!bounds.isEmpty()) {
                     map.fitBounds(bounds, { padding: [50, 50] });
                 }
+
+                updateEmployeeStats(employees);
             }
 
             function addClientMarker(client) {
