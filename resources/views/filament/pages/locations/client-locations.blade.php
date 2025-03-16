@@ -94,18 +94,19 @@
                     {{-- Estadísticas de Empleados --}}
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div class="bg-gray-50 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Empleados con Registros</div>
+                            <div class="text-sm text-gray-500">Empleados en ruta:</div>
                             <div class="text-lg font-semibold text-primary-600">
                                 {{ $statistics['employees']['with_locations'] }} / {{ $statistics['employees']['total'] }}
                             </div>
                         </div>
                         <div class="bg-gray-50 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Actividad Hoy</div>
+                            <div class="text-sm text-gray-500">Actividad de hoy:</div>
+                            <div class="text-sm text-gray-500">Activos / Inactivos</div>
                             <div class="text-lg font-semibold">
-                                <span class="text-green-600">{{ $statistics['employees']['active_today'] }}</span> /
-                                <span class="text-gray-600">{{ $statistics['employees']['inactive_today'] }}</span>
+                                <span style="color:green;" >{{ $statistics['employees']['active_today'] }}</span> /
+                                <span style="color:red;">{{ $statistics['employees']['inactive_today'] }}</span>
                             </div>
-                            <div class="text-xs text-gray-500">Activos / Inactivos hoy</div>
+                            
                         </div>
                     </div>
                 </div>

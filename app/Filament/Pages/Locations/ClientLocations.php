@@ -62,36 +62,33 @@ class ClientLocations extends Page
 
     private function getEmployeeLocationsData()
     {
-        return Employee::with(['locations' => function ($query) {
-            $query->orderBy('created_at', 'desc');
-        }])
-        ->get()
-        ->map(function ($employee) {
-            return [
-                'id' => $employee->id,
-                'tipo' => 'empleado',
-                'nombre' => $employee->full_name,
-                'phone_number' => $employee->phone_number,
-                'identity' => $employee->identity,
-                'address' => $employee->address,
-                'branch' => optional($employee->branch)->name ?? 'Sin sucursal',
-                'has_routes' => $employee->locations->isNotEmpty(),
-                'last_location' => $employee->locations->first() ? [
-                    'timestamp' => $employee->locations->first()->created_at->format('Y-m-d H:i:s'),
-                    'date' => $employee->locations->first()->created_at->format('Y-m-d')
-                ] : null,
-                'locations' => $employee->locations
-                    ->map(function ($location) {
-                        return [
-                            'lat' => $location->latitude,
-                            'lng' => $location->longitude,
-                            'timestamp' => $location->created_at->format('Y-m-d H:i:s'),
-                            'date' => $location->created_at->format('Y-m-d'),
-                            'maps_url' => $this->generateGoogleMapsUrl($location)
-                        ];
-                    })
-            ];
-        });
+        return Employee::with(['locations', 'branch'])
+            ->get()
+            ->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'nombre' => $employee->full_name,
+                    'phone_number' => $employee->phone_number,
+                    'identity' => $employee->identity,
+                    'address' => $employee->address,
+                    'branch_name' => $employee->branch ? $employee->branch->name : 'Sin sucursal',
+                    'has_routes' => $employee->locations->isNotEmpty(),
+                    'last_location' => $employee->locations->first() ? [
+                        'timestamp' => $employee->locations->first()->created_at->format('Y-m-d H:i:s'),
+                        'date' => $employee->locations->first()->created_at->format('Y-m-d')
+                    ] : null,
+                    'locations' => $employee->locations
+                        ->map(function ($location) {
+                            return [
+                                'lat' => $location->latitude,
+                                'lng' => $location->longitude,
+                                'timestamp' => $location->created_at->format('Y-m-d H:i:s'),
+                                'date' => $location->created_at->format('Y-m-d'),
+                                'maps_url' => $this->generateGoogleMapsUrl($location)
+                            ];
+                        })
+                ];
+            });
     }
 
     private function getStatistics()
