@@ -326,19 +326,58 @@
             // Funciones principales
             function switchMode(mode) {
                 currentMode = mode;
+                
+                // Limpiar completamente el mapa
                 clearMap();
-                updateUI();
+                
+                // Limpiar búsquedas y resultados
+                document.getElementById('clientSearch').value = '';
+                document.getElementById('employeeSearch').value = '';
+                document.getElementById('clientSearchResults').classList.add('hidden');
+                document.getElementById('employeeSearchResults').classList.add('hidden');
+                
+                // Actualizar UI
+                document.getElementById('clientFilters').classList.toggle('hidden', mode !== 'clients');
+                document.getElementById('employeeFilters').classList.toggle('hidden', mode !== 'employees');
+                document.getElementById('clientModeBtn').classList.toggle('active', mode === 'clients');
+                document.getElementById('employeeModeBtn').classList.toggle('active', mode === 'employees');
+                
+                // Mostrar datos según el modo
                 if (mode === 'clients') {
                     showAllClients();
                 } else {
-                    showEmployeeRoutes();
+                    showAllEmployees();
                 }
+            }
+
+            function clearMap() {
+                // Limpiar todos los marcadores existentes
+                if (currentMarkers.length > 0) {
+                    currentMarkers.forEach(marker => marker.remove());
+                    currentMarkers = [];
+                }
+                
+                // Limpiar todas las rutas
+                if (currentRoute) {
+                    currentRoute.remove();
+                    currentRoute = null;
+                }
+                
+                // Limpiar marcadores de clientes
+                Object.values(clientMarkers).forEach(marker => marker.remove());
+                clientMarkers = {};
+                
+                // Limpiar rutas de empleados
+                Object.values(employeeRoutes).forEach(route => {
+                    if (route.route) route.route.remove();
+                    if (route.marker) route.marker.remove();
+                });
+                employeeRoutes = {};
             }
 
             function showAllClients() {
                 const clients = @json($clients);
                 bounds = L.latLngBounds();
-                clearMap();
                 
                 clients.forEach(client => {
                     if (client.has_location) {
@@ -352,6 +391,45 @@
                 }
 
                 updateClientStats(clients);
+            }
+
+            function showAllEmployees() {
+                const employees = @json($employeeLocations);
+                bounds = L.latLngBounds();
+                
+                employees.forEach((employee, index) => {
+                    if (employee.locations && employee.locations.length > 0) {
+                        const routeColor = routeColors[index % routeColors.length];
+                        const routePoints = employee.locations.map(loc => [loc.lat, loc.lng]);
+                        
+                        // Agregar ruta
+                        const route = L.polyline(routePoints, {
+                            color: routeColor,
+                            weight: 3,
+                            opacity: 0.7
+                        }).addTo(map);
+
+                        // Agregar marcador
+                        const marker = L.marker([employee.locations[0].lat, employee.locations[0].lng], {
+                            icon: L.divIcon({
+                                className: 'custom-employee-marker',
+                                html: `
+                                    <div class="employee-label px-3 py-1.5 rounded-full shadow-md text-white"
+                                         style="background-color: ${routeColor}; border: 2px solid white;">
+                                        <span class="font-medium">${employee.nombre}</span>
+                                    </div>
+                                `
+                            })
+                        }).addTo(map);
+
+                        employeeRoutes[employee.id] = { route, marker };
+                        routePoints.forEach(point => bounds.extend(point));
+                    }
+                });
+
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
             }
 
             function addClientMarker(client) {
@@ -439,7 +517,7 @@
                 const marker = L.marker([lastLocation.lat, lastLocation.lng], {
                     icon: L.divIcon({
                         className: 'employee-marker',
-                        html: `<div class="w-8 h-8 flex items-center justify-center text-white rounded-full" 
+                        html: `<div class="w-8 h-auto flex items-center justify-center text-white rounded-full" 
                               style="background-color: ${color}">
                                 ${employee.nombre.charAt(0)}
                               </div>`
@@ -450,33 +528,8 @@
                 routePoints.forEach(point => bounds.extend(point));
             }
 
-            function clearMap() {
-                Object.values(clientMarkers).forEach(marker => marker.remove());
-                Object.values(employeeRoutes).forEach(route => {
-                    route.route.remove();
-                    route.marker.remove();
-                });
-                clientMarkers = {};
-                employeeRoutes = {};
-                currentMarkers = [];
-                if (currentRoute) {
-                    currentRoute.remove();
-                    currentRoute = null;
-                }
-            }
-
-            function updateUI() {
-                document.getElementById('clientFilters').classList.toggle('hidden', currentMode !== 'clients');
-                document.getElementById('employeeFilters').classList.toggle('hidden', currentMode !== 'employees');
-                
-                document.getElementById('clientModeBtn').classList.toggle('active', currentMode === 'clients');
-                document.getElementById('employeeModeBtn').classList.toggle('active', currentMode === 'employees');
-            }
-
-            
-
-            // Inicializar mostrando todos los clientes
-            showAllClients();
+            // Iniciar en modo clientes
+            switchMode('clients');
         });
     </script>
     @endpush
