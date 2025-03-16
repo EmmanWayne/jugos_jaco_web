@@ -12,7 +12,7 @@ class ClientLocations extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-map-pin';
     protected static ?string $navigationLabel = 'Ubicaciones';
-    protected static ?string $title = 'Mapa de ubicación de clientes y empleados';
+    protected static ?string $title = 'Mapa de ubicaciones';
     protected static ?int $navigationSort = 7;
     protected static string $view = 'filament.pages.locations.client-locations';
 

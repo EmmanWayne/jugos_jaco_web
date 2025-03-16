@@ -37,12 +37,12 @@
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="flex justify-center space-x-4">
                     <button id="clientModeBtn" class="mode-button active flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
-                        <x-heroicon-s-users class="w-4 h-4" />
-                        <span>Clientes</span>
+                        <x-heroicon-o-user-group class="w-4 h-8" />
+                        <span>Ubicación de clientes</span>
                     </button>
                     <button id="employeeModeBtn" class="mode-button flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
-                        <x-heroicon-s-map class="w-4 h-4" />
-                        <span>Empleados</span>
+                        <x-heroicon-o-identification class="w-4 h-8" />
+                        <span>Ubicación de empleados</span>
                     </button>
                 </div>
             </div>
@@ -420,19 +420,57 @@
                             opacity: 0.7
                         }).addTo(map);
 
-                        // Agregar marcador
+                        // Agregar marcador con popup mejorado
                         const marker = L.marker([employee.locations[0].lat, employee.locations[0].lng], {
                             icon: L.divIcon({
                                 className: 'custom-employee-marker',
                                 html: `
-                                    <div class="employee-label px-3 py-1.5 rounded-full shadow-md text-white"
+                                    <div class="employee-label px-4 py-2 rounded-full shadow-md text-white whitespace-nowrap"
                                          style="background-color: ${routeColor}; border: 2px solid white;">
                                         <span class="font-medium">${employee.nombre}</span>
                                         ${employee.en_ruta ? '<span class="ml-1 text-xs">●</span>' : ''}
                                     </div>
-                                `
+                                `,
+                                iconSize: null // Permite que el div se ajuste al contenido
                             })
                         }).addTo(map);
+
+                        // Agregar popup con información y botón de WhatsApp
+                        marker.bindPopup(`
+                            <div class="p-3 min-w-[200px]">
+                                <h3 class="font-bold text-lg mb-2">${employee.nombre}</h3>
+                                <div class="space-y-2">
+                                    <p class="text-sm">
+                                        <span class="font-medium">Estado:</span><br>
+                                        <span class="${employee.en_ruta ? 'text-green-600' : 'text-gray-600'}">
+                                            ${employee.en_ruta ? 'En ruta' : 'Inactivo'}
+                                        </span>
+                                    </p>
+                                    <p class="text-sm">
+                                        <span class="font-medium">Última actualización:</span><br>
+                                        ${employee.locations[0].timestamp}
+                                    </p>
+                                    <div class="mt-3 flex space-x-2">
+                                        <a href="https://www.google.com/maps/search/?api=1&query=${employee.locations[0].lat},${employee.locations[0].lng}"
+                                           target="_blank"
+                                           class="flex items-center justify-center px-3 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors duration-200">
+                                            <svg class="w-8 h-8 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                            </svg>
+                                            Ver en Maps
+                                        </a>
+                                        <a href="https://wa.me/${employee.phone_number}?text=Hola%20${encodeURIComponent(employee.nombre)}"
+                                           target="_blank"
+                                           class="flex items-center justify-center px-3 py-1.5 bg-green-500 text-white rounded-md text-sm hover:bg-green-600 transition-colors duration-200">
+                                            <svg class="w-10 h-10 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824z"/>
+                                            </svg>
+                                            Escribir al WhatsApp
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
 
                         employeeRoutes[employee.id] = { route, marker };
                         routePoints.forEach(point => bounds.extend(point));
@@ -447,7 +485,6 @@
                 });
 
                 if (lastLocation) {
-                    // Centrar en la última ubicación con un zoom razonable
                     map.setView([lastLocation.lat, lastLocation.lng], 13);
                 } else if (!bounds.isEmpty()) {
                     map.fitBounds(bounds, { padding: [50, 50] });
@@ -551,6 +588,29 @@
                 employeeRoutes[employee.id] = { route, marker };
                 routePoints.forEach(point => bounds.extend(point));
             }
+
+            // Agregar estilos CSS necesarios
+            const style = document.createElement('style');
+            style.textContent = `
+                .custom-employee-marker {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .employee-label {
+                    transform: translateY(-50%);
+                    transition: all 0.2s ease;
+                    display: inline-block;
+                    min-width: max-content;
+                }
+                
+                .employee-label:hover {
+                    transform: translateY(-50%) scale(1.05);
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                }
+            `;
+            document.head.appendChild(style);
 
             // Iniciar en modo clientes
             switchMode('clients');
