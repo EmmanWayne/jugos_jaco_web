@@ -10,6 +10,7 @@ use App\Http\Resources\ClientImageResource;
 use App\Http\Resources\ClientResource;
 use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -129,7 +130,7 @@ class ClientController extends Controller
     /**
      * Upload a business image of the client.
      * 
-     * @param ImageReuest $request
+     * @param ImageRequest $request
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -139,24 +140,31 @@ class ClientController extends Controller
             DB::beginTransaction();
 
             $client = Client::findOrFail($id);
+            $image = null;
 
             if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $extension = $image->getClientOriginalExtension();
-                $timestamp = time();
-                $fileName = "{$timestamp}_{$id}.{$extension}";
-                $path = $image->storeAs(StoragePath::CLIENTS_BUSINESS_IMAGES->value, $fileName, StoragePath::ROOT_DIRECTORY->value);
+                $imageFile = $request->file('image');
+                $extension = $imageFile->getClientOriginalExtension();
+                $uniqueId = uniqid();
+                $fileName = "{$uniqueId}_{$id}.{$extension}";
+                $path = $imageFile->storeAs(StoragePath::CLIENTS_BUSINESS_IMAGES->value, $fileName, StoragePath::ROOT_DIRECTORY->value);
 
-                $client->businessImages()->create([
-                    'path' => $path,
-                    'type' => 'business',
-                ]);
+                $existingImage = $client->businessImages()->where('path', $path)->first();
+                
+                if (!$existingImage) {
+                    $image = $client->businessImages()->create([
+                        'path' => $path,
+                        'type' => 'business',
+                    ]);
+                } else {
+                    $image = $existingImage;
+                }
             }
 
             DB::commit();
 
             return $this->successResponse(
-                null,
+                new ClientImageResource($image),
                 'Imagen del cliente agregada correctamente'
             );
         } catch (ModelNotFoundException $e) {
