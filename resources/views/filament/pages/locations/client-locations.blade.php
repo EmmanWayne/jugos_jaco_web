@@ -41,11 +41,11 @@
             {{-- Selector de modo --}}
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="flex justify-center space-x-4">
-                    <button id="clientModeBtn" class="mode-button active flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
+                    <button id="clientModeBtn" class="mode-button flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2 bg-gray-200 text-gray-600">
                         <x-heroicon-o-user-group class="w-4 h-8" />
                         <span>Ubicación de clientes</span>
                     </button>
-                    <button id="employeeModeBtn" class="mode-button flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
+                    <button id="employeeModeBtn" class="mode-button flex-1 px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2 bg-gray-200 text-gray-600">
                         <x-heroicon-o-identification class="w-4 h-8" />
                         <span>Ubicación de empleados</span>
                     </button>
@@ -374,26 +374,33 @@
             // Funciones principales
             function switchMode(mode) {
                 currentMode = mode;
-
-                // Limpiar completamente el mapa
+                
+                // Limpiar el mapa y búsquedas
                 clearMap();
-
-                // Limpiar búsquedas y resultados
                 document.getElementById('clientSearch').value = '';
                 document.getElementById('employeeSearch').value = '';
                 document.getElementById('clientSearchResults').classList.add('hidden');
                 document.getElementById('employeeSearchResults').classList.add('hidden');
-
-                // Actualizar UI
-                document.getElementById('clientFilters').classList.toggle('hidden', mode !== 'clients');
-                document.getElementById('employeeFilters').classList.toggle('hidden', mode !== 'employees');
-                document.getElementById('clientModeBtn').classList.toggle('active', mode === 'clients');
-                document.getElementById('employeeModeBtn').classList.toggle('active', mode === 'employees');
-
-                // Mostrar datos según el modo
+                
+                // Actualizar estado visual de los botones
+                const clientBtn = document.getElementById('clientModeBtn');
+                const employeeBtn = document.getElementById('employeeModeBtn');
+                
+                // Restablecer estilos base
+                clientBtn.classList.remove('bg-primary-500', 'text-white', 'bg-gray-200', 'text-gray-600');
+                employeeBtn.classList.remove('bg-primary-500', 'text-white', 'bg-gray-200', 'text-gray-600');
+                
                 if (mode === 'clients') {
+                    clientBtn.classList.add('bg-primary-500', 'text-white');
+                    employeeBtn.classList.add('bg-gray-200', 'text-gray-600');
+                    document.getElementById('clientFilters').classList.remove('hidden');
+                    document.getElementById('employeeFilters').classList.add('hidden');
                     showAllClients();
                 } else {
+                    employeeBtn.classList.add('bg-primary-500', 'text-white');
+                    clientBtn.classList.add('bg-gray-200', 'text-gray-600');
+                    document.getElementById('clientFilters').classList.add('hidden');
+                    document.getElementById('employeeFilters').classList.remove('hidden');
                     showAllEmployees();
                 }
             }
@@ -672,7 +679,7 @@
             `;
             document.head.appendChild(style);
 
-            // Iniciar en modo clientes
+            // Inicializar en modo clientes
             switchMode('clients');
         });
     </script>
