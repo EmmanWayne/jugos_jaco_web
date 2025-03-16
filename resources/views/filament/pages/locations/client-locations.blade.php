@@ -75,17 +75,6 @@
                                 {{ $statistics['clients']['with_location'] }} / {{ $statistics['clients']['total'] }}
                             </div>
                         </div>
-                        <div class="bg-gray-50 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Sin Ubicación</div>
-                            <div class="text-lg font-semibold text-gray-600" id="clientsWithoutLocation">0</div>
-                        </div>
-                    </div>
-
-                    {{-- Lista de Clientes sin Ubicación --}}
-                    <div class="mt-4">
-                        <h3 class="text-sm font-medium text-gray-700 mb-2">Clientes sin Ubicación</h3>
-                        <div id="clientsWithoutLocationList" class="max-h-48 overflow-y-auto bg-gray-50 rounded-lg p-2">
-                        </div>
                     </div>
                 </div>
 
@@ -105,16 +94,18 @@
                     {{-- Estadísticas de Empleados --}}
                     <div class="mt-4 grid grid-cols-2 gap-4">
                         <div class="bg-gray-50 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Total Empleados</div>
+                            <div class="text-sm text-gray-500">Empleados con Registros</div>
                             <div class="text-lg font-semibold text-primary-600">
-                                {{ $statistics['employees']['total'] }}
+                                {{ $statistics['employees']['with_locations'] }} / {{ $statistics['employees']['total'] }}
                             </div>
                         </div>
                         <div class="bg-gray-50 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Empleados Activos Hoy</div>
-                            <div class="text-lg font-semibold text-primary-600">
-                                {{ $statistics['employees']['active_today'] }}
+                            <div class="text-sm text-gray-500">Actividad Hoy</div>
+                            <div class="text-lg font-semibold">
+                                <span class="text-green-600">{{ $statistics['employees']['active_today'] }}</span> /
+                                <span class="text-gray-600">{{ $statistics['employees']['inactive_today'] }}</span>
                             </div>
+                            <div class="text-xs text-gray-500">Activos / Inactivos hoy</div>
                         </div>
                     </div>
                 </div>

@@ -96,21 +96,29 @@ class ClientLocations extends Page
 
     private function getStatistics()
     {
-        $clients = Client::withCount('location')->get();
-        $employees = Employee::withCount('locations')->get();
+        // Estadísticas de clientes
+        $totalClients = Client::count();
+        $clientsWithLocation = Client::has('location')->count();
+
+        // Estadísticas de empleados
+        $totalEmployees = Employee::count();
+        $employeesWithLocations = Employee::has('locations')->count();
+        
+        // Empleados activos hoy (con registros de ubicación del día actual)
         $activeToday = Employee::whereHas('locations', function ($query) {
             $query->whereDate('created_at', Carbon::today());
         })->count();
 
         return [
             'clients' => [
-                'total' => $clients->count(),
-                'with_location' => $clients->where('location_count', '>', 0)->count(),
-                'without_location' => $clients->where('location_count', 0)->count(),
+                'total' => $totalClients,
+                'with_location' => $clientsWithLocation,
             ],
             'employees' => [
-                'total' => $employees->count(),
-                'active_today' => $activeToday
+                'total' => $totalEmployees,
+                'with_locations' => $employeesWithLocations,
+                'active_today' => $activeToday,
+                'inactive_today' => $totalEmployees - $activeToday
             ]
         ];
     }
