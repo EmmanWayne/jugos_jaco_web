@@ -10,7 +10,6 @@ use App\Http\Resources\ClientImageResource;
 use App\Http\Resources\ClientResource;
 use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -107,6 +106,7 @@ class ClientController extends Controller
 
             if ($request->filled(['latitude', 'longitude'])) {
                 $client->location()->updateOrCreate(
+                    ['model_id' => $client->id],
                     [
                         'latitude' => $request->latitude,
                         'longitude' => $request->longitude,
@@ -115,10 +115,8 @@ class ClientController extends Controller
                 );
             }
 
-            $client->load(['location', 'typePrice']);
-
             DB::commit();
-
+            $client->refresh()->load(['location', 'typePrice']);
             return (new ClientResource($client))
                 ->additional(['message' => 'Cliente actualizado correctamente.']);
         } catch (\Exception $e) {
