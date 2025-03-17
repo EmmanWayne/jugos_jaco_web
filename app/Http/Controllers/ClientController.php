@@ -13,6 +13,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -116,7 +117,7 @@ class ClientController extends Controller
             }
 
             DB::commit();
-            $client->refresh()->load(['location', 'typePrice']);
+            $client->load(['location', 'typePrice']);
             return (new ClientResource($client))
                 ->additional(['message' => 'Cliente actualizado correctamente.']);
         } catch (\Exception $e) {

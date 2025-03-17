@@ -20,6 +20,14 @@ class Location extends Model
         'model_type',
     ];
 
+    protected function cast(): array
+    {
+        return [
+            'latitude' => 'double',
+            'longitude' => 'double',
+        ];
+    }
+
     public function model()
     {
         return $this->morphTo();
