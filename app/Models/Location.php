@@ -20,8 +20,18 @@ class Location extends Model
         'model_type',
     ];
 
+    protected $casts = [
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+    ];
+
     public function model()
     {
         return $this->morphTo();
+    }
+
+    public function getGoogleMapsUrlAttribute(): string
+    {
+        return "https://www.google.com/maps?q={$this->latitude},{$this->longitude}";
     }
 }

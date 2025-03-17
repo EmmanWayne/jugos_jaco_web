@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\DepartmentEnum;
 use App\Enums\MunicipalityEnum;
-use Faker\Provider\sv_SE\Municipality;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -83,5 +82,50 @@ class Client extends Model
     public function businessImages()
     {
         return $this->morphMany(ResourceMedia::class, 'model')->where('type', 'business');
+    }
+
+    // Scopes
+    public function scopeWithLocationData($query)
+    {
+        return $query->with(['location', 'employee.branch'])
+            ->has('location');
+    }
+
+    public function getMapDataAttribute(): array
+    {
+        return [
+            'id' => $this->id,
+            'tipo' => 'cliente',
+            'nombre' => $this->full_name,
+            'direccion' => $this->address,
+            'department' => $this->department,
+            'township' => $this->township,
+            'phone_number' => $this->phone_number,
+            'empleado' => $this->employee?->full_name ?? 'Sin asignar',
+            'employee_id' => $this->employee_id,
+            'has_location' => $this->location !== null,
+            'location' => $this->when($this->location, fn() => [
+                'lat' => $this->location->latitude,
+                'lng' => $this->location->longitude,
+                'maps_url' => $this->location->google_maps_url,
+                'whatsapp_url' => $this->whatsapp_share_url
+            ])
+        ];
+    }
+
+    public function getWhatsappShareUrlAttribute(): string
+    {
+        if (!$this->location) return '';
+
+        $message = "*Información del Cliente*\n" .
+            "Nombre: {$this->full_name}\n" .
+            "Dirección: {$this->address}\n" .
+            "Departamento: {$this->department}\n" .
+            "Municipio: {$this->township}\n" .
+            "Teléfono: {$this->phone_number}\n" .
+            "Ubicación: {$this->location->google_maps_url}\n" .
+            "Empleado Asignado: " . ($this->employee?->full_name ?? "Sin asignar");
+
+        return "https://wa.me/?text=" . urlencode($message);
     }
 }
