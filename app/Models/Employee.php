@@ -23,6 +23,9 @@ class Employee extends Model
         'branch_id',
     ];
 
+    protected $casts = [
+        'last_location_at' => 'datetime',
+    ];
 
     public function getFullNameAttribute()
     {
@@ -42,5 +45,46 @@ class Employee extends Model
     public function locations()
     {
         return $this->morphMany(Location::class, 'model');
+    }
+
+    public function scopeWithRouteData($query)
+    {
+        return $query->with(['locations' => function ($query) {
+            $query->orderBy('created_at', 'desc');
+        }, 'branch']);
+    }
+
+    public function scopeActiveToday($query)
+    {
+        return $query->whereHas('locations', function ($query) {
+            $query->whereDate('created_at', now());
+        });
+    }
+
+    public function getMapDataAttribute(): array
+    {
+        $lastLocation = $this->locations->first();
+        
+        return [
+            'id' => $this->id,
+            'nombre' => $this->full_name,
+            'phone_number' => $this->phone_number,
+            'identity' => $this->identity,
+            'address' => $this->address,
+            'branch_name' => $this->branch?->name ?? 'Sin sucursal',
+            'has_routes' => $this->locations->isNotEmpty(),
+            'en_ruta' => $lastLocation?->created_at->isToday() ?? false,
+            'last_location' => $lastLocation ? [
+                'timestamp' => $lastLocation->created_at->format('Y-m-d H:i:s'),
+                'date' => $lastLocation->created_at->format('Y-m-d')
+            ] : null,
+            'locations' => $this->locations->map(fn($location) => [
+                'lat' => $location->latitude,
+                'lng' => $location->longitude,
+                'timestamp' => $location->created_at->format('Y-m-d H:i:s'),
+                'date' => $location->created_at->format('Y-m-d'),
+                'maps_url' => $location->google_maps_url
+            ])
+        ];
     }
 }

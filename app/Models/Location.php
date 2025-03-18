@@ -32,4 +32,9 @@ class Location extends Model
     {
         return $this->morphTo();
     }
+
+    public function getGoogleMapsUrlAttribute(): string
+    {
+        return "https://www.google.com/maps?q={$this->latitude},{$this->longitude}";
+    }
 }

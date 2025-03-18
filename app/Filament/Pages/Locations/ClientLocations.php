@@ -6,56 +6,22 @@ use Filament\Pages\Page;
 use App\Models\Client;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ClientLocations extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-s-map-pin';
-    protected static ?string $navigationLabel = 'Ubicaciones de Clientes';
-    protected static ?string $title = 'Mapa de Clientes';
+    protected static ?string $navigationLabel = 'Ubicaciones';
+    protected static ?string $title = 'Mapa de ubicaciones';
     protected static ?int $navigationSort = 7;
     protected static string $view = 'filament.pages.locations.client-locations';
 
     public function getViewData(): array
     {
-        // Obtener todos los clientes, incluso sin ubicación
-        $allClients = Client::with(['location', 'employee'])
-            ->get()
-            ->map(function ($client) {
-                $data = [
-                    'id' => $client->id,
-                    'nombre' => $client->full_name,
-                    'direccion' => $client->address,
-                    'empleado' => optional($client->employee)->full_name ?? 'Sin asignar',
-                    'employee_id' => $client->employee_id,
-                    'has_location' => $client->location !== null
-                ];
-
-                // Agregar datos de ubicación si existen
-                if ($client->location) {
-                    $data['location'] = [
-                        'lat' => $client->location->latitude,
-                        'lng' => $client->location->longitude,
-                        'maps_url' => "https://www.google.com/maps?q={$client->location->latitude},{$client->location->longitude}",
-                        'whatsapp_url' => $this->generateWhatsAppLink($client)
-                    ];
-                }
-
-                return $data;
-            });
-
-        // Obtener todos los empleados
-        $employees = Employee::orderBy('first_name')
-            ->get()
-            ->map(function ($employee) {
-                return [
-                    'id' => $employee->id,
-                    'nombre' => $employee->full_name
-                ];
-            });
-
         return [
-            'clients' => $allClients,
-            'employees' => $employees,
+            'clients' => $this->getClientsData(),
+            'employeeLocations' => $this->getEmployeeLocationsData(),
+            'statistics' => $this->getStatistics(),
             'center' => [
                 'lat' => 14.6349,
                 'lng' => -86.9315
@@ -63,15 +29,53 @@ class ClientLocations extends Page
         ];
     }
 
-    private function generateWhatsAppLink($client): string
+    private function getClientsData()
     {
-        $mapsUrl = "https://www.google.com/maps?q={$client->location->latitude},{$client->location->longitude}";
-        $message = "*Información del Cliente*\n" .
-            "Nombre: {$client->full_name}\n" .
-            "Dirección: {$client->address}\n" .
-            "Ubicación: {$mapsUrl}\n" .
-            "Empleado: " . (optional($client->employee)->full_name ?? "Sin asignar");
+        return Client::withLocationData()
+            ->get()
+            ->map->mapData;
+    }
 
-        return "https://wa.me/?text=" . urlencode($message);
+    private function getEmployeeLocationsData()
+    {
+        return Employee::withRouteData()
+            ->get()
+            ->map->mapData;
+    }
+
+    private function getStatistics(): array
+    {
+        $clientStats = [
+            'total' => Client::count(),
+            'with_location' => Client::has('location')->count(),
+        ];
+
+        $employeeStats = [
+            'total' => Employee::count(),
+            'with_locations' => Employee::has('locations')->count(),
+            'active_today' => Employee::activeToday()->count(),
+        ];
+
+        return [
+            'clients' => $clientStats,
+            'employees' => [
+                ...$employeeStats,
+                'inactive_today' => $employeeStats['total'] - $employeeStats['active_today']
+            ]
+        ];
+    }
+
+    public function filterClientById($clientId)
+    {
+        return Client::withLocationData()
+            ->findOrFail($clientId)
+            ->mapData;
+    }
+
+    public function filterEmployeeById($employeeId)
+    {
+        return Employee::withRouteData()
+            ->findOrFail($employeeId)
+            ->mapData;
     }
 }
