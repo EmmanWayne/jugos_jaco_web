@@ -27,9 +27,12 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('')
             ->login(Login::class)
             ->topNavigation()
+            ->brandName(config('app.name'))
+            ->brandLogo(asset('storage/images/logo.png'))
+            ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Amber,
             ])
