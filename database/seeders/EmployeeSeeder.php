@@ -17,7 +17,7 @@ class EmployeeSeeder extends Seeder
         Employee::create([
             'first_name' => 'Admin',
             'last_name' => 'Admin',
-            'identity' => '123456789012',
+            'identity' => '1234567890123',
             'phone_number' => '123456789',
             'address' => 'Calle 123',
             'branch_id' => Branch::first()->id
