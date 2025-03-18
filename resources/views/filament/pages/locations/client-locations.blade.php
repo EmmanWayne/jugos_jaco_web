@@ -32,6 +32,22 @@
         .search-result {
             @apply p-2 hover:bg-gray-100 cursor-pointer;
         }
+
+        .start-marker {
+            background: #4CAF50;
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            padding: 4px;
+        }
+
+        .end-marker {
+            background: #f44336;
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            padding: 4px;
+        }
     </style>
     @endpush
 
@@ -183,7 +199,12 @@
 
                 if (searchTerm.length < 2) {
                     clientSearchResults.classList.add('hidden');
-                    showAllClients(); // Mostrar todos los clientes cuando no hay búsqueda
+                    
+                    // Si el campo está vacío, mostrar todos los clientes
+                    if (searchTerm.length === 0) {
+                        clearMap();
+                        showAllClients();
+                    }
                     return;
                 }
 
@@ -281,14 +302,37 @@
                         const routeColor = routeColors[0];
                         const routePoints = employee.locations.map(loc => [loc.lat, loc.lng]);
 
-                        // Dibujar la ruta
+                        // Dibujar la ruta punteada
                         currentRoute = L.polyline(routePoints, {
                             color: routeColor,
                             weight: 3,
-                            opacity: 0.7
+                            opacity: 0.7,
+                            dashArray: '10, 10' // Agregar línea punteada
                         }).addTo(map);
 
-                        // Crear el marcador
+                        // Agregar marcador de inicio
+                        const startPoint = routePoints[routePoints.length - 1];
+                        const startMarker = L.marker(startPoint, {
+                            icon: L.divIcon({
+                                className: 'start-marker',
+                                html: '<div style="font-size: 12px;">🏁</div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map);
+
+                        // Agregar marcador de fin
+                        const endPoint = routePoints[0];
+                        const endMarker = L.marker(endPoint, {
+                            icon: L.divIcon({
+                                className: 'end-marker',
+                                html: '<div style="font-size: 12px;">📍</div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map);
+
+                        // Crear el marcador principal
                         const marker = L.marker([employee.locations[0].lat, employee.locations[0].lng], {
                             icon: L.divIcon({
                                 className: 'custom-employee-marker',
@@ -303,7 +347,7 @@
                             })
                         }).addTo(map);
 
-                        // Crear el contenido del popup
+                        // Crear y vincular el popup al marcador
                         const popupContent = `
                             <div class="p-3 min-w-[250px]">
                                 <h3 class="font-bold text-lg mb-2">${employee.nombre}</h3>
@@ -352,6 +396,8 @@
                         marker.openPopup();
 
                         currentMarkers.push(marker);
+                        currentMarkers.push(startMarker);
+                        currentMarkers.push(endMarker);
                         
                         // Ajustar el mapa para mostrar toda la ruta
                         const bounds = L.latLngBounds(routePoints);
@@ -393,6 +439,9 @@
                     clientBtn.classList.add('bg-gray-200', 'text-gray-600');
                     document.getElementById('clientFilters').classList.add('hidden');
                     document.getElementById('employeeFilters').classList.remove('hidden');
+                    // Limpiar marcadores de clientes antes de mostrar empleados
+                    Object.values(clientMarkers).forEach(marker => marker.remove());
+                    clientMarkers = {};
                     showAllEmployees();
                 }
             }
@@ -418,6 +467,8 @@
                 Object.values(employeeRoutes).forEach(route => {
                     if (route.route) route.route.remove();
                     if (route.marker) route.marker.remove();
+                    if (route.startMarker) route.startMarker.remove();
+                    if (route.endMarker) route.endMarker.remove();
                 });
                 employeeRoutes = {};
             }
@@ -462,14 +513,37 @@
                         const routeColor = routeColors[index % routeColors.length];
                         const routePoints = employee.locations.map(loc => [loc.lat, loc.lng]);
 
-                        // Agregar ruta
+                        // Crear línea punteada para la ruta
                         const route = L.polyline(routePoints, {
                             color: routeColor,
                             weight: 3,
-                            opacity: 0.7
+                            opacity: 0.7,
+                            dashArray: '10, 10' // Patrón de línea punteada
                         }).addTo(map);
 
-                        // Agregar marcador con popup mejorado
+                        // Agregar marcador de inicio (punto más antiguo)
+                        const startPoint = routePoints[routePoints.length - 1];
+                        const startMarker = L.marker(startPoint, {
+                            icon: L.divIcon({
+                                className: 'start-marker',
+                                html: '<div style="font-size: 12px;">🏁</div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map);
+
+                        // Agregar marcador de fin (punto más reciente)
+                        const endPoint = routePoints[0];
+                        const endMarker = L.marker(endPoint, {
+                            icon: L.divIcon({
+                                className: 'end-marker',
+                                html: '<div style="font-size: 12px;">📍</div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map);
+
+                        // Agregar marcador principal con el nombre
                         const marker = L.marker([employee.locations[0].lat, employee.locations[0].lng], {
                             icon: L.divIcon({
                                 className: 'custom-employee-marker',
@@ -484,7 +558,7 @@
                             })
                         }).addTo(map);
 
-                        // Agregar popup con información y botón de WhatsApp
+                        // Agregar popup con información
                         marker.bindPopup(`
                             <div class="p-3 min-w-[250px]">
                                 <h3 class="font-bold text-lg mb-2">${employee.nombre}</h3>
@@ -511,7 +585,7 @@
                                         <a href="https://www.google.com/maps/search/?api=1&query=${employee.locations[0].lat},${employee.locations[0].lng}"
                                            target="_blank"
                                            class="flex items-center justify-center px-3 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors duration-200">
-                                            <svg class="w-8 h-8 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                                                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                                             </svg>
                                             Ver en Maps
@@ -523,11 +597,14 @@
 
                         employeeRoutes[employee.id] = {
                             route,
-                            marker
+                            marker,
+                            startMarker,
+                            endMarker
                         };
+
                         routePoints.forEach(point => bounds.extend(point));
 
-                        // Verificar si esta es la ubicación más reciente
+                        // Actualizar última ubicación
                         const currentUpdateTime = new Date(employee.locations[0].timestamp);
                         if (!lastUpdateTime || currentUpdateTime > lastUpdateTime) {
                             lastUpdateTime = currentUpdateTime;
@@ -623,15 +700,39 @@
 
             function addEmployeeRoute(employee, color) {
                 const routePoints = employee.locations.map(loc => [loc.lat, loc.lng]);
-
+                
+                // Crear línea punteada
                 const route = L.polyline(routePoints, {
                     color: color,
                     weight: 3,
-                    opacity: 0.7
+                    opacity: 0.7,
+                    dashArray: '10, 10', // Esto crea el patrón de línea punteada
                 }).addTo(map);
 
-                const lastLocation = employee.locations[0];
-                const marker = L.marker([lastLocation.lat, lastLocation.lng], {
+                // Agregar marcador de inicio
+                const startPoint = routePoints[routePoints.length - 1]; // El punto más antiguo
+                const startMarker = L.marker(startPoint, {
+                    icon: L.divIcon({
+                        className: 'start-marker',
+                        html: '<div style="font-size: 12px;">🏁</div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                }).addTo(map);
+
+                // Agregar marcador de fin (ubicación actual)
+                const endPoint = routePoints[0]; // El punto más reciente
+                const endMarker = L.marker(endPoint, {
+                    icon: L.divIcon({
+                        className: 'end-marker',
+                        html: '<div style="font-size: 12px;">📍</div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                }).addTo(map);
+
+                // Agregar el marcador principal con el nombre
+                const marker = L.marker(endPoint, {
                     icon: L.divIcon({
                         className: 'employee-marker',
                         html: `<div class="w-8 h-auto flex items-center justify-center text-white rounded-full" 
@@ -643,8 +744,11 @@
 
                 employeeRoutes[employee.id] = {
                     route,
-                    marker
+                    marker,
+                    startMarker,
+                    endMarker
                 };
+
                 routePoints.forEach(point => bounds.extend(point));
             }
 
