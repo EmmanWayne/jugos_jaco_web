@@ -114,7 +114,7 @@ class ClientResource extends Resource
                 TextColumn::make('full_name')
                     ->label('Nombre Completo')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable(['first_name','last_name']),
                 TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
