@@ -121,11 +121,10 @@ class EmployeeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('first_name')
+                Tables\Columns\TextColumn::make('full_name')
                     ->label('Nombre Completo')
-                    ->formatStateUsing(fn($record) => "{$record->first_name} {$record->last_name}")
                     ->sortable()
-                    ->searchable(),
+                    ->searchable(['first_name', 'last_name']),
                 Tables\Columns\TextColumn::make('identity')
                     ->label('Identidad')
                     ->searchable(),

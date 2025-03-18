@@ -20,10 +20,13 @@ class Location extends Model
         'model_type',
     ];
 
-    protected $casts = [
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
-    ];
+    protected function cast(): array
+    {
+        return [
+            'latitude' => 'double',
+            'longitude' => 'double',
+        ];
+    }
 
     public function model()
     {
