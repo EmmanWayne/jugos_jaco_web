@@ -335,15 +335,17 @@
                         // Crear el marcador principal
                         const marker = L.marker([employee.locations[0].lat, employee.locations[0].lng], {
                             icon: L.divIcon({
-                                className: 'custom-employee-marker',
+                                className: 'employee-marker',
                                 html: `
-                                    <div class="employee-label px-4 py-2 rounded-full shadow-md text-white whitespace-nowrap"
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white"
                                          style="background-color: ${routeColor}; border: 2px solid white;">
-                                        <span class="font-medium">${employee.nombre}</span>
-                                        ${employee.en_ruta ? '<span class="ml-1 text-xs">●</span>' : ''}
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                        </svg>
                                     </div>
                                 `,
-                                iconSize: null
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 16]
                             })
                         }).addTo(map);
 
@@ -546,15 +548,17 @@
                         // Agregar marcador principal con el nombre
                         const marker = L.marker([employee.locations[0].lat, employee.locations[0].lng], {
                             icon: L.divIcon({
-                                className: 'custom-employee-marker',
+                                className: 'employee-marker',
                                 html: `
-                                    <div class="employee-label px-4 py-2 rounded-full shadow-md text-white whitespace-nowrap"
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white"
                                          style="background-color: ${routeColor}; border: 2px solid white;">
-                                        <span class="font-medium">${employee.nombre}</span>
-                                        ${employee.en_ruta ? '<span class="ml-1 text-xs">●</span>' : ''}
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                        </svg>
                                     </div>
                                 `,
-                                iconSize: null
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 16]
                             })
                         }).addTo(map);
 
@@ -735,10 +739,16 @@
                 const marker = L.marker(endPoint, {
                     icon: L.divIcon({
                         className: 'employee-marker',
-                        html: `<div class="w-8 h-auto flex items-center justify-center text-white rounded-full" 
-                              style="background-color: ${color}">
-                                ${employee.nombre.charAt(0)}
-                              </div>`
+                        html: `
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                                 style="background-color: ${color}; border: 2px solid white;">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                            </div>
+                        `,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
                     })
                 }).addTo(map);
 
