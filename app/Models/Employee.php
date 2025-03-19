@@ -50,7 +50,7 @@ class Employee extends Model
     public function scopeWithRouteData($query)
     {
         return $query->with(['locations' => function ($query) {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('id', 'asc');
         }, 'branch']);
     }
 
