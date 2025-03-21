@@ -231,7 +231,7 @@ class ClientController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getImagesBusiness($id)
+    public function getBusinessImages($id)
     {
         try {
             $client = Client::findOrFail($id);
@@ -239,6 +239,28 @@ class ClientController extends Controller
             return $this->successResponse(
                 ClientImageResource::collection($client->businessImages),
                 'Imágenes del cliente obtenidas correctamente'
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse($e, 404, 'Cliente no encontrado');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    /**
+     * Get the profile image of the client.
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProfileImage($id)
+    {
+        try {
+            $client = Client::findOrFail($id);
+
+            return $this->successResponse(
+                new ClientImageResource($client->profileImage),
+                'Imagen de perfil obtenida correctamente'
             );
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse($e, 404, 'Cliente no encontrado');
