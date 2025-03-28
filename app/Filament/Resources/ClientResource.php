@@ -8,6 +8,7 @@ use App\Filament\Resources\ClientResource\Pages;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\TypePrice;
+use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
@@ -44,6 +45,28 @@ class ClientResource extends Resource
                                     ->tel()
                                     ->required()
                                     ->maxLength(15),
+                                Forms\Components\TextInput::make('business_name')
+                                    ->label('Nombre del negocio')
+                                    ->required()
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('position')
+                                    ->label('Turno de visita')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(1)
+                                    ->maxValue(255)
+                                    ->maxLength(3),
+                                Forms\Components\Select::make('visit_day')
+                                    ->label('Día de visita')
+                                    ->options([
+                                        'Lunes' => 'Lunes',
+                                        'Martes' => 'Martes',
+                                        'Miércoles' => 'Miércoles',
+                                        'Jueves' => 'Jueves',
+                                        'Viernes' => 'Viernes',
+                                        'Sábado' => 'Sábado',
+                                    ])
+                                    ->required(),
                             ]),
                         Forms\Components\Grid::make(1)
                             ->schema([
@@ -92,7 +115,7 @@ class ClientResource extends Resource
                                     ->preload()
                                     ->createOptionForm([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Nombre del Tipo de Precio')
+                                            ->label('Nombre')
                                             ->required(),
                                     ])
                                     ->createOptionUsing(fn(array $data) => TypePrice::create($data)->id)
@@ -107,14 +130,39 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('profileImage.path')
-                    ->defaultImageUrl(url('storage\images\avatar.png'))
+                    ->defaultImageUrl(url('storage/images/avatar.png'))
                     ->label('')
                     ->size(30)
-                    ->circular(),
+                    ->circular()
+                    ->action(
+                        Action::make('preview')
+                            ->label('Foto del cliente')
+                            ->modalHeading('Foto del cliente')
+                            ->modalSubmitAction(false) // Remove submit button
+                            ->modalCancelAction(false) // Remove cancel button
+                            ->modalContent(fn($record) => view('filament.components.client-image-modal', [
+                                'imageUrl' => $record->profileImage?->path
+                                    ? Storage::url($record->profileImage->path)
+                                    : url('storage/images/avatar.png')
+                            ]))
+                            ->modalWidth('md')
+                    ),
                 TextColumn::make('full_name')
-                    ->label('Nombre Completo')
+                    ->label('Encargado')
                     ->sortable()
-                    ->searchable(['first_name','last_name']),
+                    ->searchable(['first_name', 'last_name']),
+                TextColumn::make('business_name')
+                    ->label('Negocio')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('position')
+                    ->label('Turno de visita')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('visit_day')
+                    ->label('Día de visita')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('phone_number')
                     ->label('Teléfono')
                     ->searchable(),
@@ -210,6 +258,9 @@ class ClientResource extends Resource
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'phone_number' => $data['phone_number'],
+            'business_name' => $data['business_name'],
+            'position' => $data['position'],
+            'visit_day' => $data['visit_day'],
             'address' => $data['address'],
             'department' => $data['department'],
             'township' => $data['township'],

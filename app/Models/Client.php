@@ -18,17 +18,20 @@ class Client extends Model
     protected $fillable = [
         'first_name',
         'last_name',
-        'employee_id',
-        'address',
         'phone_number',
+        'business_name',
+        'position',
+        'visit_day',
+        'address',
         'department',
         'township',
+        'employee_id',
         'type_price_id',
     ];
 
     /**
      * The attributes that should be cast.
-     * 
+     *
      * @return array<string, string>
      */
     protected function cast(): array
@@ -51,7 +54,7 @@ class Client extends Model
 
     /**
      * Define a polymorphic relationship with the location model.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphOne
      */
     public function location(): MorphOne
@@ -66,7 +69,7 @@ class Client extends Model
 
     /**
      * Get the profile photo of the client with polimorphic relationship.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphOne
      */
     public function profileImage()
@@ -76,7 +79,7 @@ class Client extends Model
 
     /**
      * Get the images of the client with polimorphic relationship.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function businessImages()
