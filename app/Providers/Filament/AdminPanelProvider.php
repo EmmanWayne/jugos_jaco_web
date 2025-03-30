@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->login(Login::class)
             ->topNavigation()
             ->brandName(config('app.name'))
-            ->brandLogo(asset('storage/images/logo.png'))
+            ->brandLogo(asset('/images/logo.png'))
             ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Amber,
