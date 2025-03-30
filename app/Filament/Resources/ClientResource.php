@@ -130,7 +130,7 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 ImageColumn::make('profileImage.path')
-                    ->defaultImageUrl(url('storage/images/avatar.png'))
+                    ->defaultImageUrl(asset('/images/avatar.png'))
                     ->label('')
                     ->size(30)
                     ->circular()
@@ -143,7 +143,7 @@ class ClientResource extends Resource
                             ->modalContent(fn($record) => view('filament.components.client-image-modal', [
                                 'imageUrl' => $record->profileImage?->path
                                     ? Storage::url($record->profileImage->path)
-                                    : url('storage/images/avatar.png')
+                                    : asset('/images/avatar.png')
                             ]))
                             ->modalWidth('md')
                     ),
