@@ -37,44 +37,69 @@ class ProductResource extends Resource
                     ->description('En esta sección se registra la información de los productos.') // Descripción
                     ->schema([
                         Section::make('')
-                            ->columns(2)
+                            ->columns(3)
                             ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Nombre')
-                                    ->required()
-                                    ->maxLength(50),
                                 Forms\Components\TextInput::make('code')
                                     ->label('Código')
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->maxLength(20)
                                     ->afterStateUpdated(fn($state, callable $set) => self::validateCode($state)),
-                            ]),
-
-                        Section::make('')
-                            ->columns(2)
-                            ->schema([
-                                Forms\Components\Select::make('content')
-                                    ->label('Contenido')
-                                    ->options([
-                                        '15ml' => '15ml',
-                                        '20ml' => '20ml',
-                                    ])->searchable()
-                                    ->preload()
-                                    ->required(),
-
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nombre')
+                                    ->required()
+                                    ->maxLength(50),
                                 Select::make('category_id')
                                     ->label('Categoría')
-                                    ->relationship('category', 'name') // Relación con la tabla categories
+                                    ->relationship('category', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->createOptionForm([
                                         TextInput::make('name')
-                                            ->label('Nombre de la categoría')
+                                            ->label('Nombre')
                                             ->required(),
                                     ])
                                     ->required(),
                             ]),
+
+                        Section::make('')
+                            ->columns(1)
+                            ->schema([
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Descripción')
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
+
+                            ]),
+
+                        Section::make('')
+                            ->columns(3)
+                            ->schema([
+                                Select::make('content_type')
+                                    ->label('Tipo de contenido')
+                                    ->required()
+                                    ->options([
+                                        'ml' => 'Miligramos',
+                                        'l' => 'Litros',
+                                        'Unidad' => 'Unidad',
+                                    ])
+                                    ->searchable()
+                                    ->preload(),
+                                Forms\Components\TextInput::make('content')
+                                    ->label('Contenido')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxLength(16),
+                                Forms\Components\TextInput::make('cost')
+                                    ->label('Costo')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->prefix('L.'),
+                            ]),
+
+
                     ]),
 
             ]);
@@ -98,18 +123,29 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('code')
                     ->label('Código')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('content')
-                    ->label('Contenido')
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Categoría')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('content')
+                    ->label('Contenido')
+                    ->formatStateUsing(fn($record) => "{$record->content} {$record->content_type}")
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('cost')
+                    ->label('Costo')
+                    ->formatStateUsing(fn($record) => "L. {$record->cost}")
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Descripción')
+                    ->limit(30)
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha de creación')
                     ->dateTime()
