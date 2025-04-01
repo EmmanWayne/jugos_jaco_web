@@ -15,7 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name', 50);
             $table->string('code', 20)->unique();
-            $table->enum('content', ['15ml', '20ml']);
+            $table->string('content_type', 16);
+            $table->string('content', 16);
+            $table->decimal('cost', 8, 2);
+            $table->string('description', 256);
             $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
             $table->timestamps();
         });
