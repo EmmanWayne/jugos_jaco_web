@@ -26,7 +26,7 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function profileProduct()
+    public function profileImage()
     {
         return $this->morphOne(ResourceMedia::class, 'model')->where('type', 'product');
     }

@@ -79,9 +79,10 @@ class ProductResource extends Resource
                                     ->label('Tipo de contenido')
                                     ->required()
                                     ->options([
-                                        'ml' => 'Miligramos',
-                                        'l' => 'Litros',
-                                        'Unidad' => 'Unidad',
+                                        'ml' => 'Mililitros',
+                                        'mg' => 'Miligramos',
+                                        'u' => 'Unidad',
+                                        'onz' => 'Onzas',
                                     ])
                                     ->searchable()
                                     ->preload(),
