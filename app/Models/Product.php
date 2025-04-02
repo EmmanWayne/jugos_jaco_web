@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -29,5 +30,13 @@ class Product extends Model
     public function profileImage()
     {
         return $this->morphOne(ResourceMedia::class, 'model')->where('type', 'product');
+    }
+
+
+    public function getImageUrlAttribute()
+    {
+        return $this->profileImage
+            ? asset('storage/' . $this->profileImage->path)
+            : asset('/images/producto.png');
     }
 }
