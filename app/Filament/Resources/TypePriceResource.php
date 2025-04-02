@@ -98,11 +98,11 @@ class TypePriceResource extends Resource
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-currency-dollar';
+        return 'heroicon-o-tag';
     }
 
     public static function getNavigationSort(): int
     {
-        return 2;
+        return 3;
     }
 }

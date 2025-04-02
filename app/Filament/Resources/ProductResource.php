@@ -251,6 +251,6 @@ class ProductResource extends Resource
 
     public static function getNavigationSort(): int
     {
-        return 2;
+        return 1;
     }
 }
