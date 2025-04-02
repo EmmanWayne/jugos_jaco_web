@@ -103,6 +103,6 @@ class CategoryResource extends Resource
 
     public static function getNavigationSort(): int
     {
-        return 9;
+        return 2;
     }
 }
