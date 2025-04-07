@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\VisitDayEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ClientRequest extends FormRequest
 {
@@ -29,7 +31,10 @@ class ClientRequest extends FormRequest
             'department' => 'required|string|max:32',
             'township' => 'required|string|max:32',
             'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180'
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'business_name' => 'required|string|max:50',
+            'position' => 'nullable|integer|min:1|max:5',
+            'visit_day' => ['nullable', 'string', 'max:10', Rule::in(VisitDayEnum::getAllowedDays())],
         ];
     }
 }

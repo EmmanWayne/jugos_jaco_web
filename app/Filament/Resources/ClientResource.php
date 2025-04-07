@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\DepartmentEnum;
 use App\Enums\MunicipalityEnum;
+use App\Enums\VisitDayEnum;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Models\Client;
 use App\Models\Employee;
@@ -58,15 +59,8 @@ class ClientResource extends Resource
                                     ->maxLength(3),
                                 Forms\Components\Select::make('visit_day')
                                     ->label('Día de visita')
-                                    ->options([
-                                        'Lunes' => 'Lunes',
-                                        'Martes' => 'Martes',
-                                        'Miércoles' => 'Miércoles',
-                                        'Jueves' => 'Jueves',
-                                        'Viernes' => 'Viernes',
-                                        'Sábado' => 'Sábado',
-                                    ])
-                                    ->required(),
+                                    ->options(VisitDayEnum::toArray())
+                                    ->required()
                             ]),
                         Forms\Components\Grid::make(1)
                             ->schema([

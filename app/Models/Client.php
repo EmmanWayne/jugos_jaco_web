@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\DepartmentEnum;
 use App\Enums\MunicipalityEnum;
+use App\Enums\VisitDayEnum;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,7 +40,8 @@ class Client extends Model
     {
         return [
             'department' => DepartmentEnum::class,
-            'township' => MunicipalityEnum::getByDepartment($this->department),
+            'township' => MunicipalityEnum::getByDepartment(DepartmentEnum::from($this->department)),
+            'visit_day' => VisitDayEnum::from($this->visit_day)?->value,
         ];
     }
 
@@ -130,5 +133,12 @@ class Client extends Model
             "Empleado Asignado: " . ($this->employee?->full_name ?? "Sin asignar");
 
         return "https://wa.me/?text=" . urlencode($message);
+    }
+
+    public function scopeVisitDay($query, $day): Builder
+    {
+        if (!$day) return $query;
+
+        return $query->where('visit_day', $day);
     }
 }
