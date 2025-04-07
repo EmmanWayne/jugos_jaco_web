@@ -11,9 +11,9 @@ use App\Http\Resources\ClientResource;
 use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -30,14 +30,18 @@ class ClientController extends Controller
 
     /**
      * Get clients of the authenticated employee.
-     * 
+     *
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getClients()
+    public function getClients(Request $request)
     {
         try {
-            $clients = Client::where('employee_id', Auth::user()->id)
+            $day = $request->query('day');
+            $clients = Client::visitDay($day)->where('employee_id', Auth::user()->id)
                 ->with(['location', 'typePrice'])
+                ->orderBy('visit_day')
+                ->orderBy('position')
                 ->get();
 
             return $this->successResponse(
@@ -51,7 +55,7 @@ class ClientController extends Controller
 
     /**
      * Create a new client.
-     * 
+     *
      * @param ClientRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -89,7 +93,7 @@ class ClientController extends Controller
 
     /**
      * Update a client.
-     * 
+     *
      * @param ClientRequest $request
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -128,7 +132,7 @@ class ClientController extends Controller
 
     /**
      * Upload a business image of the client.
-     * 
+     *
      * @param ImageRequest $request
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -149,7 +153,7 @@ class ClientController extends Controller
                 $path = $imageFile->storeAs(StoragePath::CLIENTS_BUSINESS_IMAGES->value, $fileName, StoragePath::ROOT_DIRECTORY->value);
 
                 $existingImage = $client->businessImages()->where('path', $path)->first();
-                
+
                 if (!$existingImage) {
                     $image = $client->businessImages()->create([
                         'path' => $path,
@@ -177,7 +181,7 @@ class ClientController extends Controller
 
     /**
      * Upload a profile image of the client.
-     * 
+     *
      * @param ImageRequest $request
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -227,7 +231,7 @@ class ClientController extends Controller
 
     /**
      * Get business images of the client.
-     * 
+     *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -249,7 +253,7 @@ class ClientController extends Controller
 
     /**
      * Get the profile image of the client.
-     * 
+     *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
