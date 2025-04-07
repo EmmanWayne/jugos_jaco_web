@@ -30,6 +30,9 @@ class ClientResource extends JsonResource
                 'model_id' => $this->location?->model_id,
             ],
             'type_price' => $this->typePrice?->name,
+            'visit_day' => $this->visit_day,
+            'position' => $this->position,
+            'business_name' => $this->business_name,
         ];
     }
 }
