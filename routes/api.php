@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}/images/business', [ClientController::class, 'getBusinessImages']);
         Route::get('/{id}/image/profile', [ClientController::class, 'getProfileImage']);
         Route::post('/{id}/image/profile', [ClientController::class, 'uploadProfileImage']);
+        Route::put('/{id}/visit/position', [ClientController::class, 'updatePosition']);
     });
 
     Route::prefix('media')->group(function () {

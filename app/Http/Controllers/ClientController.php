@@ -10,6 +10,7 @@ use App\Http\Resources\ClientImageResource;
 use App\Http\Resources\ClientResource;
 use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
+use App\Services\ClientService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,11 +22,13 @@ class ClientController extends Controller
 {
     use ApiResponse;
 
-    protected $plusCodeService;
+    private $plusCodeService;
+    private $clientService;
 
     public function __construct()
     {
         $this->plusCodeService = new PlusCodeService();
+        $this->clientService = new ClientService();
     }
 
     /**
@@ -70,6 +73,13 @@ class ClientController extends Controller
                 ...$request->validated(),
                 'employee_id' => Auth::user()->id
             ]);
+
+            $this->clientService->updatePosition(
+                $request->position,
+                Auth::user()->id,
+                $client->id,
+                $request->visit_day
+            );
 
             if ($request->filled(['latitude', 'longitude'])) {
                 $client->location()->create([
@@ -274,7 +284,26 @@ class ClientController extends Controller
     }
 
     /**
-     * Validate if there is an existing client with the same name and phone number.
+     * Update the position of the client.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePosition($id, Request $request)
+    {
+        return $this->clientService->updatePosition(
+            $request->position,
+            Auth::user()->id,
+            $id,
+            $request->day
+        );
+    }
+    /**
+     * Validate if the client already exists.
+     *
+     * @param ClientRequest $request
+     * @param int|null $client_id
+     * @throws ValidationException
      */
     private function validateExistingClient($request, $client_id = null)
     {
