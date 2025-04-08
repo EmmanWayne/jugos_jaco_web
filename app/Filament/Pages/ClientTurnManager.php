@@ -4,6 +4,8 @@ namespace App\Filament\Pages;
 
 use App\Models\Client;
 use App\Models\Employee;
+use App\Enums\VisitDayEnum;
+use Carbon\Carbon;
 use Filament\Pages\Page;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
@@ -23,10 +25,42 @@ class ClientTurnManager extends Page implements HasTable
     protected static ?string $navigationGroup = 'Clientes';
     protected static string $view = 'filament.pages.client-turn-manager';
 
+    protected function getDefaultVisitDay(): string
+    {
+        $dayMap = [
+            1 => VisitDayEnum::LUNES->value,
+            2 => VisitDayEnum::MARTES->value,
+            3 => VisitDayEnum::MIERCOLES->value,
+            4 => VisitDayEnum::JUEVES->value,
+            5 => VisitDayEnum::VIERNES->value,
+            6 => VisitDayEnum::SABADO->value,
+            7 => VisitDayEnum::LUNES->value, // Domingo muestra Lunes
+        ];
+
+        // Usar la zona horaria de Honduras
+        $today = Carbon::now('America/Tegucigalpa');
+        return $dayMap[$today->dayOfWeek];
+    }
+
     public function table(Table $table): Table
     {
+        $currentDay = $this->getDefaultVisitDay();
+
         return $table
-            ->query(Client::query()->with(['employee']))
+            ->query(
+                Client::query()
+                    ->with(['employee'])
+                    ->when(
+                        request()->filled('tableFilters.visit_day'),
+                        fn($query) => $query->where('visit_day', request()->input('tableFilters.visit_day')),
+
+                    )
+                    ->when(
+                        request()->filled('tableFilters.employee_id'),
+                        fn($query) => $query->where('employee_id', request()->input('tableFilters.employee_id'))
+                    )
+                    ->orderBy('position')
+            )
             ->reorderable('position', true, 'Reordenar los turnos')
             ->columns([
                 TextColumn::make('position')
@@ -65,16 +99,8 @@ class ClientTurnManager extends Page implements HasTable
                     ->preload(),
                 SelectFilter::make('visit_day')
                     ->label('Filtrar por Día')
-                    ->options([
-                        'Lunes' => 'Lunes',
-                        'Martes' => 'Martes',
-                        'Miércoles' => 'Miércoles',
-                        'Jueves' => 'Jueves',
-                        'Viernes' => 'Viernes',
-                        'Sábado' => 'Sábado',
-                    ])
+                    ->options(VisitDayEnum::class)
                     ->placeholder('Seleccionar Día')
-                    ->default('Lunes')
                     ->preload()
             ])
             ->striped();
