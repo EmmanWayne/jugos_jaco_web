@@ -91,4 +91,9 @@ class ClientTurnManager extends Page implements HasTable
     {
         return true;
     }
+
+    public static function getNavigationSort(): int
+    {
+        return 2;
+    }
 }
