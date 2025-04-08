@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
-class Client extends Model
+class Client extends Model implements Sortable
 {
-    use HasFactory;
+    use HasFactory, SortableTrait;
 
     protected $table = 'clients';
 
@@ -31,6 +33,11 @@ class Client extends Model
         'type_price_id',
     ];
 
+    public array $sortable = [
+        'order_column_name' => 'position',
+        'sort_when_creating' => true,
+    ];
+
     /**
      * The attributes that should be cast.
      *
@@ -43,6 +50,11 @@ class Client extends Model
             'township' => MunicipalityEnum::getByDepartment(DepartmentEnum::from($this->department)),
             'visit_day' => VisitDayEnum::from($this->visit_day)?->value,
         ];
+    }
+
+    public function buildSortQuery()
+    {
+        return static::query()->where('visit_day', $this->visit_day);
     }
 
     public function employee(): BelongsTo
@@ -144,6 +156,6 @@ class Client extends Model
 
     public function getProfileImageUrlAttribute(): string
     {
-        return $this->profileImage ? asset('storage/'.$this->profileImage->path) : asset('images/avatar.png');
+        return $this->profileImage ? asset('storage/' . $this->profileImage->path) : asset('images/avatar.png');
     }
 }
