@@ -10,6 +10,7 @@ use App\Http\Resources\ClientImageResource;
 use App\Http\Resources\ClientResource;
 use App\Services\PlusCodeService;
 use App\Traits\ApiResponse;
+use App\Services\ClientService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,11 +22,13 @@ class ClientController extends Controller
 {
     use ApiResponse;
 
-    protected $plusCodeService;
+    private $plusCodeService;
+    private $clientService;
 
     public function __construct()
     {
         $this->plusCodeService = new PlusCodeService();
+        $this->clientService = new ClientService();
     }
 
     /**
@@ -65,6 +68,12 @@ class ClientController extends Controller
             DB::beginTransaction();
 
             $this->validateExistingClient($request);
+
+            $this->clientService->updatePosition(
+                $request->position,
+                Auth::user()->id,
+                $request->visit_day
+            );
 
             $client = Client::create([
                 ...$request->validated(),
@@ -106,6 +115,13 @@ class ClientController extends Controller
             $client = Client::findOrFail($id);
 
             $this->validateExistingClient($request, $id);
+
+            $this->clientService->updatePosition(
+                $request->position,
+                Auth::user()->id,
+                $request->visit_day,
+                $id
+            );
 
             $client->update($request->validated());
 
@@ -274,7 +290,26 @@ class ClientController extends Controller
     }
 
     /**
-     * Validate if there is an existing client with the same name and phone number.
+     * Update the position of the client.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePosition($id, Request $request)
+    {
+        return $this->clientService->updatePosition(
+            $request->position,
+            Auth::user()->id,
+            $request->day,
+            $id
+        );
+    }
+    /**
+     * Validate if the client already exists.
+     *
+     * @param ClientRequest $request
+     * @param int|null $client_id
+     * @throws ValidationException
      */
     private function validateExistingClient($request, $client_id = null)
     {
