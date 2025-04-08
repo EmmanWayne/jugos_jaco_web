@@ -141,4 +141,9 @@ class Client extends Model
 
         return $query->where('visit_day', $day);
     }
+
+    public function getProfileImageUrlAttribute(): string
+    {
+        return $this->profileImage ? asset('storage/'.$this->profileImage->path) : asset('images/avatar.png');
+    }
 }

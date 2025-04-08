@@ -123,7 +123,7 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('profileImage.path')
+                ImageColumn::make('profileImageUrl')
                     ->defaultImageUrl(asset('/images/avatar.png'))
                     ->label('')
                     ->size(30)
