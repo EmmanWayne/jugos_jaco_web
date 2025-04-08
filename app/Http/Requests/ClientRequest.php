@@ -33,7 +33,7 @@ class ClientRequest extends FormRequest
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'business_name' => 'required|string|max:50',
-            'position' => 'required|integer|min:1|max:5',
+            'position' => 'required|integer|min:1|max:999',
             'visit_day' => ['required', 'string', 'max:10', Rule::in(VisitDayEnum::getAllowedDays())],
         ];
     }
