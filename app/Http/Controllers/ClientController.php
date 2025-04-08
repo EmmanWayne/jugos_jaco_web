@@ -69,17 +69,16 @@ class ClientController extends Controller
 
             $this->validateExistingClient($request);
 
+            $this->clientService->updatePosition(
+                $request->position,
+                Auth::user()->id,
+                $request->visit_day
+            );
+
             $client = Client::create([
                 ...$request->validated(),
                 'employee_id' => Auth::user()->id
             ]);
-
-            $this->clientService->updatePosition(
-                $request->position,
-                Auth::user()->id,
-                $client->id,
-                $request->visit_day
-            );
 
             if ($request->filled(['latitude', 'longitude'])) {
                 $client->location()->create([
@@ -116,6 +115,13 @@ class ClientController extends Controller
             $client = Client::findOrFail($id);
 
             $this->validateExistingClient($request, $id);
+
+            $this->clientService->updatePosition(
+                $request->position,
+                Auth::user()->id,
+                $request->visit_day,
+                $id
+            );
 
             $client->update($request->validated());
 
@@ -294,8 +300,8 @@ class ClientController extends Controller
         return $this->clientService->updatePosition(
             $request->position,
             Auth::user()->id,
-            $id,
-            $request->day
+            $request->day,
+            $id
         );
     }
     /**

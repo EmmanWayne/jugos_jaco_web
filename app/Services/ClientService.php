@@ -13,38 +13,39 @@ class ClientService
 {
     use ApiResponse;
 
-    public function updatePosition(int $position, int $employeeId, int $clientId, string $day): JsonResponse
+    public function updatePosition(int $position, int $employeeId, string $day, ?int $clientId = null): JsonResponse
     {
         try {
-            $client = Client::find($clientId);
+            $client = null;
+            $positionAdjustment = 1;
+            $clients = null;
 
-            $comparisonOperator = ">=";
-            $positionAdjustment = -1;
+            if (!is_null($clientId) && $client = Client::find($clientId)) {
+                if ($position == $client->position) {
+                    $clients = collect();
+                } else {
+                    $movingUp = $position < $client->position;
+                    $rangePositionUpdate =  $movingUp ? [$position, $client->position - 1]: [$client->position + 1, $position];
+                    $positionAdjustment = $movingUp ? 1 : -1;
 
-            if ($position < $client->position) {
-                $comparisonOperator = "<=";
-                $positionAdjustment = 1;
+                    $clients = Client::visitDay($day)
+                        ->where('id', '!=', $clientId)
+                        ->where('employee_id', $employeeId)
+                        ->whereBetween('position', $rangePositionUpdate)
+                        ->get();
+                }
+            } else {
+                $clients = Client::visitDay($day)
+                    ->where('position', '>=', $position)
+                    ->where('employee_id', $employeeId)
+                    ->get();
             }
 
-            $clients = Client::visitDay($day)
-                ->where('id', '!=', $clientId)
-                ->where('position', $comparisonOperator, $position)
-                ->where('employee_id', $employeeId)->get();
-
-            Log::info("Clientes a actualizar: ", [
-                'day' => $day,
-                'employee_id' => $employeeId,
-                'position' => $position,
-                'comparisonOperator' => $comparisonOperator,
-                'positionAdjustment' => $positionAdjustment,
-                'clients' => $clients->toArray()
-            ]);
-
-            if ($clients->isEmpty()) return $this->errorResponse(throw new NotFoundHttpException("No hay clientes que visitar este día."), 404);
-
-            $client->update([
-                'position' => $position
-            ]);
+            if (isset($client)) {
+                $client->update([
+                    'position' => $position
+                ]);
+            }
 
             $clients->each(function ($client) use ($positionAdjustment) {
                 $client->update([
