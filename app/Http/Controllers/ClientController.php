@@ -42,7 +42,7 @@ class ClientController extends Controller
         try {
             $day = $request->query('day');
             $clients = Client::visitDay($day)->where('employee_id', Auth::user()->id)
-                ->with(['location', 'typePrice'])
+                ->with(['location', 'typePrice', 'profileImage'])
                 ->orderBy('visit_day')
                 ->orderBy('position')
                 ->get();

@@ -29,6 +29,7 @@ class ClientResource extends JsonResource
                 'plus_code' => $this->location?->plus_code,
                 'model_id' => $this->location?->model_id,
             ],
+            'profile_image' => $this->profileImage?->path,
             'type_price' => $this->typePrice?->name,
             'visit_day' => $this->visit_day,
             'position' => $this->position,
