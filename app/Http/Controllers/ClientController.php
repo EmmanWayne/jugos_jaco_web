@@ -41,7 +41,7 @@ class ClientController extends Controller
     {
         try {
             $day = $request->query('day');
-            $clients = Client::visitDay($day)->where('employee_id', Auth::user()->id)
+            $clients = Client::visitDay($day)->where('employee_id', Auth::user()->employee_id)
                 ->with(['location', 'typePrice', 'profileImage'])
                 ->orderBy('visit_day')
                 ->orderBy('position')
@@ -71,13 +71,13 @@ class ClientController extends Controller
 
             $this->clientService->updatePosition(
                 $request->position,
-                Auth::user()->id,
+                Auth::user()->employee_id,
                 $request->visit_day
             );
 
             $client = Client::create([
                 ...$request->validated(),
-                'employee_id' => Auth::user()->id
+                'employee_id' => Auth::user()->employee_id
             ]);
 
             if ($request->filled(['latitude', 'longitude'])) {
@@ -118,7 +118,7 @@ class ClientController extends Controller
 
             $this->clientService->updatePosition(
                 $request->position,
-                Auth::user()->id,
+                Auth::user()->employee_id,
                 $request->visit_day,
                 $id
             );
@@ -299,7 +299,7 @@ class ClientController extends Controller
     {
         return $this->clientService->updatePosition(
             $request->position,
-            Auth::user()->id,
+            Auth::user()->employee_id,
             $request->day,
             $id
         );
