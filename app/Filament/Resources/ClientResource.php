@@ -24,6 +24,8 @@ class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
+    protected static ?string $navigationGroup = 'Clientes';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -242,7 +244,7 @@ class ClientResource extends Resource
 
     public static function getNavigationSort(): int
     {
-        return 3;
+        return 1;
     }
 
     public static function create(array $data)

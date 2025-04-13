@@ -12,6 +12,7 @@
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "spatie/eloquent-sortable": "^4.4",
         "spatie/laravel-permission": "^6.15"
     },
     "require-dev": {
