@@ -77,7 +77,7 @@ class RawMaterialsInventoryResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Última Actualización')
-                    ->dateTime('d/m/Y H:i')
+                    ->dateTime()
                     ->sortable(),
             ])
             ->filters([
