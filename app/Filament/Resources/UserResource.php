@@ -17,6 +17,8 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-user';
 
+    protected static ?string $navigationGroup = 'Administración';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -94,7 +96,7 @@ class UserResource extends Resource
                 Tables\Columns\BadgeColumn::make('roles.name')
                     ->label('Rol')
                     ->color('primary')
-                    ->formatStateUsing(fn ($state) => ucfirst($state))
+                    ->formatStateUsing(fn($state) => ucfirst($state))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
@@ -168,5 +170,10 @@ class UserResource extends Resource
     public static function getNavigationLabel(): string
     {
         return 'Usuarios';
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 4;
     }
 }

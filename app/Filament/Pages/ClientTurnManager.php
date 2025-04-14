@@ -20,7 +20,7 @@ class ClientTurnManager extends Page implements HasTable
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-queue-list';
-    protected static ?string $navigationLabel = 'Turnos de Visita';
+    protected static ?string $navigationLabel = 'Turnos De Visita';
     protected static ?string $title = 'Gestión de Turnos de Visita';
     protected static ?string $navigationGroup = 'Clientes';
     protected static string $view = 'filament.pages.client-turn-manager';
