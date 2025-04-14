@@ -9,5 +9,6 @@ enum StoragePath: string
     case EMPLOYEES_PROFILE_IMAGE = 'employees/images/profile';
     case BRANCHES_IMAGES = 'branches/images';
     case PRODUCTS_IMAGES = 'products/images';
+    case PRODUCTS_IMAGES_TEMP = 'products/temp';
     case ROOT_DIRECTORY = 'public';
 }
