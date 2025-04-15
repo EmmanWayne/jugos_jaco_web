@@ -16,9 +16,7 @@ class RawMaterialsInventoryResource extends Resource
 
     protected static ?string $navigationGroup = 'Inventario';
 
-    protected static ?string $label = 'Materia Prima';
-    protected static ?string $pluralLabel = 'Materias Primas';
-    public static function form(Form $form): \Filament\Forms\Form
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -33,7 +31,7 @@ class RawMaterialsInventoryResource extends Resource
                 Forms\Components\Select::make('unit_type')
                     ->label('Unidad')
                     ->options([
-                        'unidad' => 'Unidad',
+                        'u' => 'Unidad',
                         'kg' => 'Kilogramo',
                         'g' => 'Gramo',
                         'l' => 'Litro',
@@ -43,8 +41,11 @@ class RawMaterialsInventoryResource extends Resource
                 Forms\Components\TextInput::make('stock')
                     ->label('Cantidad')
                     ->numeric()
-                    ->visible(fn($livewire) => $livewire instanceof Pages\CreateRawMaterialsInventory)
-                    ->default(0)
+                    ->disabled(fn($livewire) => $livewire instanceof Pages\EditRawMaterialsInventory)
+                    ->required(),
+                Forms\Components\TextInput::make('min_stock')
+                    ->label('Stock Mínimo')
+                    ->numeric()
                     ->required(),
             ]);
     }
@@ -61,10 +62,12 @@ class RawMaterialsInventoryResource extends Resource
                     ->label('Nombre')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('unit_type')
-                    ->label('Unidad'),
                 Tables\Columns\TextColumn::make('stock')
                     ->label('Existencia')
+                    ->formatStateUsing(fn($record): string => "{$record->stock} {$record->unit_type}")
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('min_stock')
+                    ->label('Stock Mínimo')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Última Actualización')
@@ -108,5 +111,15 @@ class RawMaterialsInventoryResource extends Resource
     public static function getPluralModelLabel(): string
     {
         return 'Materias Primas';
+    }
+
+    public static function getNavigationIcon(): string
+    {
+        return 'heroicon-o-beaker';
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 2;
     }
 }

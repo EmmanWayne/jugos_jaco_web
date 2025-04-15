@@ -16,11 +16,13 @@ class RawMaterialsInventory extends Model
         'name',
         'unit_type',
         'stock',
+        'min_stock',
         'branch_id'
     ];
 
     protected $casts = [
         'stock' => 'decimal:2',
+        'min_stock' => 'decimal:2',
     ];
 
     public function branch(): BelongsTo
