@@ -3,56 +3,48 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RawMaterialsInventoryResource\Pages;
-use App\Filament\Resources\RawMaterialsInventoryResource\RelationManagers;
 use App\Models\RawMaterialsInventory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables;
 
 class RawMaterialsInventoryResource extends Resource
 {
     protected static ?string $model = RawMaterialsInventory::class;
 
-    protected static ?string $navigationGroup = 'Inventarios';
+    protected static ?string $navigationGroup = 'Inventario';
 
-    public static function form(Form $form): Form
+    protected static ?string $label = 'Materia Prima';
+    protected static ?string $pluralLabel = 'Materias Primas';
+    public static function form(Form $form): \Filament\Forms\Form
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('branch_id')
+                    ->label('Sucursal')
+                    ->relationship('branch', 'name')
+                    ->required(),
                 Forms\Components\TextInput::make('name')
                     ->label('Nombre')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('unit')
+                Forms\Components\Select::make('unit_type')
                     ->label('Unidad')
                     ->options([
-                        'u' => 'Unidad',
+                        'unidad' => 'Unidad',
                         'kg' => 'Kilogramo',
                         'g' => 'Gramo',
                         'l' => 'Litro',
                         'ml' => 'Mililitro',
                     ])
                     ->required(),
-                Forms\Components\TextInput::make('quantity')
+                Forms\Components\TextInput::make('stock')
                     ->label('Cantidad')
                     ->numeric()
-                    ->required(),
-                Forms\Components\TextInput::make('minimum_stock')
-                    ->label('Stock Mínimo')
-                    ->numeric()
-                    ->required(),
-                Forms\Components\Textarea::make('description')
-                    ->label('Descripción')
-                    ->maxLength(65535),
-                Forms\Components\Select::make('branch_id')
-                    ->label('Sucursal')
-                    ->relationship('branch', 'name')
-                    ->searchable()
-                    ->preload()
+                    ->visible(fn($livewire) => $livewire instanceof Pages\CreateRawMaterialsInventory)
+                    ->default(0)
                     ->required(),
             ]);
     }
@@ -61,23 +53,22 @@ class RawMaterialsInventoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('quantity')
-                    ->label('Cantidad')
-                    ->formatStateUsing(fn($record) => "{$record->quantity} {$record->unit}")
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('minimum_stock')
-                    ->label('Stock Mínimo'),
                 Tables\Columns\TextColumn::make('branch.name')
                     ->label('Sucursal')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('unit_type')
+                    ->label('Unidad'),
+                Tables\Columns\TextColumn::make('stock')
+                    ->label('Existencia')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Última Actualización')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->filters([
@@ -92,13 +83,6 @@ class RawMaterialsInventoryResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array
@@ -124,15 +108,5 @@ class RawMaterialsInventoryResource extends Resource
     public static function getPluralModelLabel(): string
     {
         return 'Materias Primas';
-    }
-
-    public static function getNavigationIcon(): string
-    {
-        return 'heroicon-o-beaker';
-    }
-
-    public static function getNavigationSort(): int
-    {
-        return 1;
     }
 }

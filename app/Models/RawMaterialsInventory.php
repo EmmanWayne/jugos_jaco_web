@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RawMaterialsInventory extends Model
@@ -15,16 +14,13 @@ class RawMaterialsInventory extends Model
 
     protected $fillable = [
         'name',
-        'unit',
-        'quantity',
-        'minimum_stock',
-        'description',
+        'unit_type',
+        'stock',
         'branch_id'
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:2',
-        'minimum_stock' => 'decimal:2',
+        'stock' => 'decimal:2',
     ];
 
     public function branch(): BelongsTo

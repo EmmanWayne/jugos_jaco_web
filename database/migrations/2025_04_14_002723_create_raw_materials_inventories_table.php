@@ -12,9 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('unit_type');
-            $table->decimal('quantity', 10, 2)->default(0);
-            $table->decimal('min_stock', 10, 2)->default(0);
-            $table->text('description')->nullable();
+            $table->decimal('stock', 10, 2)->default(0);
             $table->foreignId('branch_id')->constrained('branches')->restrictOnDelete();
             $table->timestamps();
         });
