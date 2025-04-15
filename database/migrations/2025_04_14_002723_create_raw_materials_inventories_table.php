@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('raw_materials_inventory', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('unit')->default('unidad'); // unidad, kg, litro, etc.
+            $table->string('unit_type');
             $table->decimal('quantity', 10, 2)->default(0);
             $table->decimal('min_stock', 10, 2)->default(0);
             $table->text('description')->nullable();
