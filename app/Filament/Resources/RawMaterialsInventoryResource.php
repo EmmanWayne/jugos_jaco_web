@@ -30,7 +30,7 @@ class RawMaterialsInventoryResource extends Resource
                 Forms\Components\Select::make('unit')
                     ->label('Unidad')
                     ->options([
-                        'unidades' => 'Unidad',
+                        'u' => 'Unidad',
                         'kg' => 'Kilogramo',
                         'g' => 'Gramo',
                         'l' => 'Litro',
