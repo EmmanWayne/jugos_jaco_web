@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('unit')->default('unidad'); // unidad, kg, litro, etc.
             $table->decimal('quantity', 10, 2)->default(0);
-            $table->decimal('minimum_stock', 10, 2)->default(0);
+            $table->decimal('min_stock', 10, 2)->default(0);
             $table->text('description')->nullable();
             $table->foreignId('branch_id')->constrained('branches')->restrictOnDelete();
             $table->timestamps();
