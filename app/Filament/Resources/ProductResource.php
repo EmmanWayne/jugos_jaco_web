@@ -2,11 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\StoragePath;
 use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\ProductResource\RelationManagers;
-use App\Models\Category;
 use App\Models\Product;
-use Filament\Actions\DeleteAction;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -16,8 +14,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Support\Facades\Storage;
 use Filament\Tables\Actions\Action;
@@ -79,18 +75,11 @@ class ProductResource extends Resource
                                 Forms\Components\FileUpload::make('product_image')
                                     ->label('Imagen del producto')
                                     ->image()
-                                    ->imageEditor()
-                                    ->directory('products')
-                                    ->disk('public')
+                                    ->acceptedFileTypes(['image/jpeg', 'image/jpg'])
+                                    ->maxSize(512)
+                                    ->directory(StoragePath::PRODUCTS_IMAGES_TEMP->value)
+                                    ->disk(StoragePath::ROOT_DIRECTORY->value)
                                     ->columnSpanFull()
-                                    ->afterStateUpdated(function ($state, $record) {
-                                        if ($state && $record) {
-                                            $record->profileImage()->updateOrCreate(
-                                                ['type' => 'product'],
-                                                ['path' => $state]
-                                            );
-                                        }
-                                    }),
                             ]),
 
                         Section::make('')
@@ -145,15 +134,14 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('profileImage.path')
-                    ->disk('public')
+                ImageColumn::make('imageUrl')
                     ->defaultImageUrl(asset('/images/producto.png'))
                     ->label('')
                     ->size(30)
                     ->circular()
                     ->action(
                         Action::make('preview')
-                            ->label('Foto del cliente')
+                            ->label('Foto del producto')
                             ->modalHeading('Foto del producto')
                             ->modalSubmitAction(false) // Remove submit button
                             ->modalCancelAction(false) // Remove cancel button
