@@ -123,8 +123,12 @@ class EmployeeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Nombre Completo')
-                    ->sortable()
-                    ->searchable(['first_name', 'last_name']),
+                    ->searchable(['first_name', 'last_name'])
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->orderBy('first_name', $direction)
+                            ->orderBy('last_name', $direction);
+                    }),
                 Tables\Columns\TextColumn::make('identity')
                     ->label('Identidad')
                     ->searchable(),

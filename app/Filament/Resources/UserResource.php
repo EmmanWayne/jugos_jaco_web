@@ -33,6 +33,7 @@ class UserResource extends Resource
                             ->label('Correo electrónico')
                             ->placeholder('example@examplo.com')
                             ->email()
+                            ->unique(User::class, 'email', ignoreRecord: true)
                             ->required()
                             ->maxLength(64),
                         Forms\Components\TextInput::make('password')
@@ -42,7 +43,13 @@ class UserResource extends Resource
                             ->required(fn($livewire) => $livewire instanceof Pages\CreateUser)
                             ->dehydrated(fn($state) => filled($state))
                             ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                            ->rules(['min:8'])
+                            ->rules([
+                                'min:8',
+                                'regex:/[A-Z]/',
+                                'regex:/[a-z]/',
+                                'regex:/[0-9]/',
+                                'regex:/[@$!%*#?&]/'
+                            ])
                             ->autocomplete('new-password')
                             ->helperText('La contraseña debe tener al menos 8 caracteres e incluir mayúsculas, minúsculas, números y símbolos')
                             ->live(),
@@ -83,18 +90,24 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nombre usuario')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Correo electrónico')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('employee.full_name')
                     ->label('Empleado')
-                    ->numeric()
-                    ->sortable(),
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->join('employees', 'users.employee_id', '=', 'employees.id')
+                            ->orderBy('employees.first_name', $direction)
+                            ->orderBy('employees.last_name', $direction)
+                            ->select('users.*');
+                    }),
                 Tables\Columns\BadgeColumn::make('roles.name')
                     ->label('Rol')
                     ->color('primary')
-                    ->formatStateUsing(fn ($state) => ucfirst($state))
+                    ->formatStateUsing(fn($state) => ucfirst($state))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('status')
@@ -104,7 +117,6 @@ class UserResource extends Resource
                     ->falseIcon('heroicon-s-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger')
-                    ->sortable()
                     ->tooltip(fn(bool $state): string => $state ? 'Activo' : 'Inactivo', ['placement' => 'top'])
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
