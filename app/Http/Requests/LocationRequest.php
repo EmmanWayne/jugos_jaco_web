@@ -4,6 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Class LocationRequest
+ *
+ * @package App\Http\Requests
+ * 
+ * @property float $latitude
+ * @property float $longitude
+ */
 class LocationRequest extends FormRequest
 {
     /**

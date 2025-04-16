@@ -4,6 +4,15 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Class LoginRequest
+ *
+ * @package App\Http\Requests
+ * 
+ * @property string $identity
+ * @property string $password
+ * @property string $device_name
+ */
 class LoginRequest extends FormRequest
 {
     /**

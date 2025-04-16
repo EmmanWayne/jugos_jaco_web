@@ -4,6 +4,18 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Class ImageRequest
+ *
+ * @package App\Http\Requests
+ *
+ * @method bool filled(string|array $keys) Determine if the request contains a non-empty value for a given key
+ * @method bool has(string|array $keys) Determine if the request contains a non-empty value for a given key
+ * @method bool hasFile(string $key) Determine if the request contains a file for a given key
+ * @method \Illuminate\Http\UploadedFile|null file(string $key) Get a file from the request
+ * 
+ * @property image $image
+ **/
 class ImageRequest extends FormRequest
 {
     /**

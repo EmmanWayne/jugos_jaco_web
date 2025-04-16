@@ -6,6 +6,25 @@ use App\Enums\VisitDayEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Class ClientRequest
+ *
+ * @package App\Http\Requests
+ *
+ * @method bool filled(string|array $keys) Determine if the request contains a non-empty value for a given key
+ * 
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $address
+ * @property string $phone_number
+ * @property string $department
+ * @property string $township
+ * @property float|null $latitude
+ * @property float|null $longitude
+ * @property string $business_name
+ * @property int $position
+ * @property string $visit_day
+ **/
 class ClientRequest extends FormRequest
 {
     /**
