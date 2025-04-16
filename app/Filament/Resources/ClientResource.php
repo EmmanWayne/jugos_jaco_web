@@ -12,12 +12,14 @@ use App\Models\TypePrice;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Facades\Storage;
 
 class ClientResource extends Resource
@@ -100,7 +102,8 @@ class ClientResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('employee_id')
                                     ->label('Empleado asignado')
-                                    ->options(Employee::selectRaw("CONCAT(first_name, ' ', last_name) as name, id")->pluck('name', 'id'))
+                                    ->relationship('employee')
+                                    ->getOptionLabelFromRecordUsing(fn($record) => $record->full_name)
                                     ->searchable()
                                     ->preload()
                                     ->required(),
@@ -145,40 +148,46 @@ class ClientResource extends Resource
                     ),
                 TextColumn::make('full_name')
                     ->label('Encargado')
-                    ->sortable()
-                    ->searchable(['first_name', 'last_name']),
+                    ->searchable(['clients.first_name', 'clients.last_name'])
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->orderBy('clients.first_name', $direction)
+                            ->orderBy('clients.last_name', $direction);
+                    }),
                 TextColumn::make('business_name')
                     ->label('Negocio')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('position')
                     ->label('Turno de visita')
-                    ->sortable()
-                    ->searchable(),
+                    ->sortable(),
                 TextColumn::make('visit_day')
                     ->label('Día de visita')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('phone_number')
                     ->label('Teléfono')
-                    ->searchable(),
+                    ->searchable('clients.phone_number'),
                 TextColumn::make('employee.full_name')
                     ->label('Empleado asignado')
-                    ->sortable(),
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->join('employees', 'clients.employee_id', '=', 'employees.id')
+                            ->orderBy('employees.first_name', $direction)
+                            ->orderBy('employees.last_name', $direction)
+                            ->select('clients.*');
+                    }),
                 TextColumn::make('typePrice.name')
                     ->label('Tipo de precio')
                     ->sortable(),
                 TextColumn::make('department')
                     ->label('Departamento')
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('township')
                     ->label('Municipio')
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('address')
                     ->label('Dirección')
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Fecha de creación')
@@ -192,7 +201,13 @@ class ClientResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('employee_id')
+                    ->label('Empleado')
+                    ->relationship('employee', 'id')
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record->full_name)
+                    ->searchable()
+                    ->preload()
+                    ->multiple(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
