@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\TypeInventoryManagementEnum;
 use App\Filament\Resources\ManagementInventoryResource\Pages;
 use App\Models\ManagementInventory;
 use Filament\Forms;
@@ -24,12 +25,7 @@ class ManagementInventoryResource extends Resource
             ->schema([
                 Forms\Components\Select::make('type')
                     ->label('Tipo de Movimiento')
-                    ->options([
-                        'entrada' => 'Entrada',
-                        'salida' => 'Salida',
-                        'dañado' => 'Dañado',
-                        'devolución' => 'Devolución',
-                    ])
+                    ->options(TypeInventoryManagementEnum::getOptions())
                     ->required(),
                 Forms\Components\TextInput::make('quantity')
                     ->label('Cantidad')
@@ -62,21 +58,9 @@ class ManagementInventoryResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipo')
+                    ->formatStateUsing(fn(string $state) => TypeInventoryManagementEnum::from($state)->getLabel())
                     ->badge()
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
-                        'entrada' => 'Entrada',
-                        'salida' => 'Salida',
-                        'dañado' => 'Dañado',
-                        'devolución' => 'Devolución',
-                        default => $state,
-                    })
-                    ->color(fn(string $state): string => match ($state) {
-                        'entrada' => 'success',
-                        'salida' => 'warning',
-                        'dañado' => 'danger',
-                        'devolución' => 'info',
-                        default => 'gray',
-                    })
+                    ->color(fn(string $state) => TypeInventoryManagementEnum::getColor($state))
                     ->extraAttributes([
                         'class' => 'text-base font-medium',
                     ])
