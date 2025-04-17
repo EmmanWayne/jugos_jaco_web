@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id();
             $table->text('description')->nullable();
             $table->decimal('amount', 10, 2);
-            $table->string('reference_number')->unique();
+            $table->string('reference_number', 64)->unique();
             $table->unsignedBigInteger('model_id')->nullable();
-            $table->foreignId('branch_id')->constrained('branches');
+            $table->foreignId('branch_id')->constrained('branches')->restrictOnDelete();
             $table->timestamps();
         });
     }

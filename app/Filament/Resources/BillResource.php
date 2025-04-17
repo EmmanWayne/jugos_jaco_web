@@ -34,10 +34,6 @@ class BillResource extends Resource
                     ->numeric()
                     ->required()
                     ->minValue(0),
-                Forms\Components\TextInput::make('model_id')
-                    ->label('ID de Modelo')
-                    ->numeric()
-                    ->nullable(),
                 Forms\Components\Textarea::make('description')
                     ->label('Descripción')
                     ->nullable()
