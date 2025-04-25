@@ -70,6 +70,7 @@ class ProductService
             $existingImagePath = $record->profileImage->path;
             if (Storage::disk(StoragePath::ROOT_DIRECTORY->value)->exists($existingImagePath)) {
                 Storage::disk(StoragePath::ROOT_DIRECTORY->value)->delete($existingImagePath);
+                $record->profileImage()->delete();
             }
         }
     }
