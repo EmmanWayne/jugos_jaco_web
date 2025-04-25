@@ -21,6 +21,8 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
+    protected static ?string $navigationGroup = 'Administración';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -207,6 +209,6 @@ class EmployeeResource extends Resource
 
     public static function getNavigationSort(): int
     {
-        return 4;
+        return 1;
     }
 }

@@ -13,7 +13,8 @@ class ClientLocations extends Page
     protected static ?string $navigationIcon = 'heroicon-s-map-pin';
     protected static ?string $navigationLabel = 'Ubicaciones';
     protected static ?string $title = 'Mapa de ubicaciones';
-    protected static ?int $navigationSort = 7;
+    protected static ?string $navigationGroup = 'Administración';
+
     protected static string $view = 'filament.pages.locations.client-locations';
 
     public function getViewData(): array
@@ -77,5 +78,10 @@ class ClientLocations extends Page
         return Employee::withRouteData()
             ->findOrFail($employeeId)
             ->mapData;
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 3;
     }
 }

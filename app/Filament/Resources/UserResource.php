@@ -17,6 +17,8 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-user';
 
+    protected static ?string $navigationGroup = 'Administración';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -180,5 +182,10 @@ class UserResource extends Resource
     public static function getNavigationLabel(): string
     {
         return 'Usuarios';
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 4;
     }
 }
