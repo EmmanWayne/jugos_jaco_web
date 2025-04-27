@@ -18,40 +18,7 @@ class ManagementInventoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
     protected static ?string $navigationGroup = 'Inventario';
-
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('type')
-                    ->label('Tipo de Movimiento')
-                    ->options(TypeInventoryManagementEnum::getOptions())
-                    ->required(),
-                Forms\Components\TextInput::make('quantity')
-                    ->label('Cantidad')
-                    ->numeric()
-                    ->required(),
-                Forms\Components\Textarea::make('description')
-                    ->label('Descripción')
-                    ->required()
-                    ->maxLength(65535),
-                Forms\Components\Hidden::make('model_type')
-                    ->default('App\Models\RawMaterialsInventory'),
-                Forms\Components\Select::make('model_id')
-                    ->label('Materia Prima')
-                    ->options(
-                        fn() => \App\Models\RawMaterialsInventory::query()
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->toArray()
-                    )
-                    ->searchable()
-                    ->required(),
-                Forms\Components\Hidden::make('created_by')
-                    ->default(fn() => Auth::user()->name),
-            ]);
-    }
-
+    
     public static function table(Table $table): Table
     {
         return $table
