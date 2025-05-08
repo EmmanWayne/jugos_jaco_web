@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class RawMaterialsInventory extends Model
 {
@@ -28,5 +29,10 @@ class RawMaterialsInventory extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function movements(): MorphMany
+    {
+        return $this->morphMany(ManagementInventory::class, 'model');
     }
 }

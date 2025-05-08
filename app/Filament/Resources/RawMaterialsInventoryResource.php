@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\ManagementInventoryResource\RelationManagers\MovementsInventoryRelationManager;
 use App\Filament\Resources\RawMaterialsInventoryResource\Pages;
 use App\Models\RawMaterialsInventory;
 use Filament\Forms;
@@ -86,6 +87,13 @@ class RawMaterialsInventoryResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            MovementsInventoryRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

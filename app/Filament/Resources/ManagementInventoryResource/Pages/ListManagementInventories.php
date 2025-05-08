@@ -9,11 +9,4 @@ use Filament\Resources\Pages\ListRecords;
 class ListManagementInventories extends ListRecords
 {
     protected static string $resource = ManagementInventoryResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\CreateAction::make(),
-        ];
-    }
 }
