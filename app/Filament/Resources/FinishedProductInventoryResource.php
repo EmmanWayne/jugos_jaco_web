@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FinishedProductInventoryResource\Pages;
+use App\Filament\Resources\ManagementInventoryResource\RelationManagers\MovementsInventoryRelationManager;
 use App\Models\FinishedProductInventory;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
@@ -17,13 +18,17 @@ class FinishedProductInventoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
 
-    protected static ?string $navigationGroup = 'Inventarios';
+    protected static ?string $navigationGroup = 'Inventario';
 
-    protected static ?string $navigationLabel = 'Inventario de Productos';
+    protected static ?string $navigationLabel = 'Inventario de productos terminados';
 
-    protected static ?string $modelLabel = 'Inventario de Producto';
+    protected static ?string $modelLabel = 'Inventario de productos terminados';
 
-    protected static ?string $pluralModelLabel = 'Inventario de Productos';
+    protected static ?string $pluralModelLabel = 'Inventario de productos terminados';
+    
+    protected static ?string $singularModelLabel = 'Inventario de producto terminado';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -134,7 +139,7 @@ class FinishedProductInventoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            MovementsInventoryRelationManager::class,
         ];
     }
 

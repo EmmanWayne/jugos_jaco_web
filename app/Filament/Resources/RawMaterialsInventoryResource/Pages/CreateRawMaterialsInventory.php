@@ -9,4 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateRawMaterialsInventory extends CreateRecord
 {
     protected static string $resource = RawMaterialsInventoryResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

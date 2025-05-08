@@ -73,8 +73,6 @@ class ManagementInventoryResource extends Resource
     {
         return [
             'index' => Pages\ListManagementInventories::route('/'),
-            'create' => Pages\CreateManagementInventory::route('/create'),
-            'edit' => Pages\EditManagementInventory::route('/{record}/edit'),
             'view' => Pages\ViewManagementInventory::route('/{record}'),
         ];
     }
@@ -98,6 +96,7 @@ class ManagementInventoryResource extends Resource
     {
         return 'Inventario';
     }
+    
     public static function getNavigationSort(): ?int
     {
         return 2;
