@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AssignedProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\EmployeeController;
@@ -29,5 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('employees')->group(function () {
         Route::get('/{id}', [EmployeeController::class, 'getEmployee']);
         Route::post('/{id}/location', [EmployeeController::class, 'createLocation']);
+    });
+    
+    Route::prefix('products')->group(function () {
+        Route::get('/assigned', [AssignedProductController::class, 'getProductAssigned']);
     });
 });
