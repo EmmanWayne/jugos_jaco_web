@@ -124,13 +124,6 @@ class ClientController extends Controller
 
             $this->validateExistingClient($request, $id);
 
-            $this->clientService->updatePosition(
-                $request->position,
-                Auth::user()->employee_id,
-                $request->visit_day,
-                $id
-            );
-
             $client->update($request->validated());
 
             if ($request->filled(['latitude', 'longitude'])) {
