@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Branch;
 
@@ -45,6 +46,11 @@ class Employee extends Model
     public function locations()
     {
         return $this->morphMany(Location::class, 'model');
+    }
+    
+    public function assignedProducts(): HasMany
+    {
+        return $this->hasMany(AssignedProduct::class);
     }
 
     public function scopeWithRouteData($query)
