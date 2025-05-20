@@ -16,4 +16,16 @@ class ViewProduct extends ViewRecord
             Actions\EditAction::make(),
         ];
     }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\ProductResource\Widgets\ProductImagesWidget::class,
+        ];
+    }
+
+    public function getFooterWidgetsColumns(): int|string|array
+    {
+        return 1;
+    }
 }

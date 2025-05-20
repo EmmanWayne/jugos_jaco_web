@@ -14,6 +14,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Support\Colors\Color;
+use PHPUnit\Framework\Reorderable;
 
 class ClientTurnManager extends Page implements HasTable
 {
@@ -27,6 +28,16 @@ class ClientTurnManager extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+
+        $employeeFilter = request()->input('tableFilters.employee_id');
+        $visitDayFilter = request()->input('tableFilters.visit_day');
+
+        $canReorder = isset($employeeFilter) &&
+            isset($visitDayFilter) &&
+            $employeeFilter !== '' &&
+            $visitDayFilter !== '';
+
+
         return $table
             ->query(
                 Client::query()
@@ -42,7 +53,8 @@ class ClientTurnManager extends Page implements HasTable
                     )
                     ->orderBy('position')
             )
-            ->reorderable('position', true, 'Reordenar los turnos')
+            ->reorderable('position', $canReorder, 'Reordenar los turnos')
+
             ->columns([
                 TextColumn::make('position')
                     ->label('Turno')
@@ -77,10 +89,15 @@ class ClientTurnManager extends Page implements HasTable
                     )
                     ->searchable()
                     ->placeholder('Seleccionar Empleado')
+                    ->searchable()
+
                     ->preload(),
                 SelectFilter::make('visit_day')
                     ->label('Filtrar por Día')
+                    ->searchable()
                     ->options(VisitDayEnum::class)
+
+
                     ->placeholder('Seleccionar Día')
                     ->preload()
             ])
