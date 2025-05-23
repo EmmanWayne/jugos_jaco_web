@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StoragePath;
 use App\Models\Client;
+use App\Models\ClientVisitDay;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -31,24 +32,25 @@ class ClientService
             $positionAdjustment = 1;
             $clients = null;
 
-            if (!is_null($clientId) && $client = Client::find($clientId)) {
-                if ($position == $client->position) {
+            if (!is_null($clientId) && $client = ClientVisitDay::find($clientId)->onDay($day)->first()) {
+                if ($position == $client->visitDays->position) {
                     $clients = collect();
                 } else {
-                    $movingUp = $position < $client->position;
-                    $rangePositionUpdate =  $movingUp ? [$position, $client->position - 1]: [$client->position + 1, $position];
+                    $positionClient = $client->position;
+                    $movingUp = $position < $positionClient;
+                    $rangePositionUpdate =  $movingUp ? [$position, $positionClient - 1] : [$positionClient + 1, $position];
                     $positionAdjustment = $movingUp ? 1 : -1;
 
-                    $clients = Client::visitDay($day)
-                        ->where('id', '!=', $clientId)
-                        ->where('employee_id', $employeeId)
+                    $clients = ClientVisitDay::onDay($day)
+                        ->byEmployee($employeeId)
+                        ->where('client_id', '!=', $clientId)
                         ->whereBetween('position', $rangePositionUpdate)
                         ->get();
                 }
             } else {
-                $clients = Client::visitDay($day)
+                $clients = ClientVisitDay::onDay($day)
+                    ->byEmployee($employeeId)
                     ->where('position', '>=', $position)
-                    ->where('employee_id', $employeeId)
                     ->get();
             }
 
@@ -66,7 +68,29 @@ class ClientService
 
             return $this->successResponse(null, "Posición actualizada con éxito", 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse($e, 40);
+            return $this->errorResponse($e, 400);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e, 500);
+        }
+    }
+
+    public function updatePositionAfterDeleteVisitDay(int $position, int $employeeId, string $day): JsonResponse
+    {
+        try {
+            $clients = ClientVisitDay::onDay($day)
+                ->byEmployee($employeeId)
+                ->where('position', '>', $position)
+                ->get();
+            
+            $clients->each(function ($client) use ($position) {
+                $client->update([
+                    'position' => $client->position - 1
+                ]);
+            });
+
+            return $this->successResponse(null, 'Posición actualizada correctamente', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse($e, 404);
         } catch (\Exception $e) {
             return $this->errorResponse($e, 500);
         }
@@ -136,7 +160,6 @@ class ClientService
 
             $this->deleteBusinessImages($clientId);
             $this->deleteProfileImage($clientId);
-        
         } catch (ModelNotFoundException $e) {
             throw new NotFoundHttpException('Cliente no encontrado');
         } catch (\Exception $e) {
