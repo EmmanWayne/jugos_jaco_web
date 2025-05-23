@@ -24,15 +24,14 @@ class ClientResource extends JsonResource
             'township' => $this->township,
             'location' => [
                 'id' => $this->location?->id,
-                'latitude' => (double) $this->location?->latitude,
-                'longitude' => (double) $this->location?->longitude,
+                'latitude' => (float) $this->location?->latitude,
+                'longitude' => (float) $this->location?->longitude,
                 'plus_code' => $this->location?->plus_code,
                 'model_id' => $this->location?->model_id,
             ],
             'profile_image' => $this->profileImage?->path,
             'type_price' => $this->typePrice?->name,
-            'visit_day' => $this->visit_day,
-            'position' => $this->position,
+            'visit_days' => $this->visitDays,
             'business_name' => $this->business_name,
         ];
     }

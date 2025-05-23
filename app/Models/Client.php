@@ -9,6 +9,8 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
@@ -24,8 +26,6 @@ class Client extends Model implements Sortable
         'last_name',
         'phone_number',
         'business_name',
-        'position',
-        'visit_day',
         'address',
         'department',
         'township',
@@ -48,7 +48,6 @@ class Client extends Model implements Sortable
         return [
             'department' => DepartmentEnum::class,
             'township' => MunicipalityEnum::getByDepartment(DepartmentEnum::from($this->department)),
-            'visit_day' => VisitDayEnum::from($this->visit_day)?->value,
         ];
     }
 
@@ -87,7 +86,7 @@ class Client extends Model implements Sortable
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphOne
      */
-    public function profileImage()
+    public function profileImage(): MorphOne
     {
         return $this->morphOne(ResourceMedia::class, 'model')->where('type', 'profile');
     }
@@ -97,9 +96,42 @@ class Client extends Model implements Sortable
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
-    public function businessImages()
+    public function businessImages(): MorphMany
     {
         return $this->morphMany(ResourceMedia::class, 'model')->where('type', 'business');
+    }
+
+    /**
+     * Get the visit days for the client.
+     */
+    public function visitDays(): HasMany
+    {
+        return $this->hasMany(ClientVisitDay::class);
+    }
+
+    /**
+     * Scope a query to only include clients for a especific day.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $day
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWithVisitDaysForDay($query, $day = null): Builder
+    {
+        if (!$day) return $query->with('visitDays');
+        
+        return $query->with(['visitDays' => function ($query) use ($day) {
+            $query->where('visit_day', $day);
+        }]);
+    }
+
+    public function scopeOrderByVisitDay($query, $day): Builder
+    {
+        if (!$day) return $query;
+        return $query->join('client_visit_days', 'clients.id', '=', 'client_visit_days.client_id')
+            ->orderBy('client_visit_days.position')
+            ->where('client_visit_days.visit_day', $day)
+            ->select('clients.*');
     }
 
     // Scopes
@@ -145,13 +177,6 @@ class Client extends Model implements Sortable
             "Empleado Asignado: " . ($this->employee?->full_name ?? "Sin asignar");
 
         return "https://wa.me/?text=" . urlencode($message);
-    }
-
-    public function scopeVisitDay($query, $day): Builder
-    {
-        if (!$day) return $query;
-
-        return $query->where('visit_day', $day);
     }
 
     public function getProfileImageUrlAttribute(): string
