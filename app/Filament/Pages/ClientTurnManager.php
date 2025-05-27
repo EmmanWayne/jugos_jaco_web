@@ -5,15 +5,12 @@ namespace App\Filament\Pages;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Enums\VisitDayEnum;
-use Carbon\Carbon;
 use Filament\Pages\Page;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Support\Colors\Color;
 
 class ClientTurnManager extends Page implements HasTable
 {
@@ -102,5 +99,10 @@ class ClientTurnManager extends Page implements HasTable
     public static function getNavigationSort(): int
     {
         return 2;
+    }
+    
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
     }
 }
