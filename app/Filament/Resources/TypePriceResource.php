@@ -83,7 +83,7 @@ class TypePriceResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Tipos de precio';
+        return 'Tipos De Precio';
     }
 
     public static function getModelLabel(): string

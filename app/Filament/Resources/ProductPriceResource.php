@@ -112,7 +112,7 @@ class ProductPriceResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Precios de productos';
+        return 'Precios De Productos';
     }
 
     public static function getModelLabel(): string
