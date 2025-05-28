@@ -25,42 +25,65 @@ class InvoicesSeriesResource extends Resource
             ->schema([
 
                 Forms\Components\TextInput::make('cai')
+                    ->label('CAI')
+                    ->helperText('Código de Autorización de Impresión')
                     ->required()
                     ->maxLength(100)
                     ->unique(ignorable: fn(?InvoicesSeries $record) => $record),
 
                 Forms\Components\TextInput::make('initial_range')
+                    ->label('Rango Inicial')
+                    ->helperText('Número inicial del rango de facturación')
                     ->required()
                     ->numeric()
                     ->maxLength(20),
 
                 Forms\Components\TextInput::make('end_range')
+                    ->label('Rango Final')
+                    ->helperText('Número final del rango de facturación')
                     ->required()
                     ->numeric()
                     ->maxLength(20),
 
                 Forms\Components\DatePicker::make('expiration_date')
+                    ->label('Fecha de Expiración')
+                    ->helperText('Fecha de expiración del CAI')
                     ->required(),
 
                 Forms\Components\Select::make('status')
+                    ->label('Estado')
+                    ->helperText('Estado de la serie de facturación')
+                    ->required()
                     ->options([
-                        'Activada' => 'Activada',
+                        'Activa' => 'Activa',
                         'Expirada' => 'Expirada',
                         'Completada' => 'Completada',
                     ])
                     ->default('Activada'),
 
                 Forms\Components\TextInput::make('mask_format')
-                    ->default('000-000-000-000-000')
+                    ->label('Formato de Máscara')
+                    ->helperText('Formato de máscara para el número de factura')
+                    ->required()
+                    ->default('00000000')
                     ->maxLength(20),
 
                 Forms\Components\TextInput::make('prefix')
-                    ->default('INV-')
+                    ->label('Prefijo')
+                    ->helperText('Prefijo para el número de factura')
+                    ->required()
+                    ->default('000-000-00')
                     ->maxLength(20),
 
                 Forms\Components\TextInput::make('current_number')
+                    ->label('Número Actual')
+                    ->helperText('Número actual de la serie de facturación')
+                    ->required()
                     ->default(1)
-                    ->numeric(),
+                    ->numeric()
+                    ->visible(fn(string $context) => in_array($context, ['edit', 'view', 'create']))
+                    ->disabled(fn(string $context) => $context === 'edit'),
+
 
                 Forms\Components\Select::make('branch_id')
                     ->relationship('branch', 'name')
@@ -77,32 +100,42 @@ class InvoicesSeriesResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('cai')
+                    ->label('CAI')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('initial_range')
+                    ->label('Rango Inicial')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('end_range')
+                    ->label('Rango Final')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('expiration_date')
+                    ->label('Fecha de Expiración')
                     ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
+                    ->label('Estado')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('mask_format'),
+                Tables\Columns\TextColumn::make('mask_format')
+                    ->label('Formato de Máscara')
+                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('prefix'),
+                Tables\Columns\TextColumn::make('prefix')
+                    ->label('Prefijo')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('current_number')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Número Actual')
+                    ->sortable()
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('branch.name')
-                    ->label('Branch Name')
+                    ->label('Sucursal')
                     ->sortable(),
             ])->filters([
                 //

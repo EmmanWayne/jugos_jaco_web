@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('initial_range');
             $table->integer('end_range');
             $table->date('expiration_date');
-            $table->enum('status', ['Activada', 'Expirada', 'Completada']);
+            $table->enum('status', ['Activa', 'Expirada', 'Completada']);
             $table->string('mask_format', 20);
             $table->string('prefix', 20);
             $table->integer('current_number');
