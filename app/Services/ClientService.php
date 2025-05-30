@@ -32,8 +32,8 @@ class ClientService
             $positionAdjustment = 1;
             $clients = null;
 
-            if (!is_null($clientId) && $client = ClientVisitDay::find($clientId)->onDay($day)->first()) {
-                if ($position == $client->visitDays->position) {
+            if (!is_null($clientId) && $client = ClientVisitDay::where('client_id', $clientId)->onDay($day)->first()) {
+                if ($position == $client->position) {
                     $clients = collect();
                 } else {
                     $positionClient = $client->position;
