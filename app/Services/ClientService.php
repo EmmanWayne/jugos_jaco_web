@@ -74,6 +74,14 @@ class ClientService
         }
     }
 
+    /**
+     * Update the position of clients after deleting a visit day.
+     * 
+     * @param int $position
+     * @param int $employeeId
+     * @param string $day
+     * @return JsonResponse
+     */
     public function updatePositionAfterDeleteVisitDay(int $position, int $employeeId, string $day): JsonResponse
     {
         try {
@@ -93,6 +101,28 @@ class ClientService
             return $this->errorResponse($e, 404);
         } catch (\Exception $e) {
             return $this->errorResponse($e, 500);
+        }
+    }
+
+    /**
+     * Get the last position of a client for a specific day.
+     * 
+     * @param int $employeeId
+     * @param string $day
+     * @return int
+     */
+    public function getLastPosition(int $employeeId, string $day): int
+    {
+        try {
+            $lastPosition = ClientVisitDay::onDay($day)
+                ->byEmployee($employeeId)
+                ->max('position');
+
+            return $lastPosition ? $lastPosition + 1 : 1; 
+        } catch (ModelNotFoundException $e) {
+            throw new NotFoundHttpException('No se encontraron clientes para el día especificado');
+        } catch (\Exception $e) {
+            throw new \Exception('Ha ocurrido un error al obtener la última posición del cliente');
         }
     }
 

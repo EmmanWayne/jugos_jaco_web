@@ -100,14 +100,15 @@ class ClientVisitDayController extends Controller
 
             $this->validateExistsVisitDay($clientId, $request->visit_day);
 
+            $lastPosition = $this->clientService->getLastPosition($clientId, $request->visit_day);
             $this->clientService->updatePosition(
-                $request->position,
+                $lastPosition,
                 Auth::user()->employee_id,
                 $request->visit_day
             );
 
             $visitDay = $client->visitDays()->create([
-                'position' => $request->position,
+                'position' => $lastPosition,
                 'visit_day' => $request->visit_day
             ]);
 

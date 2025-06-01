@@ -33,7 +33,6 @@ class ClientVisitDayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'position' => ['required', 'integer', 'min:1'],
             'visit_day' => ['required', 'string', Rule::in(VisitDayEnum::getAllowedDays())],
         ];
     }
