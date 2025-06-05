@@ -47,7 +47,7 @@ class InvoicesSeriesResource extends Resource
 
                 Forms\Components\DatePicker::make('expiration_date')
                     ->label('Fecha de Expiración')
-                    ->helperText('Fecha de expiración del CAI')
+                    ->helperText('Fecha limite de emisión')
                     ->required(),
 
                 Forms\Components\Select::make('status')
