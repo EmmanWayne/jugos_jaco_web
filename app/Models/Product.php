@@ -19,6 +19,7 @@ class Product extends Model
         'content',
         'cost',
         'description',
+        'is_active',
         'category_id',
     ];
 

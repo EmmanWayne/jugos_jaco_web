@@ -110,7 +110,14 @@ class ProductResource extends Resource
                                     ->prefix('L.'),
                             ]),
 
+                        Section::make('')
+                            ->columns(1)
+                            ->schema([]),
 
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Estado')
+                            ->default(true)
+                            ->required()
                     ]),
 
             ]);
@@ -169,6 +176,14 @@ class ProductResource extends Resource
                     ->label('Costo')
                     ->formatStateUsing(fn($record) => "L. {$record->cost}")
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Estado')
+                    ->boolean()
+                    ->trueIcon('heroicon-s-check-circle')
+                    ->falseIcon('heroicon-s-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Descripción')
