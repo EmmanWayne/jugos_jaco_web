@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -41,10 +42,10 @@ class ClientController extends Controller
     {
         try {
             $day = $request->query('day');
-            $clients = Client::visitDay($day)->where('employee_id', Auth::user()->employee_id)
-                ->with(['location', 'typePrice', 'profileImage'])
-                ->orderBy('visit_day')
-                ->orderBy('position')
+            $clients = Client::with(['location', 'typePrice', 'profileImage'])
+                ->withVisitDaysForDay($day)
+                ->where('employee_id', Auth::user()->employee_id)
+                ->orderByVisitDay($day)
                 ->get();
 
             return $this->successResponse(
@@ -69,16 +70,23 @@ class ClientController extends Controller
 
             $this->validateExistingClient($request);
 
-            $this->clientService->updatePosition(
-                $request->position,
-                Auth::user()->employee_id,
-                $request->visit_day
-            );
-
             $client = Client::create([
                 ...$request->validated(),
                 'employee_id' => Auth::user()->employee_id
             ]);
+
+            if ($request->filled(['visit_day', 'position'])) {
+                $this->clientService->updatePosition(
+                    $request->position,
+                    Auth::user()->employee_id,
+                    $request->visit_day
+                );
+
+                $client->visitDays()->create([
+                    'position' => $request->position,
+                    'visit_day' => $request->visit_day
+                ]);
+            }
 
             if ($request->filled(['latitude', 'longitude'])) {
                 $client->location()->create([
@@ -115,13 +123,6 @@ class ClientController extends Controller
             $client = Client::findOrFail($id);
 
             $this->validateExistingClient($request, $id);
-
-            $this->clientService->updatePosition(
-                $request->position,
-                Auth::user()->employee_id,
-                $request->visit_day,
-                $id
-            );
 
             $client->update($request->validated());
 
@@ -289,21 +290,6 @@ class ClientController extends Controller
         }
     }
 
-    /**
-     * Update the position of the client.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updatePosition($id, Request $request)
-    {
-        return $this->clientService->updatePosition(
-            $request->position,
-            Auth::user()->employee_id,
-            $request->day,
-            $id
-        );
-    }
     /**
      * Validate if the client already exists.
      *
