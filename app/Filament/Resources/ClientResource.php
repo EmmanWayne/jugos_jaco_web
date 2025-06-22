@@ -35,7 +35,7 @@ class ClientResource extends Resource
                 Section::make('Información del cliente')
                     ->description('En esta sección se registra la información del cliente.')
                     ->schema([
-                        Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('first_name')
                                     ->label('Nombres')
@@ -53,18 +53,7 @@ class ClientResource extends Resource
                                 Forms\Components\TextInput::make('business_name')
                                     ->label('Nombre del negocio')
                                     ->required()
-                                    ->maxLength(50),
-                                Forms\Components\TextInput::make('position')
-                                    ->label('Turno de visita')
-                                    ->numeric()
-                                    ->required()
-                                    ->minValue(1)
-                                    ->maxValue(255)
-                                    ->maxLength(3),
-                                Forms\Components\Select::make('visit_day')
-                                    ->label('Día de visita')
-                                    ->options(VisitDayEnum::toArray())
-                                    ->required()
+                                    ->maxLength(50)
                             ]),
                         Forms\Components\Grid::make(1)
                             ->schema([
@@ -156,13 +145,6 @@ class ClientResource extends Resource
                     }),
                 TextColumn::make('business_name')
                     ->label('Negocio')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('position')
-                    ->label('Turno de visita')
-                    ->sortable(),
-                TextColumn::make('visit_day')
-                    ->label('Día de visita')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('phone_number')
