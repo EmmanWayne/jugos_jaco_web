@@ -3,15 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoicesSeriesResource\Pages;
-use App\Filament\Resources\InvoicesSeriesResource\RelationManagers;
+use App\Filament\Support\FilamentNotification;
 use App\Models\InvoicesSeries;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InvoicesSeriesResource extends Resource
 {
@@ -23,72 +21,74 @@ class InvoicesSeriesResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Información de la serie de facturación')
+                    ->description('Datos generales de la serie de facturas')
+                    ->schema([
+                        Forms\Components\TextInput::make('cai')
+                            ->label('CAI')
+                            ->helperText('Código de Autorización de Impresión')
+                            ->required()
+                            ->maxLength(100)
+                            ->unique(ignorable: fn(?InvoicesSeries $record) => $record),
 
-                Forms\Components\TextInput::make('cai')
-                    ->label('CAI')
-                    ->helperText('Código de Autorización de Impresión')
-                    ->required()
-                    ->maxLength(100)
-                    ->unique(ignorable: fn(?InvoicesSeries $record) => $record),
+                        Forms\Components\Select::make('branch_id')
+                            ->label('Sucursal')
+                            ->relationship('branch', 'name')
+                            ->required(),
 
-                Forms\Components\TextInput::make('initial_range')
-                    ->label('Rango Inicial')
-                    ->helperText('Número inicial del rango de facturación')
-                    ->required()
-                    ->numeric()
-                    ->maxLength(20),
+                        Forms\Components\Grid::make('')
+                            ->schema([
+                                Forms\Components\TextInput::make('initial_range')
+                                    ->label('Rango Inicial')
+                                    ->helperText('Número inicial del rango de facturación')
+                                    ->required()
+                                    ->numeric()
+                                    ->maxLength(20),
 
-                Forms\Components\TextInput::make('end_range')
-                    ->label('Rango Final')
-                    ->helperText('Número final del rango de facturación')
-                    ->required()
-                    ->numeric()
-                    ->maxLength(20),
+                                Forms\Components\TextInput::make('end_range')
+                                    ->label('Rango Final')
+                                    ->helperText('Número final del rango de facturación')
+                                    ->required()
+                                    ->numeric()
+                                    ->maxLength(20),
+                                Forms\Components\DatePicker::make('expiration_date')
+                                    ->label('Fecha límite de emisión')
+                                    ->helperText('Fecha límite de emisión')
+                                    ->required(),
+                                Forms\Components\TextInput::make('prefix')
+                                    ->label('Prefijo')
+                                    ->helperText('Prefijo para el número de factura')
+                                    ->required()
+                                    ->placeholder('001-002-01')
+                                    ->maxLength(20),
+                                Forms\Components\TextInput::make('mask_format')
+                                    ->label('Formato de Máscara')
+                                    ->helperText('El formato de máscara es la cantidad de digitos que tendra el número de factura sin el prefijo')
+                                    ->required()
+                                    ->default('00000000')
+                                    ->maxLength(20),
+                                Forms\Components\TextInput::make('current_number')
+                                    ->label('Factura Actual')
+                                    ->helperText('Número actual de la factura')
+                                    ->required()
+                                    ->numeric()
+                                    ->visible(fn(string $context) => in_array($context, ['edit', 'view', 'create'])),
+                            ])
+                            ->columns(3),
 
-                Forms\Components\DatePicker::make('expiration_date')
-                    ->label('Fecha de Expiración')
-                    ->helperText('Fecha limite de emisión')
-                    ->required(),
-
-                Forms\Components\Select::make('status')
-                    ->label('Estado')
-                    ->helperText('Estado de la serie de facturación')
-                    ->required()
-                    ->options([
-                        'Activa' => 'Activa',
-                        'Expirada' => 'Expirada',
-                        'Completada' => 'Completada',
+                        Forms\Components\Select::make('status')
+                            ->label('Estado')
+                            ->helperText('Estado de la factura')
+                            ->required()
+                            ->options([
+                                'Activa' => 'Activa',
+                                'Expirada' => 'Expirada',
+                                'Completada' => 'Completada',
+                            ])
+                            ->default('Activa'),
                     ])
-                    ->default('Activada'),
-
-                Forms\Components\TextInput::make('mask_format')
-                    ->label('Formato de Máscara')
-                    ->helperText('Formato de máscara para el número de factura')
-                    ->required()
-                    ->default('00000000')
-                    ->maxLength(20),
-
-                Forms\Components\TextInput::make('prefix')
-                    ->label('Prefijo')
-                    ->helperText('Prefijo para el número de factura')
-                    ->required()
-                    ->default('000-000-00')
-                    ->maxLength(20),
-
-                Forms\Components\TextInput::make('current_number')
-                    ->label('Número Actual')
-                    ->helperText('Número actual de la serie de facturación')
-                    ->required()
-                    ->default(1)
-                    ->numeric()
-                    ->visible(fn(string $context) => in_array($context, ['edit', 'view', 'create']))
-                    ->disabled(fn(string $context) => $context === 'edit'),
-
-
-                Forms\Components\Select::make('branch_id')
-                    ->relationship('branch', 'name')
-                    ->required(),
-            ])->columns(2)
+                    ->columns(2),
+            ])
             ->columns([
                 'sm' => 1,
                 'md' => 2,
@@ -99,10 +99,8 @@ class InvoicesSeriesResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('cai')
-                    ->label('CAI')
-                    ->searchable()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('branch.name')
+                    ->label('Sucursal'),
 
                 Tables\Columns\TextColumn::make('initial_range')
                     ->label('Rango Inicial')
@@ -113,16 +111,25 @@ class InvoicesSeriesResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('expiration_date')
-                    ->label('Fecha de Expiración')
+                    ->label('Fecha límite de emisión')
                     ->date()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('mask_format')
-                    ->label('Formato de Máscara')
+                    ->icon(fn($state) => match ($state) {
+                        'Activa' => 'heroicon-o-check-circle',
+                        'Expirada' => 'heroicon-o-x-circle',
+                        'Completada' => 'heroicon-o-check-badge',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
+                    ->color(fn($state) => match ($state) {
+                        'Activa' => 'success',
+                        'Expirada' => 'danger',
+                        'Completada' => 'primary',
+                        default => 'gray',
+                    })
+                    ->badge()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('prefix')
@@ -130,23 +137,46 @@ class InvoicesSeriesResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('current_number')
-                    ->label('Número Actual')
+                    ->label('Factura Actual')
                     ->sortable()
                     ->searchable(),
-
-                Tables\Columns\TextColumn::make('branch.name')
-                    ->label('Sucursal')
-                    ->sortable(),
             ])->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->before(function ($action, $record) {
+                        if ($record->status === 'Activa') {
+                            FilamentNotification::error(
+                                title: 'Serie de facturación activa',
+                                body: 'La serie de facturación está activa y no se puede eliminar.'
+                            );
+
+                            $action->cancel();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function ($action, $records) {
+                            $activeSeriesCount = $records->where('status', 'Activa')->count();
+
+                            if ($activeSeriesCount > 0) {
+                                FilamentNotification::error(
+                                    title: 'Series de facturación activas',
+                                    body: "No se pueden eliminar {$activeSeriesCount} series activas. Cambie su estado antes de eliminarlas."
+                                );
+
+                                $action->cancel();
+                            }
+
+                            $records->filter(fn($record) => $record->status !== 'Activa')
+                                ->each(fn($record) => $record->delete());
+                        }),
                 ]),
             ]);
     }

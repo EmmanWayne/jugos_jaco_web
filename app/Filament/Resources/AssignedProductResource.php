@@ -4,14 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AssignedProductResource\Pages;
 use App\Filament\Resources\AssignedProductResource\RelationManagers;
+use App\Filament\Support\FilamentNotification;
 use App\Models\AssignedProduct;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AssignedProductResource extends Resource
 {
@@ -41,7 +40,9 @@ class AssignedProductResource extends Resource
                 Forms\Components\DatePicker::make('date')
                     ->required()
                     ->label('Fecha')
-                    ->default(now()->format('Y-m-d')),
+                    ->default(now()->format('Y-m-d'))
+                    ->minDate(now()->format('Y-m-d'))
+                    ->disabled(fn($livewire) => $livewire instanceof Pages\EditAssignedProduct)
             ]);
     }
 
@@ -51,7 +52,6 @@ class AssignedProductResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('employee.full_name')
                     ->searchable()
-                    ->sortable()
                     ->label('Empleado')
                     ->sortable(query: function ($query, $direction) {
                         return $query
@@ -100,11 +100,41 @@ class AssignedProductResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn($record) => static::disabledForPastOrFutureDates($record)),
+                Tables\Actions\DeleteAction::make()
+                    ->using(function ($record, $action) {
+                        if ($record->details->count() > 0) {
+                            FilamentNotification::warning(
+                                title: 'Asignación de productos',
+                                body: 'No se puede eliminar la asignación de productos debido a que tiene productos asignados.',
+                            );
+
+                            $action->cancel();
+                        }
+
+                        $record->delete();
+                    })
+                    ->visible(fn($record) => static::disabledForPastOrFutureDates($record))
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->using(function ($records, $action) {
+                            foreach ($records as $record) {
+                                if ($record->details->count() > 0) {
+                                    FilamentNotification::warning(
+                                        title: 'Asignación de productos',
+                                        body: "No se puede eliminar la asignación de productos de {$record->full_name} debido a que tiene productos asignados.",
+                                    );
+
+                                    $action->cancel();
+                                    return;
+                                }
+                            }
+
+                            AssignedProduct::destroy($records->pluck('id')->toArray());
+                        })
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -121,9 +151,14 @@ class AssignedProductResource extends Resource
     {
         return [
             'index' => Pages\ListAssignedProducts::route('/'),
-            'view' => Pages\ViewAssignedProduct::route('/{record}'),
             'create' => Pages\CreateAssignedProduct::route('/create'),
+            'view' => Pages\ViewAssignedProduct::route('/{record}'),
             'edit' => Pages\EditAssignedProduct::route('/{record}/edit'),
         ];
+    }
+
+    private static function disabledForPastOrFutureDates($record): bool
+    {
+        return $record->date->format('Y-m-d') === now()->format('Y-m-d');
     }
 }
