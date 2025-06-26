@@ -4,7 +4,9 @@ namespace App\Filament\Resources\InvoicesSeriesResource\Pages;
 
 use App\Filament\Resources\InvoicesSeriesResource;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class EditInvoicesSeries extends EditRecord
 {
@@ -14,7 +16,8 @@ class EditInvoicesSeries extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->hidden(fn(Model $record) => $record->status === 'Activa'),
         ];
     }
 }

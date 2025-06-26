@@ -54,17 +54,30 @@ class DetailsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()->label('Agregar Productos Asignados'),
+                Tables\Actions\CreateAction::make()
+                    ->label('Agregar Productos Asignados')
+                    ->visible(fn() => $this->disabledForPastOrFutureDates())
+                    ->modalHeading('Asignar producto al empleado'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->modalHeading('Detalle de Producto Asignado'),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->iconButton()
+                    ->visible(fn() => $this->disabledForPastOrFutureDates()),
+                Tables\Actions\EditAction::make()
+                    ->iconButton()
+                    ->visible(fn() => $this->disabledForPastOrFutureDates()),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => $this->disabledForPastOrFutureDates()),
                 ]),
             ]);
+    }
+
+    private function disabledForPastOrFutureDates(): bool
+    {
+        $assignedProduct = $this->getOwnerRecord();
+        return $assignedProduct->date->format('Y-m-d') === now()->format('Y-m-d');
     }
 }
