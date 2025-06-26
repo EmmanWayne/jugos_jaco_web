@@ -41,7 +41,9 @@ class AdminPanelProvider extends PanelProvider
                'Administración',
                'Clientes',
                'Finanzas',
-               'Productos'
+               'Productos',
+               'Inventario',
+               'Ventas'
             ])
             ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
