@@ -17,7 +17,6 @@ class ClientVisitDaysWidget extends Widget
 
     public function getVisitDays()
     {
-        // Asumiendo que tienes una relación visitDays en el modelo Client
         return $this->record->visitDays ?? [];
     }
 
