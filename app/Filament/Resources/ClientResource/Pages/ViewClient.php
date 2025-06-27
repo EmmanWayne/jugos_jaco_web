@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ClientResource\Pages;
 use App\Filament\Resources\ClientResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Widgets\Widget;
 
 class ViewClient extends ViewRecord
 {
@@ -21,6 +22,7 @@ class ViewClient extends ViewRecord
     {
         return [
             \App\Filament\Resources\ClientResource\Widgets\BusinessImagesWidget::class,
+             \App\Filament\Resources\ClientResource\Widgets\ClientVisitDaysWidget::class,
         ];
     }
 

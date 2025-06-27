@@ -12,12 +12,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Spatie\EloquentSortable\Sortable;
-use Spatie\EloquentSortable\SortableTrait;
 
-class Client extends Model implements Sortable
+class Client extends Model
 {
-    use HasFactory, SortableTrait;
+    use HasFactory;
 
     protected $table = 'clients';
 
@@ -32,12 +30,6 @@ class Client extends Model implements Sortable
         'employee_id',
         'type_price_id',
     ];
-
-    public array $sortable = [
-        'order_column_name' => 'position',
-        'sort_when_creating' => true,
-    ];
-
     /**
      * The attributes that should be cast.
      *
@@ -49,11 +41,6 @@ class Client extends Model implements Sortable
             'department' => DepartmentEnum::class,
             'township' => MunicipalityEnum::getByDepartment(DepartmentEnum::from($this->department)),
         ];
-    }
-
-    public function buildSortQuery()
-    {
-        return static::query()->where('visit_day', $this->visit_day);
     }
 
     public function employee(): BelongsTo
@@ -119,7 +106,7 @@ class Client extends Model implements Sortable
     public function scopeWithVisitDaysForDay($query, $day = null): Builder
     {
         if (!$day) return $query->with('visitDays');
-        
+
         return $query->with(['visitDays' => function ($query) use ($day) {
             $query->where('visit_day', $day);
         }]);
