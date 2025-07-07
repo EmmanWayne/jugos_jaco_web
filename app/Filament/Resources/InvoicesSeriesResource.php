@@ -17,6 +17,14 @@ class InvoicesSeriesResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'Configuración';
+
+    protected static ?string $navigationLabel = 'Facturación';
+
+    protected static ?string $modelLabel = 'Configuración de facturación';
+    
+    protected static ?string $pluralModelLabel = 'Configuraciones de facturación';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -198,23 +206,6 @@ class InvoicesSeriesResource extends Resource
         ];
     }
 
-
-    public static function getNavigationGroup(): ?string
-    {
-        return 'Facturación';
-    }
-    public static function getNavigationLabel(): string
-    {
-        return 'Facturas';
-    }
-    public static function getModelLabel(): string
-    {
-        return 'Serie de Factura';
-    }
-    public static function getPluralModelLabel(): string
-    {
-        return 'Series de Facturas';
-    }
     public static function getNavigationSort(): ?int
     {
         return 2; // Adjust the sort order as needed

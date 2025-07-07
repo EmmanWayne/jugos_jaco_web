@@ -112,12 +112,12 @@ class ProductResource extends Resource
 
                         Section::make('')
                             ->columns(1)
-                            ->schema([]),
-
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Estado')
-                            ->default(true)
-                            ->required()
+                            ->schema([
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Estado')
+                                    ->default(true)
+                                    ->required()
+                            ]),
                     ]),
 
             ]);
