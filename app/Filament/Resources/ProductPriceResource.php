@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductPriceResource\Pages;
 use App\Models\ProductPrice;
+use App\Models\ProductUnit;
 use App\Models\TaxCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -33,19 +34,43 @@ class ProductPriceResource extends Resource
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->label('Producto'),
+                                    ->label('Producto')
+                                    ->reactive()
+                                    ->afterStateUpdated(function (callable $set) {
+                                        $set('product_unit_id', null);
+                                    }),
 
+                                Forms\Components\Select::make('product_unit_id')
+                                    ->label('Unidad de medida')
+                                    ->options(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (!$productId) {
+                                            return [];
+                                        }
+                                        
+                                        return ProductUnit::where('product_id', $productId)
+                                            ->active()
+                                            ->with('unit')
+                                            ->get()
+                                            ->mapWithKeys(function ($productUnit) {
+                                                return [$productUnit->id => $productUnit->unit->name . ' (' . $productUnit->conversion_factor . ')'];
+                                            });
+                                    })
+                                    ->required()
+                                    ->searchable()
+                                    ->helperText('Seleccione la unidad de medida para este precio'),
+                            ]),
+
+                        Forms\Components\Section::make('')
+                            ->columns(2)
+                            ->schema([
                                 Forms\Components\Select::make('type_price_id')
                                     ->relationship('typePrice', 'name')
                                     ->required()
                                     ->searchable()
                                     ->preload()
                                     ->label('Tipo de precio'),
-                            ]),
 
-                        Forms\Components\Section::make('')
-                            ->columns(2)
-                            ->schema([
                                 Forms\Components\TextInput::make('price')
                                     ->label('Precio')
                                     ->required()
@@ -54,17 +79,17 @@ class ProductPriceResource extends Resource
                                     ->maxValue(99999.99)
                                     ->minValue(0)
                                     ->step(0.01),
+                            ]),
 
+                        Forms\Components\Section::make('')
+                            ->columns(2)
+                            ->schema([
                                 Forms\Components\Toggle::make('price_include_tax')
                                     ->label('Precio incluye impuesto')
                                     ->default(false)
                                     ->helperText('Marque si el precio ya incluye el impuesto')
                                     ->inline(false),
-                            ]),
 
-                        Forms\Components\Section::make('')
-                            ->columns(1)
-                            ->schema([
                                 Forms\Components\Select::make('tax_category_id')
                                     ->label('Categoría de impuesto')
                                     ->options(TaxCategory::getForProductSelection())
@@ -84,6 +109,17 @@ class ProductPriceResource extends Resource
                     ->label('Producto')
                     ->searchable()
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('productUnit.unit.name')
+                    ->label('Unidad')
+                    ->badge()
+                    ->color('info')
+                    ->formatStateUsing(function ($record) {
+                        if (!$record->productUnit) {
+                            return 'Sin unidad';
+                        }
+                        return $record->productUnit->unit->name . ' (' . $record->productUnit->conversion_factor . ')';
+                    }),
 
                 Tables\Columns\TextColumn::make('typePrice.name')
                     ->label('Tipo de precio')
@@ -145,6 +181,18 @@ class ProductPriceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('product_id')
+                    ->label('Producto')
+                    ->relationship('product', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                Tables\Filters\SelectFilter::make('product_unit_id')
+                    ->label('Unidad de medida')
+                    ->relationship('productUnit.unit', 'name')
+                    ->searchable()
+                    ->preload(),
+
                 Tables\Filters\SelectFilter::make('tax_category_id')
                     ->label('Categoría de Impuesto')
                     ->relationship('taxCategory', 'name')
