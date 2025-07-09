@@ -24,7 +24,7 @@ class EditAssignedProduct extends EditRecord
                     if ($record->details()->exists()) {
                         FilamentNotification::warning(
                             title: 'Asignación de Productos',
-                                body: 'No se puede eliminar la asignación de productos debido a que tiene productos asignados.',
+                            body: 'No se puede eliminar la asignación de productos debido a que tiene productos asignados.',
                         );
 
                         $action->cancel();

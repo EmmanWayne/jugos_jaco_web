@@ -33,6 +33,11 @@ class Unit extends Model
         return $query->where('is_active', true);
     }
 
+    public function productUnits()
+    {
+        return $this->hasMany(ProductUnit::class);
+    }
+
     /**
      * Scope para filtrar por categoría
      */
