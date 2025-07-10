@@ -301,6 +301,7 @@ class ClientController extends Controller
     {
         $query = Client::where('last_name', $request->last_name)
             ->where('first_name', $request->first_name)
+            ->where('business_name', $request->business_name)
             ->where('phone_number', $request->phone_number);
 
         if ($client_id) {
