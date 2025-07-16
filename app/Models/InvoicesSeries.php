@@ -25,4 +25,9 @@ class InvoicesSeries extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'invoice_series_id');
+    }
 }

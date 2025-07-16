@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
@@ -28,9 +29,19 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function productPrices()
+    {
+        return $this->hasMany(ProductPrice::class);
+    }
+
     public function productUnits()
     {
         return $this->hasMany(ProductUnit::class);
+    }
+
+    public function saleDetails(): HasMany
+    {
+        return $this->hasMany(SaleDetail::class);
     }
 
     public function activeUnits()

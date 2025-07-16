@@ -59,6 +59,24 @@ class TaxCategory extends Model
     }
 
     /**
+     * Relación con categorías derivadas (para líneas de display)
+     */
+    public function derivedTaxCategories()
+    {
+        return $this->hasMany(TaxCategory::class, 'base_tax_id');
+    }
+
+    public function saleDetails()
+    {
+        return $this->hasMany(SaleDetail::class, 'tax_category_id');
+    }
+
+    public function saleTaxTotals()
+    {
+        return $this->hasMany(SaleTaxTotal::class, 'tax_category_id');
+    }
+
+    /**
      * Scope para categorías que se asignan a productos
      */
     public function scopeForProducts($query)

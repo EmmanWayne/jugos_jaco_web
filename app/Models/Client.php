@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\DepartmentEnum;
 use App\Enums\MunicipalityEnum;
-use App\Enums\VisitDayEnum;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -107,6 +106,11 @@ class Client extends Model implements Sortable
     public function visitDays(): HasMany
     {
         return $this->hasMany(ClientVisitDay::class);
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
     }
 
     /**

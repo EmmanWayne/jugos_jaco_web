@@ -38,6 +38,11 @@ class ProductUnit extends Model
         return $this->belongsTo(Unit::class);
     }
 
+    public function saleDetails()
+    {
+        return $this->hasMany(SaleDetail::class, 'product_unit_id');
+    }
+
     /**
      * Scope para obtener solo unidades activas
      */
