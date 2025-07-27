@@ -38,12 +38,12 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->navigationGroups([
-               'Administración',
-               'Clientes',
-               'Finanzas',
-               'Productos',
-               'Inventario',
-               'Ventas'
+                'Administración',
+                'Clientes',
+                'Finanzas',
+                'Productos',
+                'Inventario',
+                'Ventas'
             ])
             ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -53,10 +53,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\Locations\ClientLocations::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
-            ])
+            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

@@ -8,8 +8,13 @@ use App\Models\Client;
 use App\Models\Employee;
 use App\Models\Product;
 
-class StatsOverview extends BaseWidget
+class RegistrosDelSistemaWidget extends BaseWidget
 {
+    protected ?string $heading = 'Registros del Sistema';
+    protected ?string $description = 'Resumen de la cantidad total de clientes, empleados y productos registrados en el sistema.';
+
+    protected static string $view = 'filament.widgets.registros-del-sistema-widget';
+
     protected function getCards(): array
     {
         return [
