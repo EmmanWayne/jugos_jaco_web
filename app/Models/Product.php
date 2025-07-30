@@ -24,6 +24,13 @@ class Product extends Model
         'category_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -36,7 +43,7 @@ class Product extends Model
 
     public function productUnits()
     {
-        return $this->hasMany(ProductUnit::class);
+        return $this->hasMany(ProductUnit::class, 'product_id', 'id');
     }
 
     public function saleDetails(): HasMany
@@ -59,6 +66,10 @@ class Product extends Model
         return $this->morphOne(ResourceMedia::class, 'model')->where('type', 'product');
     }
 
+    public function scopeIsActive($query, $isActive = true)
+    {
+        return $query->where('is_active', $isActive);
+    }
 
     public function getImageUrlAttribute()
     {

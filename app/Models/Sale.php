@@ -207,4 +207,20 @@ class Sale extends Model
             'series' => $this->invoiceSeries,
         ];
     }
+    
+    /**
+     * Obtiene el valor del estado como string para casos donde se necesite la conversión automática
+     */
+    public function getStatusValueAttribute(): ?string
+    {
+        return $this->status?->value;
+    }
+    
+    /**
+     * Obtiene el valor del tipo de pago como string para casos donde se necesite la conversión automática
+     */
+    public function getPaymentTypeValueAttribute(): ?string
+    {
+        return $this->payment_type?->value;
+    }
 }

@@ -84,4 +84,9 @@ class ProductPrice extends Model
     {
         return $this->belongsTo(ProductUnit::class);
     }
+
+    public function scopeTypePrice($query, $typePriceId)
+    {
+        return $query->where('type_price_id', $typePriceId);
+    }
 }
