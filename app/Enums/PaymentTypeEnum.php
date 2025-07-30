@@ -46,9 +46,11 @@ enum PaymentTypeEnum: string
 
     public static function getOptions(): array
     {
-        return collect(self::cases())
-            ->mapWithKeys(fn($case) => [$case->value => $case->getLabelWithIcon()])
-            ->toArray();
+        $options = [];
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->getLabel();
+        }
+        return $options;
     }
 
     public function requiresDueDate(): bool

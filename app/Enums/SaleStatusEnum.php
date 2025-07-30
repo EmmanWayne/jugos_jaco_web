@@ -50,9 +50,11 @@ enum SaleStatusEnum: string
 
     public static function getOptions(): array
     {
-        return collect(self::cases())
-            ->mapWithKeys(fn($case) => [$case->value => $case->getLabel()])
-            ->toArray();
+        $options = [];
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->getLabel();
+        }
+        return $options;
     }
 
     public static function getSelectOptions(): array
