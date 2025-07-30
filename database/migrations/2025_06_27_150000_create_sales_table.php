@@ -16,7 +16,6 @@ return new class extends Migration
 
             $table->foreignId('client_id')->nullable()->constrained('clients');
             $table->foreignId('employee_id')->constrained('employees');
-            $table->foreignId('deposit_id')->nullable()->constrained('deposits')->restrictOnDelete();
 
             $table->date('sale_date');
             $table->date('due_date')->nullable();
