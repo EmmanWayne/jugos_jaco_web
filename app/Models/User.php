@@ -57,4 +57,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function createdSales()
+    {
+        return $this->hasMany(Sale::class, 'created_by');
+    }
+
+    public function updatedSales()
+    {
+        return $this->hasMany(Sale::class, 'updated_by');
+    }
 }
