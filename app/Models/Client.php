@@ -187,4 +187,11 @@ class Client extends Model implements Sortable
     {
         return $this->profileImage ? asset('storage/' . $this->profileImage->path) : asset('images/avatar.png');
     }
+
+    public function getAccountReceivableCountAttribute(): int
+    {
+        return $this->sales()
+            ->whereHas('accountReceivable')
+            ->count();
+    }
 }

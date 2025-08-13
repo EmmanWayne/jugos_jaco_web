@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Filament\Support\FilamentNotification;
-use Exception;
+use Throwable;
 use Illuminate\Database\QueryException;
 
 class ExceptionHandlerService
@@ -11,7 +11,7 @@ class ExceptionHandlerService
     /**
      * Maneja la excepción y muestra la notificación apropiada
      */
-    public static function handle(Exception $exception, string $context = 'registro'): void
+    public static function handle(Throwable $exception, string $context = 'registro'): void
     {
         $message = self::getErrorMessage($exception, $context);
         
@@ -24,13 +24,22 @@ class ExceptionHandlerService
     /**
      * Devuelve el mensaje de error apropiado según el tipo de excepción
      */
-    public static function getErrorMessage(Exception $exception, string $context = 'registro'): array
+    public static function getErrorMessage(Throwable $exception, string $context = 'registro'): array
     {
         if ($exception instanceof QueryException) {
             return self::getQueryExceptionMessage($exception, $context);
         }
 
-        // Otras excepciones generales
+        // Excepciones generales: mostrar el mensaje lanzado si existe
+        $message = trim((string) $exception->getMessage());
+        if ($message !== '') {
+            return [
+                'title' => 'Error',
+                'body' => $message,
+            ];
+        }
+
+        // Fallback genérico si no hay mensaje
         return [
             'title' => 'Error inesperado',
             'body' => "Ocurrió un error inesperado al procesar el {$context}. Por favor, inténtelo de nuevo."
