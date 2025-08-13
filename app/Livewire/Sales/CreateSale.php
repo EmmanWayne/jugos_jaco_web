@@ -525,7 +525,6 @@ class CreateSale extends Component
                 );
             }
 
-
             DB::commit();
 
             // Close payment modal and show confirmation
@@ -535,7 +534,7 @@ class CreateSale extends Component
             
             session()->flash('success', 'Venta creada exitosamente.');
             
-    } catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Error al crear la venta: ' . $e->getMessage());
         }

@@ -16,6 +16,7 @@ class Deposit extends Model
         'amount',
         'reference_number',
         'bank',
+        'model_id',
         'branch_id',
     ];
 
