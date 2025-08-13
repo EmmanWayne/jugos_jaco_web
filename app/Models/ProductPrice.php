@@ -14,6 +14,7 @@ class ProductPrice extends Model
     protected $fillable = [
         'type_price_id',
         'product_id',
+        'product_unit_id',
         'price',
         'tax_category_id',
         'price_include_tax',
@@ -77,5 +78,10 @@ class ProductPrice extends Model
     public function taxCategory()
     {
         return $this->belongsTo(TaxCategory::class);
+    }
+
+    public function productUnit()
+    {
+        return $this->belongsTo(ProductUnit::class);
     }
 }
