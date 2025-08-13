@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('content', 16);
             $table->decimal('cost', 8, 2);
             $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->foreignId('category_id')->constrained('categories')->restrictOnDelete();
             $table->timestamps();
         });
