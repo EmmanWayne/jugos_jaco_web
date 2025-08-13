@@ -28,6 +28,21 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function productUnits()
+    {
+        return $this->hasMany(ProductUnit::class);
+    }
+
+    public function activeUnits()
+    {
+        return $this->hasMany(ProductUnit::class)->where('is_active', true);
+    }
+
+    public function baseUnit()
+    {
+        return $this->hasOne(ProductUnit::class)->where('is_base_unit', true);
+    }
+
     public function profileImage()
     {
         return $this->morphOne(ResourceMedia::class, 'model')->where('type', 'product');
