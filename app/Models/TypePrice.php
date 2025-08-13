@@ -14,4 +14,14 @@ class TypePrice extends Model
     protected $fillable = [
         'name',
     ];
+
+    public function saleDetails()
+    {
+        return $this->hasMany(SaleDetail::class, 'type_price_id');
+    }
+
+    public function clients()
+    {
+        return $this->hasMany(Client::class, 'type_price_id');
+    }
 }

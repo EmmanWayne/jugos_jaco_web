@@ -22,6 +22,8 @@ return new class extends Migration
             $table->string('township', 50);
             $table->foreignId('type_price_id')->nullable()->constrained('types_prices')->restrictOnDelete();
             $table->string('business_name', 50);
+            $table->tinyInteger('position')->unsigned()->nullable();
+            $table->enum('visit_day', ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'])->nullable();
             $table->timestamps();
         });
     }

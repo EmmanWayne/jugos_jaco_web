@@ -53,6 +53,11 @@ class Employee extends Model
         return $this->hasMany(AssignedProduct::class);
     }
 
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
     public function scopeWithRouteData($query)
     {
         return $query->with(['locations' => function ($query) {
