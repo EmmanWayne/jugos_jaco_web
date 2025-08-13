@@ -11,6 +11,7 @@ use App\Models\ProductUnit;
 use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Services\ProductService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -445,6 +446,7 @@ class CreateSale extends Component
         try {
             DB::beginTransaction();
             $managementInventoryService = app(\App\Services\ManagementInventoryService::class);
+            $accountReceivableService = app(\App\Services\AccountReceivableService::class);
 
             $subtotal = $this->subtotal;
             $final_total = $this->final_total;
@@ -511,6 +513,17 @@ class CreateSale extends Component
                 }
             }
 
+            // Crear cuenta por cobrar si la venta es de tipo crédito
+            if ($payment_type === 'credit') {
+                $accountReceivableService->create(
+                    sale: $sale,
+                    totalAmount: null,
+                    name: null,
+                    notes: $this->notes,
+                    dueDate: Carbon::now()->addDays(30),
+                    amountPaidNow: (float) $this->amount_paid,
+                );
+            }
 
             DB::commit();
 
@@ -522,7 +535,6 @@ class CreateSale extends Component
             session()->flash('success', 'Venta creada exitosamente.');
             
         } catch (\Exception $e) {
-            dd($e);
             DB::rollBack();
             session()->flash('error', 'Error al crear la venta: ' . $e->getMessage());
         }
