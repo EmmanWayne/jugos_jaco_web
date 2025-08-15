@@ -58,6 +58,11 @@ class Employee extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
     public function scopeWithRouteData($query)
     {
         return $query->with(['locations' => function ($query) {

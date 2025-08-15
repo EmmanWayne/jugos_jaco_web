@@ -140,6 +140,12 @@ class EmployeeResource extends Resource
                 Tables\Columns\TextColumn::make('branch.name')
                     ->label('Sucursal')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('clients_count')
+                    ->label('Clientes Asignados')
+                    ->counts('clients')
+                    ->badge()
+                    ->color(fn ($state) => $state > 0 ? 'success' : 'gray')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('address')
                     ->label('Dirección')
                     ->searchable()
