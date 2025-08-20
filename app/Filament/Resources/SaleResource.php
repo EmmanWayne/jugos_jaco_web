@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\PaymentTypeEnum;
+use App\Enums\PaymentTermEnum;
 use App\Enums\SaleStatusEnum;
 use App\Filament\Resources\SaleResource\Pages;
 use App\Models\Sale;
@@ -68,7 +69,12 @@ class SaleResource extends Resource
                     ->money('HNL')
                     ->sortable()
                     ->weight('bold'),
-                TextColumn::make('payment_type')
+                TextColumn::make('payment_term')
+                    ->label('Término de Pago')
+                    ->formatStateUsing(fn($state) => $state?->getLabel() ?? 'Sin Término')
+                    ->color(fn($state) => $state?->getColor() ?? '')
+                    ->badge(),
+                TextColumn::make('payment_method')
                     ->label('Método de Pago')
                     ->formatStateUsing(fn($state) => $state?->getLabel() ?? 'Sin Método')
                     ->color(fn($state) => $state?->getColor() ?? '')
@@ -81,7 +87,10 @@ class SaleResource extends Resource
             ])
             ->defaultSort('id', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('payment_type')
+                Tables\Filters\SelectFilter::make('payment_term')
+                    ->label('Término de Pago')
+                    ->options(PaymentTermEnum::getOptions()),
+                Tables\Filters\SelectFilter::make('payment_method')
                     ->label('Método de Pago')
                     ->options(PaymentTypeEnum::getOptions()),
                 Tables\Filters\SelectFilter::make('status')

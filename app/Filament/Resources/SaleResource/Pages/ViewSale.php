@@ -58,9 +58,15 @@ class ViewSale extends ViewRecord
                                             ->formatStateUsing(fn($state) => $state?->getLabel() ?? 'Sin Estado')
                                             ->color(fn($state) => $state?->getColor() ?? 'gray'),
 
-                                        TextEntry::make('payment_type')
-                                            ->label('Tipo de Pago')
-                                            ->formatStateUsing(fn($state) => $state?->getLabel() ?? 'Sin Tipo')
+                                        TextEntry::make('payment_term')
+                                            ->label('Término de Pago')
+                                            ->formatStateUsing(fn($state) => $state?->getLabel() ?? 'Sin Término')
+                                            ->badge()
+                                            ->color(fn($state) => $state?->getColor() ?? 'gray'),
+                                            
+                                        TextEntry::make('payment_method')
+                                            ->label('Método de Pago')
+                                            ->formatStateUsing(fn($state) => $state?->getLabel() ?? 'Sin Método')
                                             ->badge()
                                             ->color(fn($state) => $state?->getColor() ?? 'gray'),
                                     ]),

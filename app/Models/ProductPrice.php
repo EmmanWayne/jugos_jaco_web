@@ -37,7 +37,7 @@ class ProductPrice extends Model
             return $this->price;
         }
 
-        return $this->price / (1 + ($this->taxCategory->rate / 100));
+        return round($this->price / (1 + ($this->taxCategory->rate / 100)), 2);
     }
 
     /**
@@ -50,7 +50,7 @@ class ProductPrice extends Model
         }
 
         $basePrice = $this->getPriceWithoutTax();
-        return $this->taxCategory->calculateTax($basePrice);
+        return round($this->taxCategory->calculateTax($basePrice), 2);
     }
 
     /**

@@ -20,6 +20,7 @@ use Filament\Support\Enums\FontWeight;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Enums\PaymentTypeEnum;
+use App\Enums\PaymentTermEnum;
 
 class AccountReceivableResource extends Resource
 {
@@ -48,7 +49,7 @@ class AccountReceivableResource extends Resource
                                 Forms\Components\Select::make('sales_id')
                                     ->label('Venta (Opcional)')
                                     ->relationship('sale', 'invoice_number', function ($query) {
-                                        $query->where('payment_type', PaymentTypeEnum::CREDIT);
+                                        $query->where('payment_term', PaymentTermEnum::CREDIT);
                                     })
                                     ->searchable()
                                     ->preload()
