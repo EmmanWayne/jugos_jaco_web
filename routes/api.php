@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ResourceMediaController;
 use App\Http\Controllers\ClientVisitDayController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
@@ -42,5 +43,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('products')->group(function () {
         Route::get('/assigned', [AssignedProductController::class, 'getProductAssigned']);
         Route::get('/', [ProductController::class, 'getProducts']);
+    });
+
+    Route::prefix('sales')->group(function () {
+        Route::post('/', [SaleController::class, 'createSale']);
+        Route::get('/', [SaleController::class, 'getSales']);
+        Route::get('/{id}', [SaleController::class, 'getSaleDetailsBySaleId']);
     });
 });

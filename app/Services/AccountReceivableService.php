@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PaymentTypeEnum;
+use App\Enums\PaymentTermEnum;
 use App\Models\AccountReceivable;
 use App\Models\Sale;
 use Carbon\CarbonInterface;
@@ -72,8 +73,8 @@ class AccountReceivableService
 	 */
 	private function validateSale(Sale $sale): void
 	{
-		if ($sale->payment_type !== PaymentTypeEnum::CREDIT) {
-			throw new \InvalidArgumentException('Solo se pueden crear cuentas por cobrar para ventas de tipo crédito.');
+		if ($sale->payment_term !== PaymentTermEnum::CREDIT) {
+			throw new \InvalidArgumentException('Solo se pueden crear cuentas por cobrar para ventas de término crédito.');
 		}
 
 		if ($sale->accountReceivable()->exists()) {

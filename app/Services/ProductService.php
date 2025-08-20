@@ -191,17 +191,20 @@ class ProductService
                 'id' => $detail->product_id,
                 'name' => $detail->product->name,
                 'code' => $detail->product->code,
-                'description' => $detail->product->description,
+                'description' => $detail->product->description ?? "Sin descripción",
                 'quantity' => [
                     'assigned' => (int)$detail->quantity,
                     'sold' => (int)($detail->sale_quantity ?? 0),
                     'available' => (int)$availableStock,
                 ],
                 'unit' => $productUnit->unit->name,
-                'unitAbbreviation' => $productUnit->unit->abbreviation,
-                'priceWithTax' => (float)$productPrice->getPriceWithTax(),
-                'priceWithoutTax' => (float)$productPrice->getPriceWithoutTax(),
-                'taxAmount' => (float)$productPrice->getTaxAmount(),
+                'unit_abbreviation' => $productUnit->unit->abbreviation,
+                'price' => (float)$productPrice->getPriceWithTax(),
+                'price_without_tax' => (float)$productPrice->getPriceWithoutTax(),
+                'tax_amount' => (float)$productPrice->getTaxAmount(),
+                'tax' => (float)$productPrice->taxCategory->rate,
+                'tax_name' => $productPrice->taxCategory->name,
+                'tax_category_id' => $productPrice->tax_category_id,
                 'product_price_id' => $productPrice->id
             ];
         })

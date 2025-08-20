@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\SaleStatusEnum;
 use App\Enums\PaymentTypeEnum;
+use App\Enums\PaymentTermEnum;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,7 +25,8 @@ class Sale extends Model
         'sale_date',
         'due_date',
         'status',
-        'payment_type',
+        'payment_term',
+        'payment_method',
         'cash_amount',
         'subtotal',
         'discount_percentage',
@@ -41,7 +44,8 @@ class Sale extends Model
         'due_date' => 'date',
         'confirmed_at' => 'datetime',
         'status' => SaleStatusEnum::class,
-        'payment_type' => PaymentTypeEnum::class,
+        'payment_term' => PaymentTermEnum::class,
+        'payment_method' => PaymentTypeEnum::class,
         'subtotal' => 'decimal:4',
         'discount_percentage' => 'decimal:2',
         'discount_amount' => 'decimal:4',
@@ -107,6 +111,11 @@ class Sale extends Model
     public function scopePaid($query)
     {
         return $query->where('status', SaleStatusEnum::PAID);
+    }
+
+    public function scopeToDay($query)
+    {
+        return $query->whereDate('sale_date', Carbon::today());
     }
 
     public function scopeCancelled($query)
