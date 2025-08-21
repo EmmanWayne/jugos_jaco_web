@@ -24,6 +24,20 @@
             padding-right: 15px;
             min-height: 100px;
         }
+        .custom-col-65 {
+            flex: 0 0 auto;
+            width: calc(65% - 15px);
+            padding-left: 15px;
+            padding-right: 15px;
+            min-height: 100px;
+        }
+        .custom-col-35 {
+            flex: 0 0 auto;
+            width: calc(35% - 15px);
+            padding-left: 15px;
+            padding-right: 15px;
+            min-height: 100px;
+        }
         .custom-col-4 {
             flex: 0 0 auto;
             width: calc(33.33333333% - 15px);
@@ -35,7 +49,7 @@
             background-color: #f8f9fa;
         }
         @media (max-width: 768px) {
-            .custom-col-6, .custom-col-4 {
+            .custom-col-6, .custom-col-4, .custom-col-65, .custom-col-35 {
                 width: 100% !important;
             }
             .custom-row {
@@ -82,7 +96,7 @@
         <div class="custom-container p-6">
             <div class="custom-row">
                 <!-- Left Column - Sales by Employee -->
-                <div class="custom-col-6">
+                <div class="custom-col-65">
                     <div class="custom-bg-light p-4 rounded-lg border border-gray-200">
                         <!-- Employee Selection -->
                         <div class="fi-section-content p-6">
@@ -318,7 +332,7 @@
                 </div>
 
                 <!-- Right Column - Financial Summary -->
-                <div class="custom-col-6">
+                <div class="custom-col-35">
                     <div class="custom-bg-light p-4 rounded-lg border border-gray-200">
                         <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
                             🧮 Resumen Financiero
