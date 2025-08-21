@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\DailySalesReconciliation;
 
 class User extends Authenticatable
 {
@@ -66,5 +68,13 @@ class User extends Authenticatable
     public function updatedSales()
     {
         return $this->hasMany(Sale::class, 'updated_by');
+    }
+    
+    /**
+     * Get the daily sales reconciliations where this user is the cashier.
+     */
+    public function cashierReconciliations(): HasMany
+    {
+        return $this->hasMany(DailySalesReconciliation::class, 'cashier_id');
     }
 }
