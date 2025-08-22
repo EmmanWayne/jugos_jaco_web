@@ -47,13 +47,6 @@ class CreateReconciliation extends Component
     {
         $this->employees = Employee::orderBy('first_name')->get();
         $this->reconciliation_date = now()->format('Y-m-d');
-        
-        // If user has an employee, pre-select it
-        $user = Auth::user();
-        if ($user && $user->employee) {
-            $this->employee_id = $user->employee->id;
-            $this->loadEmployeeData();
-        }
     }
     
     public function updatedEmployeeId()
