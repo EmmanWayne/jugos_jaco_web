@@ -125,6 +125,17 @@
                                                 👤 Seleccionar Empleado
                                             </span>
                                         </label>
+                                        <div>
+                                            <button 
+                                                type="button"
+                                                wire:click="initializeReconciliation"
+                                                class="fi-btn fi-btn-size-sm relative inline-flex items-center justify-center font-semibold outline-none transition duration-75 focus:ring-2 rounded-lg fi-btn-color-primary fi-btn-color-primary-600 enabled:hover:bg-primary-500 enabled:active:bg-primary-700 dark:fi-btn-color-primary-400 dark:enabled:hover:bg-primary-300 dark:enabled:active:bg-primary-500 focus:ring-primary-600/50 dark:focus:ring-primary-400/50 bg-primary-600 text-white px-2 py-1 text-xs"
+                                                :class="{'opacity-50 cursor-not-allowed': !selectedEmployee || $wire.reconciliation_created}"
+                                                :disabled="!selectedEmployee || $wire.reconciliation_created"
+                                            >
+                                                <span class="fi-btn-label">Iniciar Cuadre</span>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div class="grid gap-y-2">
@@ -132,110 +143,152 @@
                                             <div class="relative w-full" x-data="{ 
                                                 open: false, 
                                                 search: '', 
-                                                selectedEmployeeName: '',
-                                                isSelected: false,
-                                                employees: {{ $employees->map(function($emp) { return ['id' => $emp->id, 'name' => $emp->first_name . ' ' . $emp->last_name]; })->toJson() }},
+                                                selectedEmployee: null,
+                                                isSearching: false,
+                                                noResults: false,
+                                                employees: {{ $employees->map(function($emp) { return ['id' => $emp->id, 'name' => $emp->first_name . ' ' . $emp->last_name, 'position' => $emp->position ?? 'Empleado' ]; })->toJson() }},
                                                 get filteredEmployees() {
                                                     if (this.search === '') return this.employees;
-                                                    return this.employees.filter(emp => 
+                                                    const results = this.employees.filter(emp => 
                                                         emp.name.toLowerCase().includes(this.search.toLowerCase())
                                                     );
+                                                    this.noResults = results.length === 0;
+                                                    return results;
+                                                },
+                                                init() {
+                                                    this.$watch('search', (value) => {
+                                                        if (!this.selectedEmployee) {
+                                                            this.isSearching = value.length > 0;
+                                                        }
+                                                    });
                                                 },
                                                 selectEmployee(employee) {
-                                                    this.selectedEmployeeName = employee.name;
-                                                    this.isSelected = true;
-                                                    this.search = '';
+                                                    this.selectedEmployee = employee;
+                                                    this.search = employee.name;
                                                     this.open = false;
+                                                    this.isSearching = false;
                                                     $wire.set('employee_id', employee.id);
                                                 },
                                                 clearSelection() {
-                                                    this.selectedEmployeeName = '';
-                                                    this.isSelected = false;
+                                                    this.selectedEmployee = null;
                                                     this.search = '';
                                                     this.open = false;
+                                                    this.isSearching = false;
                                                     $wire.set('employee_id', null);
-                                                },
-                                                openDropdown() {
-                                                    if (this.isSelected) {
-                                                        this.clearSelection();
-                                                    }
-                                                    this.open = true;
-                                                    this.$nextTick(() => {
-                                                        this.$refs.searchInput.focus();
-                                                    });
                                                 }
                                             }">
-                                                <div class="relative">
-                                                    <!-- Icono de usuario al lado izquierdo -->
-                                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                                        <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                                                        </svg>
+                                                <!-- Filament-style select -->
+                                                <div class="fi-select-input-wrapper relative w-full">
+                                                    <!-- Icono del lado izquierdo (lupa o usuario) -->
+                                                    <div class="absolute top-0 left-0 h-full flex items-center px-1 pointer-events-none">
+                                                        <!-- Icono de lupa cuando no hay empleado seleccionado -->
+                                                        <template x-if="!selectedEmployee">
+                                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                            </svg>
+                                                        </template>
+                                                        <!-- Icono de usuario cuando hay empleado seleccionado -->
+                                                        <template x-if="selectedEmployee">
+                                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                                            </svg>
+                                                        </template>
                                                     </div>
 
-                                                    <!-- Input -->
+                                                    <!-- Input con estilo Filament -->
                                                     <input
-                                                        x-ref="searchInput"
-                                                        x-model="isSelected ? selectedEmployeeName : search"
-                                                        @focus="if (!isSelected) open = true"
-                                                        @input="if (!isSelected) open = true"
+                                                        x-model="selectedEmployee ? selectedEmployee.name : search"
+                                                        @focus="if (!selectedEmployee) { open = true; $nextTick(() => { $el.select(); }) }"
+                                                        @input="if (!selectedEmployee) open = true"
                                                         @keydown.escape="open = false"
-                                                        @click="openDropdown()"
+                                                        @keydown.arrow-down.prevent="
+                                                            if (filteredEmployees.length > 0) {
+                                                                $el.blur();
+                                                                $refs.employeesList.querySelector('button').focus();
+                                                            }
+                                                        "
+                                                        @click="if (selectedEmployee) clearSelection(); else open = true"
                                                         type="text"
                                                         placeholder="Buscar empleado..."
-                                                        :readonly="isSelected"
-                                                        class="fi-input block w-full border-none bg-transparent py-3 pl-10 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-gray-500 sm:text-sm sm:leading-6 rounded-lg"
-                                                        :class="isSelected ? 'cursor-pointer bg-gray-50 dark:bg-gray-700/50 pr-20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30 pr-10'" />
+                                                        :readonly="selectedEmployee"
+                                                        class="fi-input block w-full border-none bg-transparent py-2 px-6 pl-10 text-sm text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-gray-500 rounded-lg"
+                                                        :class="{
+                                                            'cursor-pointer bg-gray-50 dark:bg-gray-700/50 pr-16': selectedEmployee,
+                                                            'hover:bg-gray-50 dark:hover:bg-gray-700/30 pr-10': !selectedEmployee,
+                                                            'fi-search-highlighting': isSearching && !selectedEmployee
+                                                        }"
+                                                        x-ref="searchInput" />
 
-                                                    <!-- Iconos del lado derecho -->
-                                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                                        <!-- Cuando hay empleado seleccionado -->
-                                                        <template x-if="isSelected">
-                                                            <div class="flex items-center space-x-2">
-                                                                <!-- Botón X -->
-                                                                <button
-                                                                    @click.stop="clearSelection()"
-                                                                    type="button"
-                                                                    class="flex items-center justify-center h-5 w-5 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors duration-200 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 p-0.5"
-                                                                    title="Limpiar selección">
-                                                                    <svg fill="currentColor" viewBox="0 0 20 20" class="h-4 w-4">
-                                                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                                                    </svg>
-                                                                </button>
-                                                                <!-- Check -->
-                                                                <div class="flex items-center justify-center h-5 w-5">
-                                                                    <svg viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-green-500 dark:text-green-400">
-                                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                                                    </svg>
-                                                                </div>
-                                                            </div>
-                                                        </template>
-
-                                                        <!-- Cuando no hay empleado seleccionado -->
-                                                        <template x-if="!isSelected">
-                                                            <div class="flex items-center justify-center h-5 w-5">
-                                                                <svg viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-gray-400 dark:text-gray-500">
-                                                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                    <!-- Icono del lado derecho -->
+                                                    <div class="absolute top-0 right-0 pt-2 px-2 flex items-center justify-end" style="width: 100%;">
+                                                        <!-- Botón X cuando hay selección -->
+                                                        <template x-if="selectedEmployee">
+                                                            <button
+                                                                @click.stop="clearSelection()"
+                                                                type="button"
+                                                                class="flex items-center justify-center h-5 w-5 text-gray-400 hover:text-red-500
+                                                                        dark:text-gray-500 dark:hover:text-red-400 transition-colors duration-200 
+                                                                        rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                title="Limpiar selección">
+                                                                <svg fill="currentColor" viewBox="0 0 20 20" class="h-4 w-4">
+                                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                                                 </svg>
-                                                            </div>
+                                                            </button>
                                                         </template>
                                                     </div>
                                                 </div>
 
-                                                <div x-show="open && filteredEmployees.length > 0" @click.away="open = false" x-transition class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-gray-950/10 dark:ring-white/20 overflow-auto focus:outline-none">
-                                                    <template x-for="employee in filteredEmployees" :key="employee.id">
-                                                        <button
-                                                            @click="selectEmployee(employee)"
-                                                            type="button"
-                                                            class="w-full text-left px-4 py-2 text-sm text-gray-950 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
-                                                            x-text="employee.name">
-                                                        </button>
-                                                    </template>
-                                                </div>
-
-                                                <div x-show="open && search && filteredEmployees.length === 0" @click.away="open = false" x-transition class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-2 text-base ring-1 ring-gray-950/10 dark:ring-white/20">
-                                                    <div class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
-                                                        No se encontraron empleados
+                                                <!-- Dropdown de resultados estilo Filament -->
+                                                <div x-show="open"
+                                                     x-transition:enter="transition ease-out duration-100"
+                                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                                     x-transition:leave="transition ease-in duration-75"
+                                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                                     @click.away="open = false"
+                                                     @keydown.escape.window="open = false"
+                                                     class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden">
+                                                    
+                                                    <!-- Resultados de búsqueda -->
+                                                    <ul x-show="filteredEmployees.length > 0" 
+                                                        x-ref="employeesList"
+                                                        role="listbox"
+                                                        class="fi-select-list max-h-64 overflow-y-auto overscroll-contain p-1">
+                                                        <template x-for="(employee, index) in filteredEmployees" :key="employee.id">
+                                                            <li>
+                                                                <button 
+                                                                    @click="selectEmployee(employee)"
+                                                                    @keydown.enter.stop.prevent="selectEmployee(employee)"
+                                                                    @keydown.space.stop.prevent="selectEmployee(employee)"
+                                                                    @keydown.arrow-up.prevent="$el.previousElementSibling?.querySelector('button')?.focus() || $refs.searchInput?.focus()"
+                                                                    @keydown.arrow-down.prevent="$el.nextElementSibling?.querySelector('button')?.focus()"
+                                                                    role="option"
+                                                                    :tabindex="index === 0 ? 0 : -1"
+                                                                    :aria-selected="selectedEmployee && selectedEmployee.id === employee.id"
+                                                                    class="fi-select-option flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-75 outline-none"
+                                                                    :class="{
+                                                                        'bg-primary-500/10 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400': selectedEmployee && selectedEmployee.id === employee.id,
+                                                                        'hover:bg-gray-50 dark:hover:bg-white/5 focus:bg-gray-50 dark:focus:bg-white/5': !(selectedEmployee && selectedEmployee.id === employee.id)
+                                                                    }">
+                                                                    <div class="flex flex-1 flex-col">
+                                                                        <span class="truncate" x-text="employee.name"></span>
+                                                                        <span class="truncate text-xs text-gray-500 dark:text-gray-400" x-text="employee.position"></span>
+                                                                    </div>
+                                                                    <span class="text-xs text-gray-400 dark:text-gray-500" x-text="'ID: ' + employee.id"></span>
+                                                                </button>
+                                                            </li>
+                                                        </template>
+                                                    </ul>
+                                                    
+                                                    <!-- Mensaje de no resultados -->
+                                                    <div x-show="noResults" class="fi-select-empty-state px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                                        <div class="flex items-center justify-center gap-x-3 py-2">
+                                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            <span>No se encontraron empleados</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -525,7 +578,7 @@
                                             </div>
                                             <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20">
                                                 <input type="number" step="0.01" placeholder="0.00" disabled
-                                                    class="fi-input block w-full border-none bg-transparent py-1.5 px-3 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500 sm:text-sm sm:leading-6" />
+                                                    class="fi-input block w-full border-none bg-transparent py-1 px-3 text-xs text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500" />
                                             </div>
                                         </div>
                                     </div>
@@ -541,7 +594,7 @@
                                                 </label>
                                             </div>
                                             <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20">
-                                                <select disabled class="fi-select-input block w-full border-none bg-transparent py-1.5 pe-8 ps-3 text-base text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500 dark:text-white sm:text-sm sm:leading-6">
+                                                <select disabled class="fi-select-input block w-full border-none bg-transparent py-1 pe-8 ps-3 text-xs text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500 dark:text-white">
                                                     <option>Nombre del banco</option>
                                                 </select>
                                             </div>
@@ -560,7 +613,7 @@
                                             </div>
                                             <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20">
                                                 <input type="text" placeholder="Número de referencia" disabled
-                                                    class="fi-input block w-full border-none bg-transparent py-1.5 px-3 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500 sm:text-sm sm:leading-6" />
+                                                    class="fi-input block w-full border-none bg-transparent py-1 px-3 text-xs text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500" />
                                             </div>
                                         </div>
                                     </div>
@@ -568,7 +621,7 @@
                                     <!-- Add Deposit Button -->
                                     <div class="flex justify-center">
                                         <button type="button" disabled
-                                            class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 focus-visible:ring-custom-500/50 dark:bg-custom-500 dark:hover:bg-custom-400 dark:focus-visible:ring-custom-400/50 fi-color-primary opacity-50 cursor-not-allowed">
+                                            class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-size-sm fi-btn-size-sm gap-0.5 px-1.5 py-0.5 text-xs inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 focus-visible:ring-custom-500/50 dark:bg-custom-500 dark:hover:bg-custom-400 dark:focus-visible:ring-custom-400/50 fi-color-primary opacity-50 cursor-not-allowed">
                                             <span class="fi-btn-label">➕ Agregar Depósito</span>
                                         </button>
                                     </div>

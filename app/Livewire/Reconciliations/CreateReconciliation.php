@@ -52,13 +52,15 @@ class CreateReconciliation extends Component
     public function updatedEmployeeId()
     {
         if ($this->employee_id) {
-            $this->loadEmployeeData();
+            // Solo cargamos los datos del empleado pero no creamos el cuadre automáticamente
+            $this->loadEmployeeDataOnly();
         } else {
             $this->resetData();
         }
     }
     
-    protected function loadEmployeeData()
+    // Método para cargar solo los datos del empleado sin crear el cuadre
+    protected function loadEmployeeDataOnly()
     {
         if (!$this->employee_id) {
             return;
@@ -101,7 +103,27 @@ class CreateReconciliation extends Component
             })->toArray();
         
         $this->calculateTotals();
-        $this->createPendingReconciliation();
+        
+        // Verificar si ya existe un cuadre para hoy
+        $today = Carbon::today();
+        $existing = DailySalesReconciliation::where('employee_id', $this->employee_id)
+            ->whereDate('reconciliation_date', $today)
+            ->first();
+            
+        if ($existing) {
+            $this->current_reconciliation = $existing;
+            $this->reconciliation_created = true;
+        }
+    }
+    
+    // Método completo que carga datos y crea el cuadre
+    protected function loadEmployeeData()
+    {
+        $this->loadEmployeeDataOnly();
+        
+        if (!$this->reconciliation_created) {
+            $this->createPendingReconciliation();
+        }
     }
     
     protected function calculateTotals()
@@ -118,6 +140,12 @@ class CreateReconciliation extends Component
         
         $this->total_collections = collect($this->payments)
             ->sum('amount');
+    }
+    
+    // Método para iniciar el cuadre (llamado desde el botón)
+    public function initializeReconciliation()
+    {
+        $this->createPendingReconciliation();
     }
     
     protected function createPendingReconciliation()
