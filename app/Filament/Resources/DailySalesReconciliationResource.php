@@ -24,11 +24,11 @@ class DailySalesReconciliationResource extends Resource
 
     protected static ?string $navigationGroup = 'Finanzas';
 
-    protected static ?string $navigationLabel = 'Reconciliaciones Diarias';
+    protected static ?string $navigationLabel = 'Cuadres Diarios';
 
-    protected static ?string $label = 'Reconciliación Diaria';
+    protected static ?string $label = 'Cuadre Diario';
 
-    protected static ?string $pluralLabel = 'Reconciliaciones Diarias';
+    protected static ?string $pluralLabel = 'Cuadres Diarios';
 
     public static function form(Form $form): Form
     {
@@ -169,47 +169,26 @@ class DailySalesReconciliationResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total_cash_sales')
-                    ->label('Contado')
-                    ->money('HNL')
-                    ->sortable()
-                    ->weight(FontWeight::Medium)
-                    ->color('success'),
-
-                Tables\Columns\TextColumn::make('total_credit_sales')
-                    ->label('Crédito')
-                    ->money('HNL')
-                    ->sortable()
-                    ->weight(FontWeight::Medium)
-                    ->color('warning'),
-
-                Tables\Columns\TextColumn::make('total_cash_received')
-                    ->label('Efectivo')
-                    ->money('HNL')
-                    ->sortable()
-                    ->weight(FontWeight::Medium)
-                    ->color('primary'),
-
-                Tables\Columns\TextColumn::make('total_deposits')
-                    ->label('Depósitos')
-                    ->money('HNL')
-                    ->sortable()
-                    ->weight(FontWeight::Medium)
-                    ->color('info'),
-
-                Tables\Columns\TextColumn::make('total_collections')
-                    ->label('Pagos')
-                    ->money('HNL')
-                    ->sortable()
-                    ->weight(FontWeight::Medium)
-                    ->color('gray'),
-
-                Tables\Columns\TextColumn::make('cash_difference')
-                    ->label('Diferencia')
+                Tables\Columns\TextColumn::make('total_sales')
+                    ->label('Total Ventas')
                     ->money('HNL')
                     ->sortable()
                     ->weight(FontWeight::Bold)
-                    ->color(fn ($state) => $state > 0 ? 'success' : ($state < 0 ? 'danger' : 'gray')),
+                    ->color('success'),
+
+                Tables\Columns\TextColumn::make('total_deposits')
+                    ->label('Total Depósitos')
+                    ->money('HNL')
+                    ->sortable()
+                    ->weight(FontWeight::Bold)
+                    ->color('info'),
+
+                Tables\Columns\TextColumn::make('total_collections')
+                    ->label('Total Cobros')
+                    ->money('HNL')
+                    ->sortable()
+                    ->weight(FontWeight::Bold)
+                    ->color('primary'),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
@@ -262,9 +241,12 @@ class DailySalesReconciliationResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->iconButton(),
+                Tables\Actions\EditAction::make()
+                    ->iconButton(),
+                Tables\Actions\DeleteAction::make()
+                    ->iconButton(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

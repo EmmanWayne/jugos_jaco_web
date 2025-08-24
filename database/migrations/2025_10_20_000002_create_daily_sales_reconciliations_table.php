@@ -37,6 +37,11 @@ return new class extends Migration
             // Additional useful fields
             $table->decimal('total_cash_expected', 15, 2)->default(0)->comment('Cash that the employee should have');
             $table->decimal('cash_difference', 15, 2)->default(0)->comment('Difference between expected and received cash');
+
+            // Deposits
+            $table->decimal('deposit_sales', 10, 2)->default(0);
+            $table->decimal('total_deposit_expected', 10, 2)->default(0);
+            $table->decimal('deposit_difference', 10, 2)->default(0);
             
             // Notes and status
             $table->text('notes')->nullable();

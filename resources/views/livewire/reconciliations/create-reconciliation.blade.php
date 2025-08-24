@@ -3,6 +3,8 @@
     selectedEmployee: @entangle('employee_id'),
     reconciliationCreated: @entangle('reconciliation_created')
 }">
+    @include('livewire.partials.global-toasts')
+
     <style scoped>
         .custom-container {
             width: 100%;
@@ -98,8 +100,9 @@
     </style>
 
     <div class="fi-section-content-ctn">
+        
         <!-- Header -->
-        <div class="fi-section-header-ctn flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="fi-section-header-ctn flex px-6 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
                     📊 Cuadre Diario de Ventas
@@ -107,6 +110,11 @@
                 <p class="fi-section-header-description text-sm text-gray-500 dark:text-gray-400">
                     Gestión y seguimiento de ventas por empleado
                 </p>
+            </div>
+            <div>
+                <div class="fi-badge inline-flex items-center rounded-md px-2 py-1 text-sm font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
+                    📅 Fecha: {{ now()->format('d/m/Y') }}
+                </div>
             </div>
         </div>
 
@@ -128,15 +136,15 @@
                                         <div>
                                             <button 
                                                 type="button"
-                                                wire:click="initializeReconciliation"
+                                                wire:click="{{ $reconciliation_created ? 'saveReconciliation' : 'initializeReconciliation' }}"
                                                 class="fi-btn fi-btn-size-sm relative inline-flex items-center justify-center font-semibold outline-none transition duration-75 focus:ring-2 rounded-lg fi-btn-color-primary fi-btn-color-primary-600 enabled:hover:bg-primary-500 enabled:active:bg-primary-700 dark:fi-btn-color-primary-400 dark:enabled:hover:bg-primary-300 dark:enabled:active:bg-primary-500 focus:ring-primary-600/50 dark:focus:ring-primary-400/50 bg-primary-600 text-white px-2 py-1 text-xs"
-                                                :class="{'opacity-50 cursor-not-allowed': !selectedEmployee || $wire.reconciliation_created}"
-                                                :disabled="!selectedEmployee || $wire.reconciliation_created"
+                                                :class="{'opacity-50 cursor-not-allowed': !selectedEmployee || $wire.reconciliation_created && ($wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED')}"
+                                                :disabled="!selectedEmployee || $wire.reconciliation_created && ($wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED')}"
                                             >
-                                                <span class="fi-btn-label">Iniciar Cuadre</span>
+                                                <span class="fi-btn-label">{{ $reconciliation_created ? 'Guardar Cuadre' : 'Iniciar Cuadre' }}</span>
                                             </button>
                                         </div>
-                                    </div>
+                                      </div>
 
                                     <div class="grid gap-y-2">
                                         <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 focus-within:ring-2 focus-within:ring-primary-600 dark:focus-within:ring-primary-500">
@@ -302,11 +310,7 @@
                                 @enderror
                             </div>
 
-                            @if($employee_id)
-                            <div class="mt-4 fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
-                                📅 Fecha: {{ now()->format('d/m/Y') }}
-                            </div>
-                            @endif
+
                         </div>
 
                         <!-- Sales Table -->
@@ -317,16 +321,20 @@
                                     <div>
                                         <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">💰 Ventas del Día</h4>
                                     </div>
+                                    <div class="inline-flex items-center justify-center rounded-full bg-primary-50 px-2.5 py-0.5 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+                                        <span class="text-xs font-medium">{{ count($sales) }} {{ count($sales) == 1 ? 'venta' : 'ventas' }}</span>
+                                    </div>
                                 </div>
                                 <div class="fi-section-content">
                                     <div class="overflow-hidden">
+                                        <div class="overflow-x-auto" style="max-height: 225px;">
                                         <div class="fi-ta-content relative divide-y divide-gray-200 overflow-x-auto dark:divide-white/10 dark:border-t-white/10">
                                             <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-start dark:divide-white/5">
                                                 <thead class="fi-ta-header-ctn divide-y divide-gray-200 dark:divide-white/5">
                                                     <tr class="bg-gray-50 dark:bg-white/5">
                                                         <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
                                                             <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
-                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Hora</span>
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">ID</span>
                                                             </span>
                                                         </th>
                                                         <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
@@ -336,12 +344,22 @@
                                                         </th>
                                                         <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
                                                             <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
-                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Total</span>
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Termino</span>
                                                             </span>
                                                         </th>
                                                         <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
                                                             <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
-                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Tipo</span>
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Tipo Pago</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Subtotal</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Total</span>
                                                             </span>
                                                         </th>
                                                     </tr>
@@ -352,7 +370,7 @@
                                                         <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
                                                             <div class="fi-ta-col-wrp px-3 py-4">
                                                                 <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
-                                                                    {{ $sale['time'] }}
+                                                                    {{ $sale['id'] }}
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -365,15 +383,29 @@
                                                         </td>
                                                         <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
                                                             <div class="fi-ta-col-wrp px-3 py-4">
-                                                                <div class="fi-ta-text text-sm font-medium leading-6 text-gray-950 dark:text-white">
-                                                                    L {{ number_format($sale['total'], 2) }}
+                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $sale['type'] === 'Contado' ? 'bg-success-50 text-success-700 ring-success-600/10 dark:bg-success-400/10 dark:text-success-400 dark:ring-success-400/30' : 'bg-warning-50 text-warning-700 ring-warning-600/10 dark:bg-warning-400/10 dark:text-warning-400 dark:ring-warning-400/30' }}">
+                                                                    {{ $sale['type'] }}
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
                                                             <div class="fi-ta-col-wrp px-3 py-4">
-                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $sale['type'] === 'Contado' ? 'bg-success-50 text-success-700 ring-success-600/10 dark:bg-success-400/10 dark:text-success-400 dark:ring-success-400/30' : 'bg-warning-50 text-warning-700 ring-warning-600/10 dark:bg-warning-400/10 dark:text-warning-400 dark:ring-warning-400/30' }}">
-                                                                    {{ $sale['type'] }}
+                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-700 ring-gray-600/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/30">
+                                                                    {{ $sale['payment_method'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4">
+                                                                <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
+                                                                    L {{ number_format($sale['subtotal'] ?? 0, 2) }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4">
+                                                                <div class="fi-ta-text text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                                                                    L {{ number_format($sale['total'], 2) }}
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -381,6 +413,7 @@
                                                     @endforeach
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -395,24 +428,23 @@
 
                         <!-- Collections Table -->
                         @if($employee_id && count($payments) > 0)
-                        <div class="mb-6">
+                        <div class="mb-6 pt-4">
                             <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
                                 <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">💰 Cobros Recibidos</h4>
                                     </div>
+                                    <div class="inline-flex items-center justify-center rounded-full bg-primary-50 px-2.5 py-0.5 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+                                        <span class="text-xs font-medium">{{ count($payments) }} {{ count($payments) == 1 ? 'cobro' : 'cobros' }}</span>
+                                    </div>
                                 </div>
                                 <div class="fi-section-content">
                                     <div class="overflow-hidden">
-                                        <div class="fi-ta-content relative divide-y divide-gray-200 overflow-x-auto dark:divide-white/10 dark:border-t-white/10">
+                                        <div class="overflow-x-auto" style="max-height: 225px;">
+                                            <div class="fi-ta-content relative divide-y divide-gray-200 overflow-x-auto dark:divide-white/10 dark:border-t-white/10">
                                             <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-start dark:divide-white/5">
                                                 <thead class="fi-ta-header-ctn divide-y divide-gray-200 dark:divide-white/5">
                                                     <tr class="bg-gray-50 dark:bg-white/5">
-                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
-                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
-                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Hora</span>
-                                                            </span>
-                                                        </th>
                                                         <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
                                                             <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
                                                                 <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Cliente</span>
@@ -433,13 +465,6 @@
                                                 <tbody class="fi-ta-body divide-y divide-gray-200 whitespace-nowrap dark:divide-white/5">
                                                     @foreach($payments as $payment)
                                                     <tr class="fi-ta-row [@media(hover:hover)]:transition [@media(hover:hover)]:duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
-                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
-                                                            <div class="fi-ta-col-wrp px-3 py-4">
-                                                                <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
-                                                                    {{ $payment['time'] }}
-                                                                </div>
-                                                            </div>
-                                                        </td>
                                                         <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
                                                             <div class="fi-ta-col-wrp px-3 py-4">
                                                                 <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
@@ -465,6 +490,7 @@
                                                     @endforeach
                                                 </tbody>
                                             </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -482,204 +508,375 @@
                 <!-- Right Column - Financial Summary -->
                 <div class="custom-col-35">
                     <div class="custom-bg-light p-4 rounded-lg border border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-800 mb-4 flex items-center">
-                            🧮 Resumen Financiero
-                        </h3>
-
                         @if($employee_id)
                         <!-- Financial Summary -->
-                        <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mb-6">
-                            <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h3 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                                        📊 Resumen Financiero
-                                    </h3>
-                                </div>
-                            </div>
-                            <div class="fi-section-content p-6">
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div class="fi-stats-card rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                                        <div class="fi-stats-card-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
-                                            L {{ number_format($total_cash_sales, 2) }}
-                                        </div>
-                                        <div class="fi-stats-card-label text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            💰 Ventas al Contado
-                                        </div>
-                                    </div>
-                                    <div class="fi-stats-card rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                                        <div class="fi-stats-card-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
-                                            L {{ number_format($total_credit_sales, 2) }}
-                                        </div>
-                                        <div class="fi-stats-card-label text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            🏦 Ventas a Crédito
-                                        </div>
-                                    </div>
-                                    <div class="fi-stats-card rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                                        <div class="fi-stats-card-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
-                                            L {{ number_format($total_collections, 2) }}
-                                        </div>
-                                        <div class="fi-stats-card-label text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            💵 Cobros Recibidos
-                                        </div>
-                                    </div>
-                                    <div class="fi-stats-card rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
-                                        <div class="fi-stats-card-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
-                                            L {{ number_format($total_sales, 2) }}
-                                        </div>
-                                        <div class="fi-stats-card-label text-sm font-medium text-gray-500 dark:text-gray-400">
-                                            📈 Total Ventas
+                        <div class="fi-section rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mb-6">
+                            <div class="border-b border-gray-200 dark:border-gray-700 p-3">
+                                <div class="fi-section-header mb-1">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-x-1">
+                                            <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">🧮</span>
+                                            <h3 class="fi-section-header-heading text-md font-semibold leading-5 text-gray-950 dark:text-white">
+                                                Resumen Financiero
+                                            </h3>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Cash Management Section -->
-                        <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mb-6">
-                            <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h3 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                                        💰 Efectivo Recibido
-                                    </h3>
-                                </div>
-                            </div>
-                            <div class="fi-section-content p-6">
-                                <div class="fi-stats-card rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 text-center">
-                                    <div class="fi-stats-card-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
-                                        0.00
+                            <div class="p-1">
+                                <ul class="fi-ta-list divide-y divide-gray-200 dark:divide-gray-700">
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">💰</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Ventas al Contado</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($total_cash_sales, 2) }}</span>
+                                        </div>
+                                        <!-- Desglose de Ventas al Contado -->
+                                        <div class="flex justify-between items-center mt-1 pl-8">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">Efectivo</span>
+                                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">L {{ number_format($total_cash_sales - $total_deposit_sales, 2) }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-1 pl-8">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">Depósitos</span>
+                                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">L {{ number_format($total_deposit_sales, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">🏦</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Ventas a Crédito</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($total_credit_sales, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">💰</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Total Cobros</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($total_collections, 2) }}</span>
+                                        </div>
+                                        <!-- Desglose de Cobros Realizados -->
+                                        <div class="flex justify-between items-center mt-1 pl-8">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">Efectivo</span>
+                                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">L {{ number_format($total_cash_collections, 2) }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center mt-1 pl-8">
+                                            <span class="text-xs text-gray-600 dark:text-gray-400">Depósitos</span>
+                                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">L {{ number_format($total_deposit_collections, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    <li class="fi-ta-item p-2 bg-gray-50 dark:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">📈</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Total Ventas</span>
+                                            </div>
+                                            <span class="font-bold text-gray-950 dark:text-white">L {{ number_format($total_sales, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    <!-- Separator -->
+                                    <li class="fi-ta-item px-2 py-1 bg-gray-100 dark:bg-gray-600">
+                                        <div class="h-px w-full bg-gray-200 dark:bg-gray-500"></div>
+                                    </li>
+                                    <!-- Cash Amount Input -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">💰</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Efectivo Recibido</span>
+                                            </div>
+                                            <div class="w-32">
+                                                <input type="number" step="0.01" placeholder="0.00" 
+                                                    wire:model.lazy="cash_received"
+                                                    wire:change="updateCashReceived($event.target.value)"
+                                                    class="fi-input block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'" />
+                                        </div>
                                     </div>
-                                    <div class="fi-stats-card-label text-sm font-medium text-gray-500 dark:text-gray-400">
-                                        Monto en efectivo
-                                    </div>
-                                </div>
+                                    </li>
+                                    
+                                    <!-- Efectivo Esperado -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">💵</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Efectivo Esperado</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($total_cash_expected, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <!-- Diferencia de Efectivo -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">🔄</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Diferencia de Efectivo</span>
+                                            </div>
+                                            <span class="font-semibold {{ $cash_difference < 0 ? 'text-red-600' : 'text-green-600' }} dark:{{ $cash_difference < 0 ? 'text-red-400' : 'text-green-400' }}">L {{ number_format($cash_difference, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <!-- Separator -->
+                                    <li class="fi-ta-item px-2 py-1 bg-gray-100 dark:bg-gray-600">
+                                        <div class="h-px w-full bg-gray-200 dark:bg-gray-500"></div>
+                                    </li>
+                                    
+                                    <!-- Depósitos Realizados -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">💸</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Depósitos Realizados</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($deposits_made, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <!-- Depósitos Esperados -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">🏦</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Depósitos Esperados</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($total_deposit_expected, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <!-- Diferencia de Depósitos -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">🔄</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Diferencia de Depósitos</span>
+                                            </div>
+                                            <span class="font-semibold {{ $deposit_difference < 0 ? 'text-red-600' : 'text-green-600' }} dark:{{ $deposit_difference < 0 ? 'text-red-400' : 'text-green-400' }}">L {{ number_format($deposit_difference, 2) }}</span>
+                                        </div>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
 
                         <!-- Deposits Management Section -->
-                        <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mb-6">
-                            <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <h3 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                                        🏦 Gestión de Depósitos
-                                    </h3>
+                        <div class="fi-section rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mt-2" x-data="{ showDepositForm: false }">
+                            <div class="fi-section-header mb-1">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-x-1">
+                                        <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">🏦</span>
+                                        <h3 class="fi-section-header-heading text-md font-semibold leading-5 text-gray-950 dark:text-white">
+                                            Gestión de Depósitos
+                                        </h3>
+                                    </div>
+                                    <button type="button" @click="showDepositForm = !showDepositForm"
+                                        class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-0.5 px-1"
+                                        :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
+                                        :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                        <span class="text-xs">➕</span>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="fi-section-content p-6">
-                                <div class="space-y-4">
-                                    <!-- Amount Input -->
-                                    <div class="fi-fo-field-wrp">
-                                        <div class="grid gap-y-2">
-                                            <div class="flex items-center gap-x-3 justify-between">
-                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
-                                                    <span class="text-sm font-medium leading-6 text-gray-950 dark:text-white">
-                                                        Monto
-                                                    </span>
+                            <div class="p-1">
+                                <div class="space-y-2">
+                                    <!-- Deposit Form (Collapsible) -->
+                                    <div x-show="showDepositForm" x-transition:enter="transition ease-out duration-200" 
+                                         x-transition:enter-start="opacity-0 transform -translate-y-2" 
+                                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                                         x-transition:leave="transition ease-in duration-150"
+                                         x-transition:leave-start="opacity-100 transform translate-y-0" 
+                                         x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                         class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600 mb-2">
+                                        
+                                        <div class="space-y-2">
+                                            <!-- Amount Input -->
+                                            <div class="mb-1">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white">
+                                                    Monto
                                                 </label>
+                                                <input type="number" step="0.01" placeholder="0.00" wire:model="deposit_amount"
+                                                    class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm" />
+                                                @error('deposit_amount') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                             </div>
-                                            <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20">
-                                                <input type="number" step="0.01" placeholder="0.00" disabled
-                                                    class="fi-input block w-full border-none bg-transparent py-1 px-3 text-xs text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500" />
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Bank Selection -->
-                                    <div class="fi-fo-field-wrp">
-                                        <div class="grid gap-y-2">
-                                            <div class="flex items-center gap-x-3 justify-between">
-                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
-                                                    <span class="text-sm font-medium leading-6 text-gray-950 dark:text-white">
-                                                        Banco
-                                                    </span>
+                                            <!-- Bank Selection -->
+                                            <div class="mb-1">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white">
+                                                    Banco
                                                 </label>
-                                            </div>
-                                            <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20">
-                                                <select disabled class="fi-select-input block w-full border-none bg-transparent py-1 pe-8 ps-3 text-xs text-gray-950 transition duration-75 focus:ring-0 disabled:text-gray-500 dark:text-white">
-                                                    <option>Nombre del banco</option>
+                                                <select wire:model="deposit_bank" class="fi-select-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm">
+                                                    <option value="">Seleccione un banco</option>
+                                                    @foreach($banks as $bank)
+                                                        <option value="{{ $bank }}">{{ $bank }}</option>
+                                                    @endforeach
                                                 </select>
+                                                @error('deposit_bank') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Reference Input -->
-                                    <div class="fi-fo-field-wrp">
-                                        <div class="grid gap-y-2">
-                                            <div class="flex items-center gap-x-3 justify-between">
-                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
-                                                    <span class="text-sm font-medium leading-6 text-gray-950 dark:text-white">
-                                                        Referencia
-                                                    </span>
+                                            <!-- Reference Input -->
+                                            <div class="mb-1">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white">
+                                                    Referencia
                                                 </label>
-                                            </div>
-                                            <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20">
-                                                <input type="text" placeholder="Número de referencia" disabled
-                                                    class="fi-input block w-full border-none bg-transparent py-1 px-3 text-xs text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 dark:text-white dark:placeholder:text-gray-500" />
+                                                <input type="text" placeholder="Número de referencia" wire:model="deposit_reference"
+                                                    class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm" />
+                                                @error('deposit_reference') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Add Deposit Button -->
-                                    <div class="flex justify-center">
-                                        <button type="button" disabled
-                                            class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-size-sm fi-btn-size-sm gap-0.5 px-1.5 py-0.5 text-xs inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 focus-visible:ring-custom-500/50 dark:bg-custom-500 dark:hover:bg-custom-400 dark:focus-visible:ring-custom-400/50 fi-color-primary opacity-50 cursor-not-allowed">
-                                            <span class="fi-btn-label">➕ Agregar Depósito</span>
-                                        </button>
+                                        <!-- Add Deposit Button -->
+                                        <div class="flex justify-end mt-3">
+                                            <button type="button" wire:click="saveDeposit"
+                                                class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-primary bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-2 px-2"
+                                                :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
+                                                :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                <span class="mr-1">💾</span> Guardar Depósito
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Deposits Table -->
-                                    <div class="fi-ta-content relative divide-y divide-gray-200 overflow-x-auto dark:divide-white/10 dark:border-t-white/10">
-                                        <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-start dark:divide-white/5">
-                                            <thead class="fi-ta-header-ctn divide-y divide-gray-200 dark:divide-white/5">
-                                                <tr class="bg-gray-50 dark:bg-white/5">
-                                                    <th class="fi-ta-header-cell px-3 py-3.5 text-start">
-                                                        <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Hora</span>
-                                                    </th>
-                                                    <th class="fi-ta-header-cell px-3 py-3.5 text-start">
-                                                        <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Banco</span>
-                                                    </th>
-                                                    <th class="fi-ta-header-cell px-3 py-3.5 text-start">
-                                                        <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Monto</span>
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="fi-ta-body divide-y divide-gray-200 whitespace-nowrap dark:divide-white/5">
-                                                <tr class="fi-ta-row">
-                                                    <td class="fi-ta-cell p-0 px-3 py-4">
-                                                        <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">10:00</div>
-                                                    </td>
-                                                    <td class="fi-ta-cell p-0 px-3 py-4">
-                                                        <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">Banco Nacional</div>
-                                                    </td>
-                                                    <td class="fi-ta-cell p-0 px-3 py-4">
-                                                        <div class="fi-ta-text text-sm font-medium leading-6 text-gray-950 dark:text-white">L 1000.00</div>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div class="mt-2">
+                                        <h4 class="fi-section-header-heading text-xs font-medium text-gray-950 dark:text-white mb-1">Depósitos Registrados</h4>
+                                        <div class="fi-ta rounded-lg bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                            <div class="fi-ta-content relative overflow-x-auto">
+                                                <table class="fi-ta-table w-full divide-y divide-gray-200 text-start dark:divide-white/5">
+                                                    <thead>
+                                                        <tr class="bg-gray-50 dark:bg-gray-700/50">
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Banco</span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Referencia</span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Monto</span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 text-right">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</span>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                                        @forelse($deposits as $deposit)
+                                                        <tr class="fi-ta-row hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                                                {{ $deposit['bank'] }}
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                                                {{ $deposit['reference_number'] }}
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
+                                                                L {{ number_format($deposit['amount'], 2) }}
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-right">
+                                                                <button type="button" wire:click="deleteDeposit({{ $deposit['id'] }})"
+                                                                    class="fi-icon-btn fi-icon-btn-size-xs relative flex items-center justify-center rounded-md outline-none transition duration-75 hover:bg-gray-50 focus:ring-1 dark:hover:bg-gray-700 fi-color-danger text-danger-600 hover:text-danger-500 focus:ring-danger-500/50 dark:text-danger-500 dark:hover:text-danger-400 dark:focus:ring-danger-400/50"
+                                                                    :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
+                                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                                    <span>🗑️</span>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        @empty
+                                                        <tr>
+                                                            <td colspan="4" class="px-2 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
+                                                                <div class="flex flex-col items-center justify-center">
+                                                                    <span class="text-lg mb-1">💰</span>
+                                                                    <p class="text-xs">No hay depósitos registrados</p>
+                                                                    <p class="text-xs mt-0.5">Utilice el botón + para agregar un depósito</p>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                                
+                                                <!-- Total Depósitos Realizados -->
+                                                <div class="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Total Depósitos Realizados:</span>
+                                                        <span class="text-sm font-semibold text-gray-900 dark:text-white">L {{ number_format(collect($deposits)->sum('amount'), 2) }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Reconciliation Status -->
-                        @if($reconciliation_created && $current_reconciliation)
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <!-- Mensajes de error o éxito -->
+                        @if(session()->has('error'))
+                        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
                                 <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-yellow-800">
+                                    <p class="text-sm font-medium">{{ session('error') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                        
+                        
+                        <!-- Reconciliation Status -->
+                        @if($reconciliation_created && $current_reconciliation)
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 mt-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    @if($current_reconciliation->status->value === 'COMPLETED')
+                                    <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    @else
+                                    <svg class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    @endif
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-gray-800">
+                                        @if($current_reconciliation->status->value === 'COMPLETED')
+                                        Cuadre Completado
+                                        @else
                                         Cuadre Inicializado
+                                        @endif
                                     </h3>
-                                    <div class="mt-2 text-sm text-yellow-700">
-                                        <p>Se ha creado un cuadre diario con estado <strong>PENDIENTE</strong> para el empleado seleccionado.</p>
+                                    <div class="mt-2 text-sm text-gray-700">
+                                        <p>Se ha creado un cuadre diario con estado 
+                                            @if($current_reconciliation->status->value === 'COMPLETED')
+                                            <strong class="text-green-600">COMPLETADO</strong>
+                                            @else
+                                            <strong>PENDIENTE</strong>
+                                            @endif
+                                            para el empleado seleccionado.</p>
                                         <p class="mt-1">ID del Cuadre: <strong>#{{ $current_reconciliation->id }}</strong></p>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Botón para guardar el cuadre -->
+                            @if($current_reconciliation->status->value !== 'COMPLETED')
+                            <div class="mt-4 flex justify-end">
+                                <button type="button" wire:click="saveReconciliation"
+                                    class="fi-btn fi-btn-size-md relative inline-grid grid-flow-col items-center justify-center gap-1.5 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-custom bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 fi-btn-color-primary py-2 px-3">
+                                    <span class="fi-btn-icon flex items-center justify-center">
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </span>
+                                    <span class="fi-btn-label">Guardar Cuadre</span>
+                                </button>
+                            </div>
+                            @endif
                         </div>
                         @endif
                         @else
@@ -690,6 +887,7 @@
                         </div>
                         @endif
                     </div>
+                    <!-- Removed empty div with typo -->
                 </div>
             </div>
         </div>
