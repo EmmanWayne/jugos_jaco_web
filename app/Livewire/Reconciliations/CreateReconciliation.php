@@ -393,7 +393,7 @@ class CreateReconciliation extends Component
                 DB::commit();
                 
                 // Mostrar mensaje de éxito
-                session()->flash('message', 'Cuadre guardado correctamente');
+                session()->flash('success', 'Cuadre guardado correctamente');
                 
                 // Redireccionar a la lista de cuadres
                 $this->redirect(\App\Filament\Resources\DailySalesReconciliationResource::getUrl('index'));
@@ -482,13 +482,13 @@ class CreateReconciliation extends Component
             $this->resetDepositForm();
             
             // Mostrar mensaje de éxito
-            session()->flash('deposit_message', 'Depósito guardado correctamente');
+            session()->flash('success', 'Depósito guardado correctamente');
         } catch (\Exception $e) {
             // Si ocurre algún error, revertir la transacción
             DB::rollBack();
             
             // Mostrar mensaje de error
-            session()->flash('deposit_error', 'Error al guardar el depósito: ' . $e->getMessage());
+            session()->flash('error', 'Error al guardar el depósito: ' . $e->getMessage());
         }
         
         // Recargar los depósitos
@@ -522,13 +522,13 @@ class CreateReconciliation extends Component
                 DB::commit();
                 
                 // Mostrar mensaje de éxito
-                session()->flash('deposit_message', 'Depósito eliminado correctamente');
+                session()->flash('success', 'Depósito eliminado correctamente');
             } catch (\Exception $e) {
                 // Si ocurre algún error, revertir la transacción
                 DB::rollBack();
                 
                 // Mostrar mensaje de error
-                session()->flash('deposit_error', 'Error al eliminar el depósito: ' . $e->getMessage());
+                session()->flash('error', 'Error al eliminar el depósito: ' . $e->getMessage());
             }
             
             // Recargar los depósitos
