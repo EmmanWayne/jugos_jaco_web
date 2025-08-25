@@ -54,7 +54,29 @@ class DailySalesReconciliationResource extends Resource
                                 Forms\Components\DatePicker::make('reconciliation_date')
                                     ->label('Fecha de Reconciliación')
                                     ->required()
-                                    ->default(now()),
+                                    ->default(now())
+                                    ->rules([
+                                        function () {
+                                            return function (string $attribute, $value, \Closure $fail) {
+                                                $employeeId = request()->input('employee_id');
+                                                $recordId = request()->route('record'); // For edit mode
+                                                
+                                                if ($employeeId && $value) {
+                                                    $query = \App\Models\DailySalesReconciliation::where('employee_id', $employeeId)
+                                                        ->whereDate('reconciliation_date', $value);
+                                                    
+                                                    // Exclude current record when editing
+                                                    if ($recordId) {
+                                                        $query->where('id', '!=', $recordId);
+                                                    }
+                                                    
+                                                    if ($query->exists()) {
+                                                        $fail('Ya existe un cuadre para este empleado en la fecha seleccionada.');
+                                                    }
+                                                }
+                                            };
+                                        },
+                                    ]),
                             ]),
                     ]),
 

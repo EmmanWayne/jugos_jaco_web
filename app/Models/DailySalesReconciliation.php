@@ -6,6 +6,7 @@ use App\Enums\ReconciliationStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailySalesReconciliation extends Model
 {
@@ -18,13 +19,16 @@ class DailySalesReconciliation extends Model
         'cashier_id',
         'branch_id',
         'reconciliation_date',
-        'total_cash_sales',
         'total_credit_sales',
+        'total_cash_sales',
+        'cash_sales',
         'deposit_sales',
         'total_sales',
         'total_cash_received',
         'total_deposits',
         'total_collections',
+        'cash_collections',
+        'deposit_collections',
         'total_cash_expected',
         'total_deposit_expected',
         'cash_difference',
@@ -36,18 +40,41 @@ class DailySalesReconciliation extends Model
     protected $casts = [
         'reconciliation_date' => 'date',
         'total_cash_sales' => 'decimal:2',
+        'cash_sales' => 'decimal:2',
         'total_credit_sales' => 'decimal:2',
         'deposit_sales' => 'decimal:2',
         'total_sales' => 'decimal:2',
         'total_cash_received' => 'decimal:2',
         'total_deposits' => 'decimal:2',
         'total_collections' => 'decimal:2',
+        'cash_collections' => 'decimal:2',
+        'deposit_collections' => 'decimal:2',
         'total_cash_expected' => 'decimal:2',
         'total_deposit_expected' => 'decimal:2',
         'cash_difference' => 'decimal:2',
         'deposit_difference' => 'decimal:2',
         'status' => ReconciliationStatusEnum::class,
     ];
+
+    /**
+     * Check if a reconciliation already exists for the given employee and date.
+     */
+    public static function existsForEmployeeAndDate(int $employeeId, string $date): bool
+    {
+        return self::where('employee_id', $employeeId)
+            ->whereDate('reconciliation_date', $date)
+            ->exists();
+    }
+
+    /**
+     * Get existing reconciliation for employee and date.
+     */
+    public static function getForEmployeeAndDate(int $employeeId, string $date): ?self
+    {
+        return self::where('employee_id', $employeeId)
+            ->whereDate('reconciliation_date', $date)
+            ->first();
+    }
 
     /**
      * Get the employee that owns the reconciliation.
@@ -74,11 +101,19 @@ class DailySalesReconciliation extends Model
     }
 
     /**
+     * Get the deposits associated with this reconciliation.
+     */
+    public function deposits(): HasMany
+    {
+        return $this->hasMany(Deposit::class, 'model_id');
+    }
+
+    /**
      * Calculate the expected cash based on sales and collections.
      */
     public function calculateExpectedCash(): float
     {
-        return $this->total_cash_sales + $this->total_collections - $this->total_deposits;
+        return $this->total_cash_sales + $this->cash_collections - $this->total_deposits;
     }
 
     /**
@@ -110,6 +145,9 @@ class DailySalesReconciliation extends Model
     {
         // Calculate total sales
         $this->total_sales = $this->total_cash_sales + $this->total_credit_sales;
+        
+        // Calculate total collections
+        $this->total_collections = $this->cash_collections + $this->deposit_collections;
         
         // Calculate expected cash
         $this->total_cash_expected = $this->calculateExpectedCash();

@@ -131,9 +131,7 @@ class CreateReconciliation extends Component
         
         // Verificar si ya existe un cuadre para hoy
         $today = Carbon::today();
-        $existing = DailySalesReconciliation::where('employee_id', $this->employee_id)
-            ->whereDate('reconciliation_date', $today)
-            ->first();
+        $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
             
         if ($existing) {
             $this->current_reconciliation = $existing;
@@ -223,9 +221,7 @@ class CreateReconciliation extends Component
         $today = Carbon::today();
         
         // Check if reconciliation already exists for today
-        $existing = DailySalesReconciliation::where('employee_id', $this->employee_id)
-            ->whereDate('reconciliation_date', $today)
-            ->first();
+        $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
             
         if ($existing) {
             $this->current_reconciliation = $existing;
@@ -236,25 +232,45 @@ class CreateReconciliation extends Component
         // Calcular el efectivo esperado y la diferencia de efectivo
         $this->calculateCashDifference();
         
-        // Create new pending reconciliation
-        $reconciliation = DailySalesReconciliation::create([
-            'employee_id' => $this->employee_id,
-            'cashier_id' => Auth::id(),
-            'branch_id' => Auth::user()->employee?->branch_id ?? 1, // Default branch
-            'reconciliation_date' => $today,
-            'total_cash_sales' => $this->total_cash_sales,
-            'total_credit_sales' => $this->total_credit_sales,
-            'deposit_sales' => $this->total_deposit_sales,
-            'total_sales' => $this->total_sales,
-            'total_collections' => $this->total_collections,
-            'total_cash_received' => $this->cash_received,
-            'total_deposits' => 0, // Will be filled later
-            'total_cash_expected' => $this->total_cash_expected,
-            'total_deposit_expected' => $this->total_deposit_expected,
-            'cash_difference' => $this->cash_difference,
-            'status' => ReconciliationStatusEnum::PENDING,
-            'notes' => null
-        ]);
+        // Calcular cash_sales (ventas al contado en efectivo, excluyendo depósitos)
+        $cash_sales = $this->total_cash_sales - $this->total_deposit_sales;
+        
+        try {
+            // Create new pending reconciliation
+            $reconciliation = DailySalesReconciliation::create([
+                'employee_id' => $this->employee_id,
+                'cashier_id' => Auth::id(),
+                'branch_id' => Auth::user()->employee?->branch_id ?? 1, // Default branch
+                'reconciliation_date' => $today,
+                'total_cash_sales' => $this->total_cash_sales,
+                'cash_sales' => $cash_sales,
+                'total_credit_sales' => $this->total_credit_sales,
+                'deposit_sales' => $this->total_deposit_sales,
+                'total_sales' => $this->total_sales,
+                'cash_collections' => $this->total_cash_collections,
+                'deposit_collections' => $this->total_deposit_collections,
+                'total_collections' => $this->total_collections,
+                'total_cash_received' => $this->cash_received,
+                'total_deposits' => 0, // Will be filled later
+                'total_cash_expected' => $this->total_cash_expected,
+                'total_deposit_expected' => $this->total_deposit_expected,
+                'cash_difference' => $this->cash_difference,
+                'status' => ReconciliationStatusEnum::PENDING,
+                'notes' => null
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle duplicate entry error
+            if ($e->getCode() === '23000') {
+                // Check if it's our unique constraint
+                if (str_contains($e->getMessage(), 'unique_employee_date_reconciliation')) {
+                    session()->flash('error', 'Ya existe un cuadre para este empleado en la fecha seleccionada.');
+                    return null;
+                }
+            }
+            
+            // Re-throw other database errors
+            throw $e;
+        }
         
         $this->current_reconciliation = $reconciliation;
         $this->reconciliation_created = true;
@@ -348,6 +364,9 @@ class CreateReconciliation extends Component
             DB::beginTransaction();
             
             try {
+                // Calcular cash_sales (ventas en efectivo sin depósitos)
+                $cash_sales = $this->total_cash_sales - $this->total_deposit_sales;
+                
                 // Actualizar el estado del cuadre a COMPLETED
                 $this->current_reconciliation->update([
                     'status' => ReconciliationStatusEnum::COMPLETED,
@@ -358,9 +377,12 @@ class CreateReconciliation extends Component
                     'total_deposit_expected' => $this->total_deposit_expected,
                     'deposit_difference' => $this->deposit_difference,
                     'total_cash_sales' => $this->total_cash_sales,
+                    'cash_sales' => $cash_sales,
                     'total_credit_sales' => $this->total_credit_sales,
                     'deposit_sales' => $this->total_deposit_sales,
                     'total_sales' => $this->total_sales,
+                    'cash_collections' => $this->total_cash_collections,
+                    'deposit_collections' => $this->total_deposit_collections,
                     'total_collections' => $this->total_collections
                 ]);
                 
@@ -397,6 +419,7 @@ class CreateReconciliation extends Component
                         'amount' => $deposit->amount,
                         'bank' => $deposit->bank->value,
                         'reference_number' => $deposit->reference_number,
+                        'description' => "Déposito generado en venta",
                     ];
                 })->toArray();
             

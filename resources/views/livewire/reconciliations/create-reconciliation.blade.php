@@ -154,9 +154,10 @@
                                                 selectedEmployee: null,
                                                 isSearching: false,
                                                 noResults: false,
+                                                showMinCharsMessage: false,
                                                 employees: {{ $employees->map(function($emp) { return ['id' => $emp->id, 'name' => $emp->first_name . ' ' . $emp->last_name, 'position' => $emp->position ?? 'Empleado' ]; })->toJson() }},
                                                 get filteredEmployees() {
-                                                    if (this.search === '') return this.employees;
+                                                    if (this.search.length < 4) return [];
                                                     const results = this.employees.filter(emp => 
                                                         emp.name.toLowerCase().includes(this.search.toLowerCase())
                                                     );
@@ -167,6 +168,8 @@
                                                     this.$watch('search', (value) => {
                                                         if (!this.selectedEmployee) {
                                                             this.isSearching = value.length > 0;
+                                                            this.showMinCharsMessage = value.length > 0 && value.length < 4;
+                                                            this.open = value.length >= 4;
                                                         }
                                                     });
                                                 },
@@ -175,6 +178,7 @@
                                                     this.search = employee.name;
                                                     this.open = false;
                                                     this.isSearching = false;
+                                                    this.showMinCharsMessage = false;
                                                     $wire.set('employee_id', employee.id);
                                                 },
                                                 clearSelection() {
@@ -182,6 +186,7 @@
                                                     this.search = '';
                                                     this.open = false;
                                                     this.isSearching = false;
+                                                    this.showMinCharsMessage = false;
                                                     $wire.set('employee_id', null);
                                                 }
                                             }">
@@ -206,8 +211,8 @@
                                                     <!-- Input con estilo Filament -->
                                                     <input
                                                         x-model="selectedEmployee ? selectedEmployee.name : search"
-                                                        @focus="if (!selectedEmployee) { open = true; $nextTick(() => { $el.select(); }) }"
-                                                        @input="if (!selectedEmployee) open = true"
+                                                        @focus="if (!selectedEmployee) { $nextTick(() => { $el.select(); }) }"
+                                                        @input="if (!selectedEmployee && search.length >= 4) open = true"
                                                         @keydown.escape="open = false"
                                                         @keydown.arrow-down.prevent="
                                                             if (filteredEmployees.length > 0) {
@@ -215,9 +220,9 @@
                                                                 $refs.employeesList.querySelector('button').focus();
                                                             }
                                                         "
-                                                        @click="if (selectedEmployee) clearSelection(); else open = true"
+                                                        @click="if (selectedEmployee) clearSelection();"
                                                         type="text"
-                                                        placeholder="Buscar empleado..."
+                                                        placeholder="Escriba al menos 4 caracteres para buscar..."
                                                         :readonly="selectedEmployee"
                                                         class="fi-input block w-full border-none bg-transparent py-2 px-6 pl-10 text-sm text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-gray-500 rounded-lg"
                                                         :class="{
@@ -247,15 +252,15 @@
                                                 </div>
 
                                                 <!-- Dropdown de resultados estilo Filament -->
-                                                <div x-show="open"
+                                                <div x-show="open || showMinCharsMessage"
                                                      x-transition:enter="transition ease-out duration-100"
                                                      x-transition:enter-start="transform opacity-0 scale-95"
                                                      x-transition:enter-end="transform opacity-100 scale-100"
                                                      x-transition:leave="transition ease-in duration-75"
                                                      x-transition:leave-start="transform opacity-100 scale-100"
                                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                                     @click.away="open = false"
-                                                     @keydown.escape.window="open = false"
+                                                     @click.away="open = false; showMinCharsMessage = false"
+                                                     @keydown.escape.window="open = false; showMinCharsMessage = false"
                                                      class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden">
                                                     
                                                     <!-- Resultados de búsqueda -->
@@ -290,12 +295,22 @@
                                                     </ul>
                                                     
                                                     <!-- Mensaje de no resultados -->
-                                                    <div x-show="noResults" class="fi-select-empty-state px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                                    <div x-show="noResults && search.length >= 4" class="fi-select-empty-state px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                                                         <div class="flex items-center justify-center gap-x-3 py-2">
                                                             <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                                                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                                                             </svg>
                                                             <span>No se encontraron empleados</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Mensaje de caracteres mínimos -->
+                                                    <div x-show="showMinCharsMessage" class="fi-select-empty-state px-3 py-2 text-sm text-blue-600 dark:text-blue-400">
+                                                        <div class="flex items-center justify-center gap-x-3 py-2">
+                                                            <svg class="h-5 w-5 text-blue-500 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            <span>Escriba al menos 4 caracteres para ver resultados</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -862,21 +877,6 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Botón para guardar el cuadre -->
-                            @if($current_reconciliation->status->value !== 'COMPLETED')
-                            <div class="mt-4 flex justify-end">
-                                <button type="button" wire:click="saveReconciliation"
-                                    class="fi-btn fi-btn-size-md relative inline-grid grid-flow-col items-center justify-center gap-1.5 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-custom bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 fi-btn-color-primary py-2 px-3">
-                                    <span class="fi-btn-icon flex items-center justify-center">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </span>
-                                    <span class="fi-btn-label">Guardar Cuadre</span>
-                                </button>
-                            </div>
-                            @endif
                         </div>
                         @endif
                         @else

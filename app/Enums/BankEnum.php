@@ -14,6 +14,36 @@ enum BankEnum: string
     case DA_VIVIENDA = 'Davivienda';
     case OTRO = 'Otro';
 
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::ATLANTIDA => 'danger',
+            self::FICOHSA => 'info',
+            self::BANPAIS => 'warning',
+            self::BAC_CREDOMATIC => 'danger',
+            self::OCCIDENTE => 'success',
+            self::BANRURAL => 'primary',
+            self::BANADESA => 'success',
+            self::DA_VIVIENDA => 'danger',
+            default => 'light',
+        };
+    }
+
+    public function getLabel(): string
+    {
+        return match ($this) {
+            self::ATLANTIDA => 'Banco Atlántida',
+            self::FICOHSA => 'Ficohsa',
+            self::BANPAIS => 'BanPaís',
+            self::BAC_CREDOMATIC => 'Bac Credomatic',
+            self::OCCIDENTE => 'Banco de Occidente',
+            self::BANRURAL => 'Banrural',
+            self::BANADESA => 'Banadesa',
+            self::DA_VIVIENDA => 'Davivienda',
+            default => 'Otro',
+        };
+    }
+
     public static function options(): array
     {
         return collect(self::cases())->pluck('value', 'value')->toArray();

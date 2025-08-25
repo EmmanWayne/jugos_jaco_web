@@ -28,4 +28,12 @@ class Deposit extends Model
     {
         return $this->belongsTo(Branch::class);
     }
+
+    /**
+     * Get the daily sales reconciliation that owns this deposit.
+     */
+    public function dailySalesReconciliation(): BelongsTo
+    {
+        return $this->belongsTo(DailySalesReconciliation::class, 'model_id');
+    }
 }

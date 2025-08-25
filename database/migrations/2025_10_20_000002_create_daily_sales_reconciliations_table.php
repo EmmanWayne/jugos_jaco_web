@@ -24,6 +24,7 @@ return new class extends Migration
             
             // Sales amounts
             $table->decimal('total_cash_sales', 15, 2)->default(0);
+            $table->decimal('cash_sales', 15, 2)->default(0)->comment('Cash sales amount (excluding deposits)');
             $table->decimal('total_credit_sales', 15, 2)->default(0);
             $table->decimal('total_sales', 15, 2)->default(0)->comment('Sum of cash and credit sales');
             
@@ -33,6 +34,8 @@ return new class extends Migration
             
             // Collections
             $table->decimal('total_collections', 15, 2)->default(0)->comment('Total collections from accounts receivable');
+            $table->decimal('cash_collections', 15, 2)->default(0)->comment('Collections received in cash');
+            $table->decimal('deposit_collections', 15, 2)->default(0)->comment('Collections received via deposit');
             
             // Additional useful fields
             $table->decimal('total_cash_expected', 15, 2)->default(0)->comment('Cash that the employee should have');
@@ -49,6 +52,9 @@ return new class extends Migration
             
             // Timestamps
             $table->timestamps();
+
+            // Restriction 
+            $table->unique(['employee_id', 'reconciliation_date'], 'unique_employee_date_reconciliation');
             
             // Indices
             $table->index(['employee_id', 'reconciliation_date'], 'dsr_emp_date_idx');
