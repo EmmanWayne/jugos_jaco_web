@@ -102,7 +102,8 @@ class SaleController extends Controller
             'cash_amount' => $data['cash_amount'],
             'payment_reference' => $data['payment_reference'],
             'notes' => $data['notes'],
-            'payment_type' => $data['payment_type'],
+            'payment_method' => $data['payment_method'],
+            'payment_term' => $data['payment_term'],
             'branch_id' => Auth::user()->employee->branch_id,
         ];
     }

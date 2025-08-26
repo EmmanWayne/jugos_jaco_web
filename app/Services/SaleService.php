@@ -55,7 +55,7 @@ class SaleService
 
             // 2. Verificar el tipo de pago basado en el monto pagado vs total
             $cashAmount = $saleData['cash_amount'] ?? 0;
-            $paymentMethod = $saleData['payment_method'] ?? $saleData['payment_type'] ?? PaymentTypeEnum::CASH->value;
+            $paymentMethod = $saleData['payment_method'] ?? PaymentTypeEnum::CASH->value;
             $paymentTerm = $saleData['payment_term'] ?? PaymentTermEnum::CASH->value;
             
             // Si el monto pagado es menor al total, se considera venta a crédito
@@ -128,6 +128,7 @@ class SaleService
         foreach ($productsData as $productData) {
             if (isset($productData['origin']) && $productData['origin'] === 'api') {
                 $productosAsignados = AssignedProduct::where('employee_id', Auth::user()->employee->id)
+                    ->todayAssignments()
                     ->with(['details' => function ($query) use ($productData) {
                         $query->select('id', 'product_id', 'sale_quantity', 'assigned_products_id', 'quantity')
                             ->where('product_id', $productData['product_id']);
