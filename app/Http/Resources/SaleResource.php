@@ -23,7 +23,8 @@ class SaleResource extends JsonResource
             'cash_amount' => $this->cash_amount,
             'payment_reference' => $this->payment_reference,
             'notes' => $this->notes,
-            'payment_type' => $this->payment_type->getLabel(),
+            'payment_method' => $this->payment_method->getLabel(),
+            'payment_term' => $this->payment_term->getLabel(),
             'subtotal' => $this->subtotal,
             'total_amount' => $this->total_amount
         ];
