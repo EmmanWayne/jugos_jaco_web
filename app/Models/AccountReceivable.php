@@ -59,4 +59,11 @@ class AccountReceivable extends Model
                $this->due_date->isPast() && 
                $this->status === AccountReceivableStatusEnum::PENDING;
     }
+
+    public function scopeByEmployee($query, $employeeId)
+    {
+        return $query->whereHas('sale', function($q) use ($employeeId){
+            $q->where('employee_Id', $employeeId);
+        });
+    }
 }
