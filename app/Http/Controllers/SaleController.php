@@ -62,7 +62,9 @@ class SaleController extends Controller
                 ->with([
                     'client:id,first_name,last_name',
                     'employee:id,first_name,last_name'
-                ])->get();
+                ])
+                ->orderByDesc()
+                ->get();
                 
             return $this->successResponse(SaleResource::collection($sales), "Ventas obtenidas con éxito");
         } catch (Exception $exc) {

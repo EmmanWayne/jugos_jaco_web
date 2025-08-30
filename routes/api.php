@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountReceivableController;
 use App\Http\Controllers\Api\AssignedProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
@@ -49,5 +50,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [SaleController::class, 'createSale']);
         Route::get('/', [SaleController::class, 'getSales']);
         Route::get('/{id}', [SaleController::class, 'getSaleDetailsBySaleId']);
+    });
+
+    Route::prefix('account-receivable')->group(function () {
+        Route::get('/', [AccountReceivableController::class, 'getAccountReceivable']);
+        Route::get('/{id}', [AccountReceivableController::class, 'getAccountReceivableById']);
+        Route::post('/{id}/payments', [AccountReceivableController::class, 'processPayment']);
     });
 });

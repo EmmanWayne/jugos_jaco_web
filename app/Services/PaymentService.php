@@ -5,8 +5,11 @@ namespace App\Services;
 use App\Enums\AccountReceivableStatusEnum;
 use App\Models\AccountReceivable;
 use App\Models\Payment;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class PaymentService
 {
@@ -16,6 +19,8 @@ class PaymentService
     public static function processPayment(AccountReceivable $accountReceivable, array $paymentData): array
     {
         try {
+            self::validatePaymentAmount($accountReceivable, $paymentData['amount']);
+            
             $payment = DB::transaction(function () use ($accountReceivable, $paymentData) {
                 $newBalance = $accountReceivable->remaining_balance - $paymentData['amount'];
                 
@@ -48,6 +53,7 @@ class PaymentService
                 ]
             ];
         } catch (\Exception $e) {
+            throw $e;
             return [
                 'success' => false,
                 'message' => 'Error al procesar el pago: ' . $e->getMessage(),
@@ -184,7 +190,7 @@ class PaymentService
     /**
      * Valida si un monto de pago es válido
      */
-    public static function validatePaymentAmount(AccountReceivable $accountReceivable, float $amount): array
+    public static function validatePaymentAmount(AccountReceivable $accountReceivable, float $amount): void
     {
         $errors = [];
 
@@ -193,7 +199,7 @@ class PaymentService
         }
 
         if ($amount > $accountReceivable->remaining_balance) {
-            $errors[] = "El monto del pago no puede ser mayor al saldo pendiente (L. " . number_format($accountReceivable->remaining_balance, 2) . ").";
+            $errors[] = "El monto del pago no puede ser mayor al saldo pendiente (L. " . $accountReceivable->remaining_balance . ").";
         }
 
         // Validación adicional: verificar que la cuenta esté pendiente
@@ -206,7 +212,9 @@ class PaymentService
             $errors[] = 'Esta cuenta ya está completamente pagada.';
         }
 
-        return $errors;
+        if (!empty($errors)) {
+            throw new Exception(implode(", ", $errors), 422);
+        }
     }
 
     /**
