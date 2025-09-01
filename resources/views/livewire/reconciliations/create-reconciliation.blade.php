@@ -620,9 +620,20 @@
                                         <div class="flex justify-between items-center">
                                             <div class="flex items-center gap-x-1">
                                                 <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-primary-50 p-0.5 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400 text-sm">💵</span>
-                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Efectivo Esperado</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Efectivo Esperado <span class="text-xs text-gray-500 dark:text-gray-400">(mín. L 0.00)</span></span>
                                             </div>
                                             <span class="font-semibold text-gray-950 dark:text-white">L {{ number_format($total_cash_expected, 2) }}</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <!-- Total Gastos (se resta del efectivo disponible) -->
+                                    <li class="fi-ta-item p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center gap-x-1">
+                                                <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-red-50 p-0.5 text-red-500 dark:bg-red-500/10 dark:text-red-400 text-sm">💸</span>
+                                                <span class="text-sm font-medium text-gray-950 dark:text-white">Total Gastos <span class="text-xs text-gray-500 dark:text-gray-400">(se resta)</span></span>
+                                            </div>
+                                            <span class="font-semibold text-red-600 dark:text-red-400">L {{ number_format($total_bills, 2) }}</span>
                                         </div>
                                     </li>
                                     
@@ -674,6 +685,8 @@
                                             <span class="font-semibold {{ $deposit_difference < 0 ? 'text-red-600' : 'text-green-600' }} dark:{{ $deposit_difference < 0 ? 'text-red-400' : 'text-green-400' }}">L {{ number_format($deposit_difference, 2) }}</span>
                                         </div>
                                     </li>
+                                    
+
                                 </ul>
                             </div>
                         </div>
@@ -816,6 +829,149 @@
                                                     <div class="flex justify-between items-center">
                                                         <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Total Depósitos Realizados:</span>
                                                         <span class="text-sm font-semibold text-gray-900 dark:text-white">L {{ number_format(collect($deposits)->sum('amount'), 2) }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bills Management Section -->
+                        <div class="fi-section rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 mt-2" x-data="{ showBillForm: false }">
+                            <div class="fi-section-header mb-1">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-x-1">
+                                        <span class="fi-section-header-icon flex items-center justify-center rounded-md bg-red-50 p-0.5 text-red-500 dark:bg-red-500/10 dark:text-red-400 text-sm">💸</span>
+                                        <h3 class="fi-section-header-heading text-md font-semibold leading-5 text-gray-950 dark:text-white">
+                                            Gestión de Gastos
+                                        </h3>
+                                    </div>
+                                    <button type="button" @click="showBillForm = !showBillForm"
+                                        class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-0.5 px-1"
+                                        :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
+                                        :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                        <span class="text-xs">➕</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-1">
+                                <div class="space-y-2">
+                                    <!-- Bill Form (Collapsible) -->
+                                    <div x-show="showBillForm" x-transition:enter="transition ease-out duration-200" 
+                                         x-transition:enter-start="opacity-0 transform -translate-y-2" 
+                                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                                         x-transition:leave="transition ease-in duration-150"
+                                         x-transition:leave-start="opacity-100 transform translate-y-0" 
+                                         x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                         class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600 mb-2">
+                                        
+                                        <div class="space-y-2">
+                                            <!-- Description Input -->
+                                            <div class="mb-1">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white">
+                                                    Descripción
+                                                </label>
+                                                <input type="text" placeholder="Descripción del gasto" wire:model="bill_description"
+                                                    class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm" />
+                                                @error('bill_description') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+
+                                            <!-- Amount Input -->
+                                            <div class="mb-1">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white">
+                                                    Monto
+                                                </label>
+                                                <input type="number" step="0.01" placeholder="0.00" wire:model="bill_amount"
+                                                    class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm" />
+                                                @error('bill_amount') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+
+                                            <!-- Reference Input -->
+                                            <div class="mb-1">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white">
+                                                    Referencia
+                                                </label>
+                                                <input type="text" placeholder="Número de referencia o factura" wire:model="bill_reference"
+                                                    class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm" />
+                                                @error('bill_reference') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Bill Button -->
+                                        <div class="flex justify-end mt-3">
+                                            <button type="button" wire:click="saveBill"
+                                                class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-primary bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-2 px-2"
+                                                :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
+                                                :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                <span class="mr-1">💾</span> Guardar Gasto
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bills Table -->
+                                    <div class="mt-2">
+                                        <h4 class="fi-section-header-heading text-xs font-medium text-gray-950 dark:text-white mb-1">Gastos Registrados</h4>
+                                        <div class="fi-ta rounded-lg bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                            <div class="fi-ta-content relative overflow-x-auto">
+                                                <table class="fi-ta-table w-full divide-y divide-gray-200 text-start dark:divide-white/5">
+                                                    <thead>
+                                                        <tr class="bg-gray-50 dark:bg-gray-700/50">
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Descripción</span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Referencia</span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Monto</span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 text-right">
+                                                                <span class="fi-ta-header-cell-label text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</span>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                                        @forelse($bills as $bill)
+                                                        <tr class="fi-ta-row hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                                                {{ $bill['description'] }}
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-gray-700 dark:text-gray-300">
+                                                                {{ $bill['reference_number'] }}
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
+                                                                L {{ number_format($bill['amount'], 2) }}
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-right">
+                                                                <button type="button" wire:click="deleteBill({{ $bill['id'] }})"
+                                                                    class="fi-icon-btn fi-icon-btn-size-xs relative flex items-center justify-center rounded-md outline-none transition duration-75 hover:bg-gray-50 focus:ring-1 dark:hover:bg-gray-700 fi-color-danger text-danger-600 hover:text-danger-500 focus:ring-danger-500/50 dark:text-danger-500 dark:hover:text-danger-400 dark:focus:ring-danger-400/50"
+                                                                    :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
+                                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                                    <span>🗑️</span>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        @empty
+                                                        <tr>
+                                                            <td colspan="4" class="px-2 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
+                                                                <div class="flex flex-col items-center justify-center">
+                                                                    <span class="text-lg mb-1">💸</span>
+                                                                    <p class="text-xs">No hay gastos registrados</p>
+                                                                    <p class="text-xs mt-0.5">Utilice el botón + para agregar un gasto</p>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                                
+                                                <!-- Total Gastos Realizados -->
+                                                <div class="mt-2 p-2 bg-red-50 dark:bg-red-700 rounded-md">
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-xs font-medium text-red-700 dark:text-red-300">Total Gastos Realizados:</span>
+                                                        <span class="text-sm font-semibold text-red-900 dark:text-white">L {{ number_format(collect($bills)->sum('amount'), 2) }}</span>
                                                     </div>
                                                 </div>
                                             </div>

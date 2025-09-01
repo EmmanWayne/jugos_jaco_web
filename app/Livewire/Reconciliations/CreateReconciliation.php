@@ -6,6 +6,7 @@ use App\Enums\BankEnum;
 use App\Enums\ReconciliationStatusEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTypeEnum;
+use App\Models\Bill;
 use App\Models\DailySalesReconciliation;
 use App\Models\Deposit;
 use App\Models\Employee;
@@ -47,6 +48,13 @@ class CreateReconciliation extends Component
     public ?string $deposit_reference = null;
     public array $deposits = [];
     
+    // Bill form properties
+    public ?string $bill_description = null;
+    public float $bill_amount = 0.0;
+    public ?string $bill_reference = null;
+    public array $bills = [];
+    public float $total_bills = 0.0;
+    
     // Collections for dropdowns
     public $employees;
     public $banks;
@@ -70,6 +78,7 @@ class CreateReconciliation extends Component
         $this->reconciliation_date = now()->format('Y-m-d');
         $this->banks = BankEnum::options();
         $this->loadDeposits();
+        $this->loadBills();
     }
     
     public function updatedEmployeeId()
@@ -126,9 +135,7 @@ class CreateReconciliation extends Component
                     'method' => $this->getPaymentMethodLabel($payment->payment_method)
                 ];
             })->toArray();
-        
-        $this->calculateTotals();
-        
+                
         // Verificar si ya existe un cuadre para hoy
         $today = Carbon::today();
         $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
@@ -137,7 +144,10 @@ class CreateReconciliation extends Component
             $this->current_reconciliation = $existing;
             $this->reconciliation_created = true;
             $this->loadDeposits();
+            $this->loadBills();
         }
+
+        $this->calculateTotals();
     }
     
     // Método completo que carga datos y crea el cuadre
@@ -180,13 +190,17 @@ class CreateReconciliation extends Component
             ->where('payment_method', PaymentTypeEnum::DEPOSIT->getLabel())
             ->sum('total');
             
-        // Calcular efectivo esperado (solo ventas al contado con método de pago en efectivo + cobros en efectivo)
+        // Calcular efectivo esperado (solo ventas al contado con método de pago en efectivo + cobros en efectivo - gastos)
         $cash_only_sales = collect($this->sales)
             ->where('type', PaymentTermEnum::CASH->getLabel())
             ->where('payment_method', PaymentTypeEnum::CASH->getLabel())
             ->sum('total');
             
-        $this->total_cash_expected = $cash_only_sales + $this->total_cash_collections;
+        // Calcular total de gastos
+        $this->calculateBillTotals();
+            
+        // El efectivo esperado se reduce por los gastos realizados, pero nunca puede ser negativo
+        $this->total_cash_expected = max(0, $cash_only_sales + $this->total_cash_collections - $this->total_bills);
         
         // Calcular depósitos esperados (ventas pagadas con depósitos + cobros en depósitos)
         $this->total_deposit_expected = $this->total_deposit_sales + $this->total_deposit_collections;
@@ -327,7 +341,8 @@ class CreateReconciliation extends Component
     // Método para calcular la diferencia de efectivo
     protected function calculateCashDifference()
     {
-        $this->cash_difference = $this->cash_received - $this->total_cash_expected;
+        // Restamos los gastos para reflejarlos en la diferencia de efectivo
+        $this->cash_difference = ($this->cash_received - $this->total_cash_expected) - $this->total_bills;
     }
     
     protected function calculateDepositTotals()
@@ -383,7 +398,8 @@ class CreateReconciliation extends Component
                     'total_sales' => $this->total_sales,
                     'cash_collections' => $this->total_cash_collections,
                     'deposit_collections' => $this->total_deposit_collections,
-                    'total_collections' => $this->total_collections
+                    'total_collections' => $this->total_collections,
+                    'total_bills' => $this->total_bills
                 ]);
                 
                 // Recargar el cuadre para tener los datos actualizados
@@ -544,6 +560,138 @@ class CreateReconciliation extends Component
         $this->deposit_reference = null;
     }
     
+    // Método para guardar un gasto
+    public function saveBill()
+    {
+        $this->validate([
+            'bill_description' => 'required|string|max:255',
+            'bill_amount' => 'required|numeric|min:0.01',
+            'bill_reference' => 'nullable|string|max:255',
+        ], [
+            'bill_description.required' => 'La descripción es requerida',
+            'bill_amount.required' => 'El monto es requerido',
+            'bill_amount.numeric' => 'El monto debe ser un número',
+            'bill_amount.min' => 'El monto debe ser mayor a 0',
+        ]);
+        
+        // Si no hay un cuadre inicializado, lo creamos primero
+        if (!$this->current_reconciliation) {
+            $this->createPendingReconciliation();
+        }
+        
+        // Iniciar una transacción para asegurar que todas las operaciones se realicen de forma atómica
+        DB::beginTransaction();
+        
+        try {
+            // Crear el gasto asociado al cuadre actual
+            Bill::create([
+                'description' => $this->bill_description,
+                'amount' => $this->bill_amount,
+                'reference_number' => $this->bill_reference,
+                'model_id' => $this->current_reconciliation->id,
+                'branch_id' => Auth::user()->employee?->branch_id ?? 1,
+            ]);
+            
+            // Recalcular totales
+            $this->calculateBillTotals();
+            $this->calculateTotals();
+            
+            // Confirmar la transacción
+            DB::commit();
+            
+            // Limpiar los campos del formulario de gasto
+            $this->resetBillForm();
+            
+            // Mostrar mensaje de éxito
+            session()->flash('success', 'Gasto guardado correctamente');
+        } catch (\Exception $e) {
+            // Si ocurre algún error, revertir la transacción
+            DB::rollBack();
+            
+            // Mostrar mensaje de error
+            session()->flash('error', 'Error al guardar el gasto: ' . $e->getMessage());
+        }
+        
+        // Recargar los gastos
+        $this->loadBills();
+    }
+    
+    // Método para eliminar un gasto
+    public function deleteBill($billId)
+    {
+        $bill = Bill::find($billId);
+        
+        if ($bill && $bill->model_id == $this->current_reconciliation->id) {
+            // Iniciar una transacción para asegurar que todas las operaciones se realicen de forma atómica
+            DB::beginTransaction();
+            
+            try {
+                // Eliminar el gasto
+                $bill->delete();
+                
+                // Recalcular totales
+                $this->calculateBillTotals();
+                $this->calculateTotals();
+                
+                // Confirmar la transacción
+                DB::commit();
+                
+                // Mostrar mensaje de éxito
+                session()->flash('success', 'Gasto eliminado correctamente');
+            } catch (\Exception $e) {
+                // Si ocurre algún error, revertir la transacción
+                DB::rollBack();
+                
+                // Mostrar mensaje de error
+                session()->flash('error', 'Error al eliminar el gasto: ' . $e->getMessage());
+            }
+            
+            // Recargar los gastos
+            $this->loadBills();
+        }
+    }
+    
+    // Método para resetear el formulario de gasto
+    protected function resetBillForm()
+    {
+        $this->bill_description = null;
+        $this->bill_amount = 0.0;
+        $this->bill_reference = null;
+    }
+    
+    // Método para calcular el total de gastos
+    protected function calculateBillTotals()
+    {
+        if ($this->current_reconciliation) {
+            $this->total_bills = Bill::where('model_id', $this->current_reconciliation->id)->sum('amount');
+        } else {
+            $this->total_bills = 0.0;
+        }
+    }
+    
+    // Método para cargar los gastos del cuadre actual
+    protected function loadBills()
+    {
+        if ($this->current_reconciliation) {
+            $this->bills = Bill::where('model_id', $this->current_reconciliation->id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($bill) {
+                    return [
+                        'id' => $bill->id,
+                        'description' => $bill->description,
+                        'amount' => $bill->amount,
+                        'reference_number' => $bill->reference_number,
+                        'created_at' => $bill->created_at->format('H:i'),
+                    ];
+                })->toArray();
+        } else {
+            $this->bills = [];
+        }
+        
+        $this->calculateBillTotals();
+    }
+
     public function render()
     {
         return view('livewire.reconciliations.create-reconciliation');
