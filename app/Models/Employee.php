@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Branch;
+use App\Models\DailySalesReconciliation;
 
 class Employee extends Model
 {
@@ -46,6 +47,14 @@ class Employee extends Model
     public function locations()
     {
         return $this->morphMany(Location::class, 'model');
+    }
+    
+    /**
+     * Get the daily sales reconciliations for the employee.
+     */
+    public function dailySalesReconciliations(): HasMany
+    {
+        return $this->hasMany(DailySalesReconciliation::class, 'employee_id');
     }
     
     public function assignedProducts(): HasMany

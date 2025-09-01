@@ -10,4 +10,6 @@ class CreateSale extends Page
     protected static string $resource = SaleResource::class;
 
     protected static string $view = 'filament.resources.sale-resource.pages.create-sale';
+
+    protected static ?string $title = 'Nueva Venta';
 }
