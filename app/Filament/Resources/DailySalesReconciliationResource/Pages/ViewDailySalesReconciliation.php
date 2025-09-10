@@ -2,21 +2,18 @@
 
 namespace App\Filament\Resources\DailySalesReconciliationResource\Pages;
 
-use App\Enums\BankEnum;
 use App\Filament\Resources\DailySalesReconciliationResource;
-use App\Models\Deposit;
-use Filament\Actions;
 use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\Grid;
 use Filament\Infolists\Components\Group;
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
-use Illuminate\Support\HtmlString;
+use App\Models\Bill;
+use App\Models\ProductReturn;
 
 class ViewDailySalesReconciliation extends ViewRecord
 {
@@ -25,7 +22,7 @@ class ViewDailySalesReconciliation extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            // Actions\EditAction::make(),
         ];
     }
 
@@ -314,6 +311,200 @@ class ViewDailySalesReconciliation extends ViewRecord
                                     'created_at' => null,
                                 ]] : $deposits;
                             }),
+                    ])
+                    ->compact()
+                    ->collapsible(),
+
+                // Gastos del Día
+                Section::make('💸 Gastos del Día')
+                    ->description('Detalle de todos los gastos registrados durante el cuadre')
+                    ->schema([
+                        RepeatableEntry::make('bills')
+                            ->hiddenLabel()
+                            ->schema([
+                                Grid::make(1)
+                                    ->schema([
+                                        Grid::make(3)
+                                            ->schema([
+                                                TextEntry::make('description')
+                                                    ->label('📋 Descripción')
+                                                    ->weight(FontWeight::Bold)
+                                                    ->size('lg'),
+                                                    
+                                                TextEntry::make('amount')
+                                                    ->label('💰 Monto')
+                                                    ->money('HNL')
+                                                    ->weight(FontWeight::Bold)
+                                                    ->size('lg')
+                                                    ->color('danger'),
+                                                    
+                                                TextEntry::make('reference_number')
+                                                    ->label('📄 No. Referencia')
+                                                    ->weight(FontWeight::Medium)
+                                                    ->copyable()
+                                                    ->copyMessage('Referencia copiada')
+                                                    ->extraAttributes(['class' => 'font-mono']),
+                                            ]),
+                                    ])
+                                    ->extraAttributes(['class' => 'p-4 bg-gray-50 rounded-lg border border-gray-200 mb-3']),
+                            ])
+                            ->columns(1)
+                            ->contained(false)
+                            ->state(function ($record) {
+                                $bills = $record->bills()
+                                    ->orderBy('created_at', 'desc')
+                                    ->get()
+                                    ->map(function ($bill) {
+                                        return [
+                                            'id' => $bill->id,
+                                            'description' => $bill->description,
+                                            'amount' => $bill->amount,
+                                            'reference_number' => $bill->reference_number,
+                                        ];
+                                    })
+                                    ->toArray();
+                                
+                                return empty($bills) ? [[
+                                    'description' => 'No hay gastos registrados',
+                                    'amount' => 0,
+                                    'reference_number' => '',
+                                ]] : $bills;
+                            }),
+                            
+                        // Total de Gastos
+                        Grid::make(1)
+                            ->schema([
+                                TextEntry::make('total_bills')
+                                    ->label('💸 Total de Gastos')
+                                    ->money('HNL')
+                                    ->weight(FontWeight::Bold)
+                                    ->size('xl')
+                                    ->color('danger')
+                                    ->extraAttributes(['class' => 'p-4 bg-red-100 rounded-lg border-2 border-red-300'])
+                                    ->state(function ($record) {
+                                        return $record->bills()->sum('amount');
+                                    }),
+                            ]),
+                    ])
+                    ->compact()
+                    ->collapsible(),
+
+                // Devoluciones de Productos
+                Section::make('🔄 Devoluciones de Productos')
+                    ->description('Detalle de productos dañados y retornados durante el día')
+                    ->schema([
+                        RepeatableEntry::make('product_returns')
+                            ->hiddenLabel()
+                            ->schema([
+                                Grid::make(1)
+                                    ->schema([
+                                        Grid::make(5)
+                                            ->schema([
+                                                TextEntry::make('product.name')
+                                                    ->label('📦 Producto')
+                                                    ->weight(FontWeight::Bold)
+                                                    ->size('lg'),
+                                                    
+                                                TextEntry::make('employee.first_name')
+                                                    ->label('👤 Empleado')
+                                                    ->weight(FontWeight::Medium)
+                                                    ->formatStateUsing(function ($record) {
+                                                        return $record['employee']['first_name'] . ' ' . ($record['employee']['last_name'] ?? '');
+                                                    }),
+                                                    
+                                                TextEntry::make('quantity')
+                                                    ->label('📊 Cantidad')
+                                                    ->weight(FontWeight::Bold)
+                                                    ->suffix(' unidades'),
+                                                    
+                                                TextEntry::make('type')
+                                                    ->label('🏷️ Tipo')
+                                                    ->badge()
+                                                    ->color(fn ($state) => match($state) {
+                                                        'damaged' => 'danger',
+                                                        'returned' => 'warning',
+                                                        default => 'gray'
+                                                    })
+                                                    ->formatStateUsing(fn ($state) => match($state) {
+                                                        'damaged' => 'Dañado',
+                                                        'returned' => 'Retornado',
+                                                        default => $state
+                                                    }),
+                                                    
+                                                TextEntry::make('reason')
+                                                    ->label('📝 Motivo')
+                                                    ->weight(FontWeight::Medium)
+                                                    ->limit(30),
+                                            ]),
+                                            
+                                        // Descripción completa si existe
+                                        TextEntry::make('description')
+                                            ->label('📋 Descripción Detallada')
+                                            ->placeholder('Sin descripción adicional')
+                                            ->columnSpanFull()
+                                            ->visible(fn ($state) => !empty($state))
+                                            ->extraAttributes(['class' => 'mt-2 p-2 bg-gray-50 rounded text-sm']),
+                                    ])
+                                    ->extraAttributes(['class' => 'p-4 bg-gray-50 rounded-lg border border-gray-200 mb-3']),
+                            ])
+                            ->columns(1)
+                            ->contained(false)
+                            ->state(function ($record) {
+                                $returns = $record->productReturns()
+                                    ->with(['product', 'employee'])
+                                    ->orderBy('created_at', 'desc')
+                                    ->get()
+                                    ->map(function ($return) {
+                                        return [
+                                            'id' => $return->id,
+                                            'product' => [
+                                                'name' => $return->product->name ?? 'Producto no encontrado'
+                                            ],
+                                            'employee' => [
+                                                'first_name' => $return->employee->first_name ?? 'Empleado',
+                                                'last_name' => $return->employee->last_name ?? ''
+                                            ],
+                                            'quantity' => $return->quantity,
+                                            'type' => $return->type,
+                                            'reason' => $return->reason,
+                                            'description' => $return->description,
+                                        ];
+                                    })
+                                    ->toArray();
+                                
+                                return empty($returns) ? [[
+                                    'product' => ['name' => 'No hay devoluciones registradas'],
+                                    'employee' => ['first_name' => '', 'last_name' => ''],
+                                    'quantity' => 0,
+                                    'type' => '',
+                                    'reason' => '',
+                                    'description' => '',
+                                ]] : $returns;
+                            }),
+                            
+                        // Resumen de Devoluciones
+                        Grid::make(2)
+                            ->schema([
+                                TextEntry::make('total_damaged_products')
+                                    ->label('🚫 Productos Dañados')
+                                    ->suffix(' unidades')
+                                    ->weight(FontWeight::Bold)
+                                    ->color('danger')
+                                    ->extraAttributes(['class' => 'p-3 bg-red-100 rounded-lg'])
+                                    ->state(function ($record) {
+                                        return $record->productReturns()->where('type', 'damaged')->sum('quantity');
+                                    }),
+                                    
+                                TextEntry::make('total_returned_products')
+                                    ->label('↩️ Productos Retornados')
+                                    ->suffix(' unidades')
+                                    ->weight(FontWeight::Bold)
+                                    ->color('warning')
+                                    ->extraAttributes(['class' => 'p-3 bg-yellow-100 rounded-lg'])
+                                    ->state(function ($record) {
+                                        return $record->productReturns()->where('type', 'returned')->sum('quantity');
+                                    }),
+                            ]),
                     ])
                     ->compact()
                     ->collapsible(),

@@ -6,15 +6,20 @@ use App\Enums\BankEnum;
 use App\Enums\ReconciliationStatusEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTypeEnum;
+use App\Enums\ProductReturnTypeEnum;
 use App\Models\Bill;
 use App\Models\DailySalesReconciliation;
 use App\Models\Deposit;
 use App\Models\Employee;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\ProductReturn;
 use App\Models\Sale;
+use App\Services\ProductReturnService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class CreateReconciliation extends Component
@@ -55,9 +60,22 @@ class CreateReconciliation extends Component
     public array $bills = [];
     public float $total_bills = 0.0;
     
+    // Product return form properties
+    public ?string $return_product_id = null;
+    public ?string $return_type = null;
+    public ?string $return_reason = null;
+    public int $return_quantity = 1;
+    public bool $return_affects_inventory = true;
+    public array $returns = [];
+    
+    // Product search properties (simplified)
+    public string $product_search = '';
+    
     // Collections for dropdowns
     public $employees;
     public $banks;
+    public $products;
+    public $return_types;
     
     // State
     public bool $reconciliation_created = false;
@@ -65,18 +83,40 @@ class CreateReconciliation extends Component
     
     protected $rules = [
         'employee_id' => 'required|exists:employees,id',
+        'return_product_id' => 'required|exists:products,id',
+        'return_type' => 'required|in:damaged,returned',
+        'return_reason' => 'required|string|max:255',
+        'return_quantity' => 'required|integer|min:1',
+        'return_affects_inventory' => 'boolean',
     ];
     
     protected $messages = [
         'employee_id.required' => 'Debe seleccionar un empleado.',
         'employee_id.exists' => 'El empleado seleccionado no es válido.',
+        'return_product_id.required' => 'Debe seleccionar un producto.',
+        'return_product_id.exists' => 'El producto seleccionado no es válido.',
+        'return_type.required' => 'Debe seleccionar un tipo de devolución.',
+        'return_type.in' => 'El tipo de devolución seleccionado no es válido.',
+        'return_reason.required' => 'Debe proporcionar una razón para la devolución.',
+        'return_reason.max' => 'La razón no puede exceder 255 caracteres.',
+        'return_quantity.required' => 'Debe especificar la cantidad.',
+        'return_quantity.integer' => 'La cantidad debe ser un número entero.',
+        'return_quantity.min' => 'La cantidad debe ser mayor a 0.',
     ];
 
-    public function mount(): void
+    public function mount($employee_id = null): void
     {
         $this->employees = Employee::orderBy('first_name')->get();
         $this->reconciliation_date = now()->format('Y-m-d');
         $this->banks = BankEnum::options();
+        $this->products = Product::where('is_active', true)->get();
+        $this->return_types = ProductReturnTypeEnum::getOptions();
+        
+        if ($employee_id) {
+            $this->employee_id = $employee_id;
+            $this->loadEmployeeDataOnly();
+        }
+        
         $this->loadDeposits();
         $this->loadBills();
     }
@@ -84,6 +124,14 @@ class CreateReconciliation extends Component
     public function updatedEmployeeId()
     {
         if ($this->employee_id) {
+            // Verificar si existe un cuadre para hoy y está completado
+            $today = Carbon::today();
+            $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
+            
+            if ($existing && $existing->status === ReconciliationStatusEnum::COMPLETED) {
+                session()->flash('warning', 'El empleado seleccionado ya tiene un cuadre completado para el día de hoy.');
+            }
+            
             // Solo cargamos los datos del empleado pero no creamos el cuadre automáticamente
             $this->loadEmployeeDataOnly();
         } else {
@@ -99,6 +147,25 @@ class CreateReconciliation extends Component
         }
         
         $today = Carbon::today();
+        
+        // Verificar si ya existe un cuadre para hoy
+        $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
+            
+        if ($existing) {
+            $this->current_reconciliation = $existing;
+            $this->reconciliation_created = true;
+            
+            // Si el cuadre está completado, no cargamos los datos
+            if ($existing->status === ReconciliationStatusEnum::COMPLETED) {
+                return;
+            }
+            
+            // Cargar el efectivo recibido si existe
+            $this->cash_received = $existing->total_cash_received;
+            
+            $this->loadDeposits();
+            $this->loadBills();
+        }
         
         // Load today's sales for the selected employee
         $this->sales = Sale::with(['client'])
@@ -135,18 +202,8 @@ class CreateReconciliation extends Component
                     'method' => $this->getPaymentMethodLabel($payment->payment_method)
                 ];
             })->toArray();
-                
-        // Verificar si ya existe un cuadre para hoy
-        $today = Carbon::today();
-        $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
-            
-        if ($existing) {
-            $this->current_reconciliation = $existing;
-            $this->reconciliation_created = true;
-            $this->loadDeposits();
-            $this->loadBills();
-        }
-
+        
+        $this->loadReturns();
         $this->calculateTotals();
     }
     
@@ -690,6 +747,176 @@ class CreateReconciliation extends Component
         }
         
         $this->calculateBillTotals();
+    }
+
+    public function loadReturns(): void
+    {
+        // Si tenemos un cuadre específico, cargar devoluciones por reconciliation_id para mayor precisión
+        if ($this->current_reconciliation) {
+            $this->returns = ProductReturn::with('product')
+                ->where('reconciliation_id', $this->current_reconciliation->id)
+                ->get()
+                ->map(function ($return) {
+                    return [
+                        'id' => $return->id,
+                        'product_name' => $return->product->name,
+                        'quantity' => $return->quantity,
+                        'type' => $return->type->getLabel(),
+                        'reason' => $return->reason,
+                        'affects_inventory' => $return->affects_inventory ? 'Sí' : 'No',
+                        'created_at' => $return->created_at->format('H:i:s'),
+                    ];
+                })->toArray();
+            return;
+        }
+
+        // Fallback: si no hay cuadre, usar employee_id y fecha como antes
+        if (!$this->employee_id || !$this->reconciliation_date) {
+            $this->returns = [];
+            return;
+        }
+
+        $this->returns = ProductReturn::with('product')
+            ->where('employee_id', $this->employee_id)
+            ->whereDate('created_at', $this->reconciliation_date)
+            ->get()
+            ->map(function ($return) {
+                return [
+                    'id' => $return->id,
+                    'product_name' => $return->product->name,
+                    'quantity' => $return->quantity,
+                    'type' => $return->type->getLabel(),
+                    'reason' => $return->reason,
+                    'affects_inventory' => $return->affects_inventory ? 'Sí' : 'No',
+                    'created_at' => $return->created_at->format('H:i:s'),
+                ];
+            })->toArray();
+    }
+
+    public function addReturn(): void
+    {
+        $this->validate([
+            'return_product_id' => 'required|exists:products,id',
+            'return_type' => 'required|in:damaged,returned',
+            'return_reason' => 'required|string|max:255',
+            'return_quantity' => 'required|integer|min:1',
+        ]);
+
+        try {
+            DB::transaction(function () {
+                // Si no hay un cuadre inicializado, lo creamos primero
+                if (!$this->current_reconciliation) {
+                    $this->createPendingReconciliation();
+                }
+
+                // Crear la devolución
+                $productReturn = ProductReturn::create([
+                    'product_id' => $this->return_product_id,
+                    'employee_id' => $this->employee_id,
+                    'reconciliation_id' => $this->current_reconciliation->id,
+                    'quantity' => $this->return_quantity,
+                    'type' => ProductReturnTypeEnum::from($this->return_type),
+                    'reason' => $this->return_reason,
+                    'affects_inventory' => $this->return_affects_inventory,
+                ]);
+
+                // Registrar el movimiento de inventario
+                $returnService = new ProductReturnService();
+                $returnService->registerInventoryMovement($productReturn);
+            });
+
+            $this->resetReturnForm();
+            $this->loadReturns();
+            session()->flash('message', 'Devolución registrada exitosamente.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al registrar la devolución: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteReturn(int $returnId): void
+    {
+        try {
+            DB::transaction(function () use ($returnId) {
+                $productReturn = ProductReturn::findOrFail($returnId);
+                
+                // Revertir el movimiento de inventario antes de eliminar
+                $returnService = new ProductReturnService();
+                $returnService->reverseInventoryMovement($productReturn);
+                
+                // Eliminar la devolución
+                $productReturn->delete();
+            });
+
+            $this->loadReturns();
+            session()->flash('message', 'Devolución eliminada exitosamente.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al eliminar la devolución: ' . $e->getMessage());
+        }
+    }
+
+    public function resetReturnForm(): void
+    {
+        $this->return_product_id = null;
+        $this->return_type = null;
+        $this->return_reason = null;
+        $this->return_quantity = 1;
+        $this->return_affects_inventory = true;
+        $this->resetProductSearch();
+    }
+    
+    public function resetProductSearch(): void
+    {
+        $this->product_search = '';
+    }
+    
+    public $show_product_dropdown = false;
+    public $filtered_products = [];
+    public $selected_product = null;
+
+    public function updatedProductSearch(): void
+    {
+        // No ejecutar búsqueda si hay un producto seleccionado
+        if ($this->selected_product) {
+            return;
+        }
+
+        if (strlen($this->product_search) >= 3) {
+            $this->searchProducts();
+            $this->show_product_dropdown = true;
+        } else {
+            $this->filtered_products = [];
+            $this->show_product_dropdown = false;
+        }
+    }
+
+    private function searchProducts()
+    {
+        $this->filtered_products = Product::where('name', 'like', '%' . $this->product_search . '%')
+            ->orWhere('code', 'like', '%' . $this->product_search . '%')
+            ->limit(10)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectProduct($productId)
+    {
+        $product = Product::find($productId);
+        if ($product) {
+            $this->selected_product = $product;
+            $this->product_search = $product->name;
+            $this->return_product_id = $product->id;
+            $this->show_product_dropdown = false;
+            $this->filtered_products = [];
+        }
+    }
+
+    public function clearProductSelection()
+    {
+        $this->selected_product = null;
+        $this->product_search = '';
+        $this->return_product_id = null;
+        $this->show_product_dropdown = false;
+        $this->filtered_products = [];
     }
 
     public function render()
