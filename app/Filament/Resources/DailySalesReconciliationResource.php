@@ -263,9 +263,14 @@ class DailySalesReconciliationResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                Tables\Actions\Action::make('edit_pending')
+                    ->label('Editar')
+                    ->icon('heroicon-m-pencil-square')
+                    ->url(fn ($record) => route('filament.admin.resources.daily-sales-reconciliations.create', ['employee_id' => $record->employee_id]))
+                    ->visible(fn ($record) => $record->status === \App\Enums\ReconciliationStatusEnum::PENDING)
+                    ->color('warning')
                     ->iconButton(),
-                Tables\Actions\EditAction::make()
+                Tables\Actions\ViewAction::make()
                     ->iconButton(),
                 Tables\Actions\DeleteAction::make()
                     ->iconButton(),

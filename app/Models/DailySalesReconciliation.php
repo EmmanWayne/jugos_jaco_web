@@ -109,6 +109,22 @@ class DailySalesReconciliation extends Model
     }
 
     /**
+     * Get the bills (expenses) associated with this reconciliation.
+     */
+    public function bills(): HasMany
+    {
+        return $this->hasMany(Bill::class, 'model_id');
+    }
+
+    /**
+     * Get the product returns associated with this reconciliation.
+     */
+    public function productReturns(): HasMany
+    {
+        return $this->hasMany(ProductReturn::class, 'reconciliation_id');
+    }
+
+    /**
      * Calculate the expected cash based on sales and collections.
      */
     public function calculateExpectedCash(): float

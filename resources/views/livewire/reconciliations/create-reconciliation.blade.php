@@ -115,10 +115,18 @@
                 <div class="fi-badge inline-flex items-center rounded-md px-2 py-1 text-sm font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
                     📅 Fecha: {{ now()->format('d/m/Y') }}
                 </div>
-            </div>
-        </div>
+                    </div>
+                </div>
 
         <div class="custom-container p-6">
+            @if($current_reconciliation && $current_reconciliation->status->value === 'completed')
+                <div class="text-center py-8 bg-yellow-50 rounded-lg border border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-700">
+                    <div class="text-yellow-600 dark:text-yellow-400 text-4xl mb-4">⚠️</div>
+                    <h3 class="text-lg font-medium text-yellow-700 dark:text-yellow-300 mb-2">Cuadre Diario Completado</h3>
+                    <p class="text-yellow-600 dark:text-yellow-400">Ya existe un cuadre completado para este empleado en el día de hoy.</p>
+                    <p class="text-yellow-600 dark:text-yellow-400 text-sm mt-2">No se pueden realizar más modificaciones.</p>
+                </div>
+            @else
             <div class="custom-row">
                 <!-- Left Column - Sales by Employee -->
                 <div class="custom-col-65">
@@ -138,8 +146,8 @@
                                                 type="button"
                                                 wire:click="{{ $reconciliation_created ? 'saveReconciliation' : 'initializeReconciliation' }}"
                                                 class="fi-btn fi-btn-size-sm relative inline-flex items-center justify-center font-semibold outline-none transition duration-75 focus:ring-2 rounded-lg fi-btn-color-primary fi-btn-color-primary-600 enabled:hover:bg-primary-500 enabled:active:bg-primary-700 dark:fi-btn-color-primary-400 dark:enabled:hover:bg-primary-300 dark:enabled:active:bg-primary-500 focus:ring-primary-600/50 dark:focus:ring-primary-400/50 bg-primary-600 text-white px-2 py-1 text-xs"
-                                                :class="{'opacity-50 cursor-not-allowed': !selectedEmployee || $wire.reconciliation_created && ($wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED')}"
-                                                :disabled="!selectedEmployee || $wire.reconciliation_created && ($wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED')}"
+                                                :class="{'opacity-50 cursor-not-allowed': !selectedEmployee || $wire.reconciliation_created && ($wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed')}"
+                                                :disabled="!selectedEmployee || $wire.reconciliation_created && ($wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed')}"
                                             >
                                                 <span class="fi-btn-label">{{ $reconciliation_created ? 'Guardar Cuadre' : 'Iniciar Cuadre' }}</span>
                                             </button>
@@ -165,6 +173,15 @@
                                                     return results;
                                                 },
                                                 init() {
+                                                    if ($wire.employee_id) {
+                                                        const employeeId = parseInt($wire.employee_id);
+                                                        const employee = this.employees.find(emp => emp.id === employeeId);
+                                                        if (employee) {
+                                                            this.selectedEmployee = employee;
+                                                            this.search = employee.name;
+                                                        }
+                                                    }
+                                                    
                                                     this.$watch('search', (value) => {
                                                         if (!this.selectedEmployee) {
                                                             this.isSearching = value.length > 0;
@@ -324,8 +341,6 @@
                                 </div>
                                 @enderror
                             </div>
-
-
                         </div>
 
                         <!-- Sales Table -->
@@ -517,6 +532,275 @@
                             <p class="text-gray-500 text-sm">No hay cobros registrados para hoy</p>
                         </div>
                         @endif
+
+                        <!-- Product Returns Section -->
+                        @if($employee_id)
+                        <div class="mb-6">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10" x-data="{ showReturnForm: false }">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="flex items-center gap-x-3">
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">🔄 Devoluciones de Productos</h4>
+                                        <button type="button" @click="showReturnForm = !showReturnForm"
+                                            class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-1 px-2"
+                                            :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                            :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
+                                            <span class="text-xs" x-text="showReturnForm ? '➖' : '➕'"></span>
+                                            <span class="text-xs ml-1" x-text="showReturnForm ? 'Ocultar' : 'Agregar'"></span>
+                                        </button>
+                                    </div>
+                                    <div class="inline-flex items-center justify-center rounded-full bg-orange-50 px-2.5 py-0.5 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
+                                        <span class="text-xs font-medium">{{ count($returns) }} {{ count($returns) == 1 ? 'devolución' : 'devoluciones' }}</span>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6">
+                                    <!-- Return Form (Collapsible) -->
+                                    <div x-show="showReturnForm" 
+                                         x-transition:enter="transition ease-out duration-300" 
+                                         x-transition:enter-start="opacity-0 transform -translate-y-4 scale-95" 
+                                         x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                         x-transition:leave="transition ease-in duration-200"
+                                         x-transition:leave-start="opacity-100 transform translate-y-0 scale-100" 
+                                         x-transition:leave-end="opacity-0 transform -translate-y-4 scale-95"
+                                         class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4">
+                                        <h5 class="text-sm font-medium text-gray-950 dark:text-white mb-3">Registrar Nueva Devolución</h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <!-- Product Selection -->
+                                            <div class="relative">
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white mb-1">
+                                                    Producto
+                                                </label>
+                                                <div class="relative">
+                                                    <input
+                                                        wire:model.live="product_search"
+                                                        type="text"
+                                                        placeholder="{{ $selected_product ? $selected_product->name : 'Escriba al menos 3 caracteres para buscar...' }}"
+                                                        @if($selected_product) readonly @endif
+                                                        class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm pl-3 {{ $selected_product ? 'pr-10 bg-gray-50 dark:bg-gray-600' : '' }}" />
+                                                    
+                                                    @if($selected_product)
+                                                        <!-- Botón X para limpiar selección -->
+                                                        <div class="absolute top-0 right-0 pt-2 px-2 flex items-center justify-end" style="width: 100%;">
+                                                            <button
+                                                                wire:click="clearProductSelection"
+                                                                type="button"
+                                                                class="flex items-center justify-center h-5 w-5 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors duration-200 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                                title="Limpiar selección">
+                                                                <svg fill="currentColor" viewBox="0 0 20 20" class="h-4 w-4">
+                                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                
+                                                <!-- Dropdown de resultados -->
+                                                @if($show_product_dropdown && count($filtered_products) > 0)
+                                                    <div class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                                                        @foreach($filtered_products as $product)
+                                                            <button
+                                                                wire:click="selectProduct({{ $product['id'] }})"
+                                                                type="button"
+                                                                class="w-full text-left px-4 py-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 focus:outline-none transition-colors duration-150 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                                <div class="flex items-start justify-between">
+                                                                    <div class="flex-1 min-w-0">
+                                                                        <div class="font-medium truncate">{{ $product['name'] }}</div>
+                                                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                            <span>Código: {{ $product['code'] }}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                                
+                                                <!-- Mensaje cuando no hay resultados -->
+                                                @if($show_product_dropdown && count($filtered_products) === 0 && strlen($product_search) >= 3)
+                                                    <div class="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                                        <div class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                                            <div class="flex items-center">
+                                                                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                                </svg>
+                                                                No se encontraron productos
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                                
+                                                @error('return_product_id') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+
+                                            <!-- Return Type -->
+                                            <div>
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white mb-1">
+                                                    Tipo de Devolución
+                                                </label>
+                                                <select wire:model="return_type" class="fi-select-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm">
+                                                    <option value="">Seleccione el tipo</option>
+                                                    @foreach($return_types as $key => $label)
+                                                        <option value="{{ $key }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('return_type') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+
+                                            <!-- Quantity -->
+                                            <div>
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white mb-1">
+                                                    Cantidad
+                                                </label>
+                                                <input type="number" min="1" wire:model="return_quantity" class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm" />
+                                                @error('return_quantity') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                            <!-- Reason -->
+                                            <div>
+                                                <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-1 text-sm font-medium leading-5 text-gray-950 dark:text-white mb-1">
+                                                    Motivo
+                                                </label>
+                                                <textarea wire:model="return_reason" rows="2" placeholder="Describa el motivo de la devolución" class="fi-input block w-full border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm"></textarea>
+                                                @error('return_reason') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                                            </div>
+
+                                            <!-- Affects Inventory Checkbox -->
+                                            <div class="flex items-center">
+                                                <div class="flex items-center h-5">
+                                                    <input type="checkbox" wire:model="return_affects_inventory" class="fi-checkbox-input rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:focus:border-primary-600 dark:focus:ring-primary-600" />
+                                                </div>
+                                                <div class="px-2 text-sm">
+                                                    <label class="font-medium text-gray-700 dark:text-gray-300">Afecta Inventario</label>
+                                                    <p class="text-gray-500 dark:text-gray-400 text-xs">Marque si esta devolución debe registrar movimiento de inventario</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Return Button -->
+                                        <div class="flex justify-end mt-4">
+                                            <button type="button" wire:click="addReturn" class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-primary bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-2 px-3">
+                                                <span class="mr-1">➕</span> Registrar Devolución
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Returns Table -->
+                                    @if(count($returns) > 0)
+                                    <div class="overflow-hidden">
+                                        <div class="overflow-x-auto" style="max-height: 225px;">
+                                            <div class="fi-ta-content relative divide-y divide-gray-200 overflow-x-auto dark:divide-white/10 dark:border-t-white/10">
+                                                <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-start dark:divide-white/5">
+                                                    <thead class="fi-ta-header-ctn divide-y divide-gray-200 dark:divide-white/5">
+                                                        <tr class="bg-gray-50 dark:bg-white/5">
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Producto</span>
+                                                                </span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Cantidad</span>
+                                                                </span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Tipo</span>
+                                                                </span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Motivo</span>
+                                                                </span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Inventario</span>
+                                                                </span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Hora</span>
+                                                                </span>
+                                                            </th>
+                                                            <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                                <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                    <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Acciones</span>
+                                                                </span>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="fi-ta-body divide-y divide-gray-200 whitespace-nowrap dark:divide-white/5">
+                                                        @foreach($returns as $return)
+                                                        <tr class="fi-ta-row [@media(hover:hover)]:transition [@media(hover:hover)]:duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
+                                                                        {{ $return['product_name'] }}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
+                                                                        {{ $return['quantity'] }}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <span class="fi-badge flex items-center justify-center gap-x-1 rounded-md text-xs font-medium ring-1 ring-inset px-2 py-1 fi-color-custom bg-orange-50 text-orange-600 ring-orange-600/10 dark:bg-orange-400/10 dark:text-orange-400 dark:ring-orange-400/30">
+                                                                        {{ $return['type'] }}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white truncate max-w-32" title="{{ $return['reason'] }}">
+                                                                        {{ $return['reason'] }}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <span class="fi-badge flex items-center justify-center gap-x-1 rounded-md text-xs font-medium ring-1 ring-inset px-2 py-1 {{ $return['affects_inventory'] === 'Sí' ? 'fi-color-success bg-green-50 text-green-600 ring-green-600/10 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/30' : 'fi-color-gray bg-gray-50 text-gray-600 ring-gray-600/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/30' }}">
+                                                                        {{ $return['affects_inventory'] }}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white">
+                                                                        {{ $return['created_at'] }}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                                <div class="fi-ta-col-wrp px-3 py-4">
+                                                                    <button type="button" wire:click="deleteReturn({{ $return['id'] }})" class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus:ring-2 -m-2 h-8 w-8 text-gray-400 hover:text-gray-500 focus:ring-primary-600 dark:text-gray-500 dark:hover:text-gray-400 dark:focus:ring-primary-500" title="Eliminar devolución">
+                                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @else
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">🔄</div>
+                                        <p class="text-gray-500 text-sm">No hay devoluciones registradas para hoy</p>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -610,7 +894,7 @@
                                                     wire:model.lazy="cash_received"
                                                     wire:change="updateCashReceived($event.target.value)"
                                                     class="fi-input block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'" />
+                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'" />
                                         </div>
                                     </div>
                                     </li>
@@ -702,22 +986,22 @@
                                         </h3>
                                     </div>
                                     <button type="button" @click="showDepositForm = !showDepositForm"
-                                        class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-0.5 px-1"
-                                        :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
-                                        :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
-                                        <span class="text-xs">➕</span>
+                                        class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-1 px-2"
+                                        :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                        :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
+                                        <span class="text-xs" x-text="showDepositForm ? '➖ Ocultar' : '➕ Agregar'"></span>
                                     </button>
                                 </div>
                             </div>
                             <div class="p-1">
                                 <div class="space-y-2">
                                     <!-- Deposit Form (Collapsible) -->
-                                    <div x-show="showDepositForm" x-transition:enter="transition ease-out duration-200" 
-                                         x-transition:enter-start="opacity-0 transform -translate-y-2" 
-                                         x-transition:enter-end="opacity-100 transform translate-y-0"
-                                         x-transition:leave="transition ease-in duration-150"
-                                         x-transition:leave-start="opacity-100 transform translate-y-0" 
-                                         x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                    <div x-show="showDepositForm" x-transition:enter="transition ease-out duration-300" 
+                                         x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95" 
+                                         x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                         x-transition:leave="transition ease-in duration-200"
+                                         x-transition:leave-start="opacity-100 transform translate-y-0 scale-100" 
+                                         x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
                                          class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600 mb-2">
                                         
                                         <div class="space-y-2">
@@ -760,8 +1044,8 @@
                                         <div class="flex justify-end mt-3">
                                             <button type="button" wire:click="saveDeposit"
                                                 class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-primary bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-2 px-2"
-                                                :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
-                                                :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                                :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
                                                 <span class="mr-1">💾</span> Guardar Depósito
                                             </button>
                                         </div>
@@ -804,8 +1088,8 @@
                                                             <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-right">
                                                                 <button type="button" wire:click="deleteDeposit({{ $deposit['id'] }})"
                                                                     class="fi-icon-btn fi-icon-btn-size-xs relative flex items-center justify-center rounded-md outline-none transition duration-75 hover:bg-gray-50 focus:ring-1 dark:hover:bg-gray-700 fi-color-danger text-danger-600 hover:text-danger-500 focus:ring-danger-500/50 dark:text-danger-500 dark:hover:text-danger-400 dark:focus:ring-danger-400/50"
-                                                                    :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
-                                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                                    :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
                                                                     <span>🗑️</span>
                                                                 </button>
                                                             </td>
@@ -849,22 +1133,22 @@
                                         </h3>
                                     </div>
                                     <button type="button" @click="showBillForm = !showBillForm"
-                                        class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-0.5 px-1"
-                                        :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
-                                        :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
-                                        <span class="text-xs">➕</span>
+                                        class="fi-btn fi-btn-size-xs relative inline-grid grid-flow-col items-center justify-center gap-0.5 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-primary bg-primary-50 text-primary-600 hover:bg-primary-100 dark:bg-primary-400/10 dark:text-primary-400 dark:hover:bg-primary-400/20 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-1 px-2"
+                                        :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                        :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
+                                        <span class="text-xs" x-text="showBillForm ? '➖ Ocultar' : '➕ Agregar'"></span>
                                     </button>
                                 </div>
                             </div>
                             <div class="p-1">
                                 <div class="space-y-2">
                                     <!-- Bill Form (Collapsible) -->
-                                    <div x-show="showBillForm" x-transition:enter="transition ease-out duration-200" 
-                                         x-transition:enter-start="opacity-0 transform -translate-y-2" 
-                                         x-transition:enter-end="opacity-100 transform translate-y-0"
-                                         x-transition:leave="transition ease-in duration-150"
-                                         x-transition:leave-start="opacity-100 transform translate-y-0" 
-                                         x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                    <div x-show="showBillForm" x-transition:enter="transition ease-out duration-300" 
+                                         x-transition:enter-start="opacity-0 transform -translate-y-2 scale-95" 
+                                         x-transition:enter-end="opacity-100 transform translate-y-0 scale-100"
+                                         x-transition:leave="transition ease-in duration-200"
+                                         x-transition:leave-start="opacity-100 transform translate-y-0 scale-100" 
+                                         x-transition:leave-end="opacity-0 transform -translate-y-2 scale-95"
                                          class="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600 mb-2">
                                         
                                         <div class="space-y-2">
@@ -903,8 +1187,8 @@
                                         <div class="flex justify-end mt-3">
                                             <button type="button" wire:click="saveBill"
                                                 class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-lg border-0 font-semibold outline-none transition duration-75 focus:ring-2 fi-color-primary bg-primary-600 text-white hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 text-xs py-2 px-2"
-                                                :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
-                                                :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                                :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
                                                 <span class="mr-1">💾</span> Guardar Gasto
                                             </button>
                                         </div>
@@ -947,8 +1231,8 @@
                                                             <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-2 sm:last-of-type:pe-2 py-1.5 whitespace-nowrap text-xs text-right">
                                                                 <button type="button" wire:click="deleteBill({{ $bill['id'] }})"
                                                                     class="fi-icon-btn fi-icon-btn-size-xs relative flex items-center justify-center rounded-md outline-none transition duration-75 hover:bg-gray-50 focus:ring-1 dark:hover:bg-gray-700 fi-color-danger text-danger-600 hover:text-danger-500 focus:ring-danger-500/50 dark:text-danger-500 dark:hover:text-danger-400 dark:focus:ring-danger-400/50"
-                                                                    :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'}"
-                                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'COMPLETED'">
+                                                                    :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                                                    :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
                                                                     <span>🗑️</span>
                                                                 </button>
                                                             </td>
@@ -1003,7 +1287,7 @@
                         <div class="bg-white border border-gray-200 rounded-lg p-4 mt-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    @if($current_reconciliation->status->value === 'COMPLETED')
+                                    @if($current_reconciliation->status->value === 'completed')
                                     <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
@@ -1015,7 +1299,7 @@
                                 </div>
                                 <div class="ml-3">
                                     <h3 class="text-sm font-medium text-gray-800">
-                                        @if($current_reconciliation->status->value === 'COMPLETED')
+                                        @if($current_reconciliation->status->value === 'completed')
                                         Cuadre Completado
                                         @else
                                         Cuadre Inicializado
@@ -1023,7 +1307,7 @@
                                     </h3>
                                     <div class="mt-2 text-sm text-gray-700">
                                         <p>Se ha creado un cuadre diario con estado 
-                                            @if($current_reconciliation->status->value === 'COMPLETED')
+                                            @if($current_reconciliation->status->value === 'completed')
                                             <strong class="text-green-600">COMPLETADO</strong>
                                             @else
                                             <strong>PENDIENTE</strong>
@@ -1043,9 +1327,9 @@
                         </div>
                         @endif
                     </div>
-                    <!-- Removed empty div with typo -->
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>
