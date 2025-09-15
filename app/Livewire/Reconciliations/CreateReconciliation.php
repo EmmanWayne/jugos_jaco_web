@@ -194,12 +194,13 @@ class CreateReconciliation extends Component
             ->get()
             ->map(function ($payment) {
                 $accountReceivable = $payment->model;
+                Log::info("Payment: " . $payment->payen);
                 return [
                     'id' => $payment->id,
                     'time' => $payment->payment_date->format('H:i'),
                     'client' => $accountReceivable->sale->client->business_name ?? 'Cliente General',
                     'amount' => $payment->amount,
-                    'method' => $this->getPaymentMethodLabel($payment->payment_method)
+                    'method' => $payment->payment_method->value,
                 ];
             })->toArray();
         
@@ -230,12 +231,13 @@ class CreateReconciliation extends Component
         $this->total_sales = $this->total_cash_sales + $this->total_credit_sales;
         
         // Calcular cobros desglosados por método de pago
+        Log::info("Payments: " . json_encode($this->payments));
         $this->total_cash_collections = collect($this->payments)
-            ->where('method', PaymentTypeEnum::CASH->getLabel())
+            ->where('method', PaymentTypeEnum::CASH->value)
             ->sum('amount');
             
         $this->total_deposit_collections = collect($this->payments)
-            ->where('method', PaymentTypeEnum::DEPOSIT->getLabel())
+            ->where('method', PaymentTypeEnum::DEPOSIT->value)
             ->sum('amount');
             
         $this->total_collections = collect($this->payments)

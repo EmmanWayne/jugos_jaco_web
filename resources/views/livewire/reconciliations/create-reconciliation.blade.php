@@ -535,7 +535,7 @@
 
                         <!-- Product Returns Section -->
                         @if($employee_id)
-                        <div class="mb-6">
+                        <div class="mb-6 mt-3">
                             <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10" x-data="{ showReturnForm: false }">
                                 <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex items-center gap-x-3">
