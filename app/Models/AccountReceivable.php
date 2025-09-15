@@ -63,7 +63,7 @@ class AccountReceivable extends Model
     public function scopeByEmployee($query, $employeeId)
     {
         return $query->whereHas('sale', function($q) use ($employeeId){
-            $q->where('employee_Id', $employeeId);
+            $q->where('employee_id', $employeeId);
         });
     }
 }
