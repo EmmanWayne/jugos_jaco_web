@@ -450,9 +450,20 @@
                             </div>
                         </div>
                         @elseif($employee_id && count($sales) === 0)
-                        <div class="text-center py-8">
-                            <div class="text-gray-400 text-4xl mb-2">📋</div>
-                            <p class="text-gray-500">No hay ventas registradas para hoy</p>
+                        <div class="mb-6">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">💰 Ventas del Día</h4>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">💰</div>
+                                        <p class="text-gray-500 text-sm">No hay ventas registradas para hoy</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         @endif
 
@@ -527,9 +538,131 @@
                             </div>
                         </div>
                         @elseif($employee_id && count($payments) === 0)
-                        <div class="text-center py-6">
-                            <div class="text-gray-400 text-3xl mb-2">💰</div>
-                            <p class="text-gray-500 text-sm">No hay cobros registrados para hoy</p>
+                        <div class="mb-6 pt-4">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">💳 Cobros Recibidos</h4>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">💳</div>
+                                        <p class="text-gray-500 text-sm">No hay cobros registrados para hoy</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Remaining Products Section -->
+                        @if($employee_id && count($remaining_products) > 0)
+                        <div class="mb-6 mt-3">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="flex items-center gap-x-3">
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">📦 Productos Sobrantes</h4>
+                                        <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-600/10 dark:bg-amber-400/10 dark:text-amber-400 dark:ring-amber-400/30">
+                                            {{ count($remaining_products) }} producto(s)
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="overflow-hidden">
+                                        <div class="fi-ta-ctn divide-y divide-gray-200 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:divide-white/5 dark:bg-gray-900 dark:ring-white/10">
+                                            <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-start dark:divide-white/5">
+                                                <thead class="fi-ta-header divide-y divide-gray-200 dark:divide-white/5">
+                                                    <tr class="bg-gray-50 dark:bg-white/5">
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Producto</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Código</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Asignado</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Vendido</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Sobrante</span>
+                                                            </span>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="fi-ta-body divide-y divide-gray-200 whitespace-nowrap dark:divide-white/5">
+                                                    @foreach($remaining_products as $product)
+                                                    <tr class="fi-ta-row [@media(hover:hover)]:transition [@media(hover:hover)]:duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4">
+                                                                <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white font-medium">
+                                                                    {{ $product['product_name'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4">
+                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
+                                                                    {{ $product['product_code'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white font-semibold">
+                                                                    {{ $product['quantity_assigned'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                <div class="fi-ta-text text-sm leading-6 text-blue-600 dark:text-blue-400 font-semibold">
+                                                                    {{ $product['quantity_sold'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-sm font-bold ring-1 ring-inset {{ $product['remaining'] > 0 ? 'bg-amber-50 text-amber-700 ring-amber-600/10 dark:bg-amber-400/10 dark:text-amber-400 dark:ring-amber-400/30' : 'bg-green-50 text-green-700 ring-green-600/10 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/30' }}">
+                                                                    {{ $product['remaining'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @elseif($employee_id && count($remaining_products) === 0)
+                        <div class="mb-6 mt-3">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="flex items-center gap-x-3">
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">📦 Productos Sobrantes</h4>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">✅</div>
+                                        <p class="text-gray-500 text-sm">No hay productos sobrantes - Todo vendido</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         @endif
 

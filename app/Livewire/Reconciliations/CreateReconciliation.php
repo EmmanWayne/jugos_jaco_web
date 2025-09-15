@@ -7,8 +7,10 @@ use App\Enums\ReconciliationStatusEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTypeEnum;
 use App\Enums\ProductReturnTypeEnum;
+use App\Models\AssignedProduct;
 use App\Models\Bill;
 use App\Models\DailySalesReconciliation;
+use App\Models\DetailAssignedProduct;
 use App\Models\Deposit;
 use App\Models\Employee;
 use App\Models\Payment;
@@ -67,6 +69,9 @@ class CreateReconciliation extends Component
     public int $return_quantity = 1;
     public bool $return_affects_inventory = true;
     public array $returns = [];
+    
+    // Remaining products properties
+    public array $remaining_products = [];
     
     // Product search properties (simplified)
     public string $product_search = '';
@@ -205,6 +210,7 @@ class CreateReconciliation extends Component
             })->toArray();
         
         $this->loadReturns();
+        $this->loadRemainingProducts();
         $this->calculateTotals();
     }
     
@@ -793,6 +799,49 @@ class CreateReconciliation extends Component
                     'created_at' => $return->created_at->format('H:i:s'),
                 ];
             })->toArray();
+    }
+
+    // Método para cargar productos sobrantes del empleado seleccionado
+    public function loadRemainingProducts(): void
+    {
+        if (!$this->employee_id || !$this->reconciliation_date) {
+            $this->remaining_products = [];
+            return;
+        }
+
+        // Obtener productos asignados al empleado en la fecha seleccionada
+        $assignedProducts = AssignedProduct::with(['details.product'])
+            ->where('employee_id', $this->employee_id)
+            ->assignmentsDate($this->reconciliation_date)
+            ->first();
+
+        if (!$assignedProducts || !$assignedProducts->details) {
+            $this->remaining_products = [];
+            return;
+        }
+
+        // Mapear los detalles de productos asignados con cálculos de sobrantes
+        $this->remaining_products = $assignedProducts->details
+            ->map(function ($detail) {
+                $quantityAssigned = $detail->quantity;
+                $quantitySold = $detail->venta_quantity ?? 0;
+                $remaining = $quantityAssigned - $quantitySold;
+
+                return [
+                    'id' => $detail->id,
+                    'product_name' => $detail->product->name ?? 'Producto no encontrado',
+                    'product_code' => $detail->product->code ?? 'N/A',
+                    'quantity_assigned' => $quantityAssigned,
+                    'quantity_sold' => $quantitySold,
+                    'remaining' => $remaining,
+                ];
+            })
+            ->filter(function ($item) {
+                // Solo mostrar productos con sobrantes (remaining > 0)
+                return $item['remaining'] > 0;
+            })
+            ->values()
+            ->toArray();
     }
 
     public function addReturn(): void
