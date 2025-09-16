@@ -2,27 +2,27 @@
 
 namespace App\Livewire\Reconciliations;
 
-use App\Enums\BankEnum;
+use Livewire\Component;
+use App\Models\Employee;
+use App\Models\Sale;
+use App\Models\Payment;
+use App\Models\DailySalesReconciliation;
+use App\Models\AssignedProduct;
+use App\Models\DetailAssignedProduct;
+use App\Models\Product;
+use App\Models\Deposit;
+use App\Models\Bill;
+use App\Models\ProductReturn;
+use App\Services\ProductReturnService;
 use App\Enums\ReconciliationStatusEnum;
+use App\Enums\BankEnum;
+use App\Enums\ProductReturnTypeEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\PaymentTypeEnum;
-use App\Enums\ProductReturnTypeEnum;
-use App\Models\AssignedProduct;
-use App\Models\Bill;
-use App\Models\DailySalesReconciliation;
-use App\Models\DetailAssignedProduct;
-use App\Models\Deposit;
-use App\Models\Employee;
-use App\Models\Payment;
-use App\Models\Product;
-use App\Models\ProductReturn;
-use App\Models\Sale;
-use App\Services\ProductReturnService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Livewire\Component;
 
 class CreateReconciliation extends Component
 {
@@ -129,18 +129,35 @@ class CreateReconciliation extends Component
     public function updatedEmployeeId()
     {
         if ($this->employee_id) {
-            // Verificar si existe un cuadre para hoy y está completado
-            $today = Carbon::today();
-            $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
+            // Verificar si existe un cuadre para la fecha seleccionada y está completado
+            $selectedDate = Carbon::parse($this->reconciliation_date);
+            $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $selectedDate);
             
             if ($existing && $existing->status === ReconciliationStatusEnum::COMPLETED) {
-                session()->flash('warning', 'El empleado seleccionado ya tiene un cuadre completado para el día de hoy.');
+                session()->flash('warning', 'El empleado seleccionado ya tiene un cuadre completado para la fecha seleccionada.');
             }
             
             // Solo cargamos los datos del empleado pero no creamos el cuadre automáticamente
             $this->loadEmployeeDataOnly();
         } else {
             $this->resetData();
+        }
+    }
+    
+    public function updatedReconciliationDate()
+    {
+        if ($this->employee_id && $this->reconciliation_date) {
+            // Verificar si existe un cuadre para la nueva fecha seleccionada
+            $selectedDate = Carbon::parse($this->reconciliation_date);
+            $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $selectedDate);
+            
+            if ($existing && $existing->status === ReconciliationStatusEnum::COMPLETED) {
+                session()->flash('warning', 'El empleado seleccionado ya tiene un cuadre completado para la fecha seleccionada.');
+            }
+            
+            // Recargar los datos para la nueva fecha
+            $this->loadEmployeeDataOnly();
+            $this->loadRemainingProducts();
         }
     }
     
@@ -151,10 +168,10 @@ class CreateReconciliation extends Component
             return;
         }
         
-        $today = Carbon::today();
+        $selectedDate = Carbon::parse($this->reconciliation_date);
         
-        // Verificar si ya existe un cuadre para hoy
-        $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
+        // Verificar si ya existe un cuadre para la fecha seleccionada
+        $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $selectedDate);
             
         if ($existing) {
             $this->current_reconciliation = $existing;
@@ -172,10 +189,10 @@ class CreateReconciliation extends Component
             $this->loadBills();
         }
         
-        // Load today's sales for the selected employee
+        // Load sales for the selected date and employee
         $this->sales = Sale::with(['client'])
             ->where('employee_id', $this->employee_id)
-            ->toDay()
+            ->whereDate('sale_date', $selectedDate)
             ->get()
             ->map(function ($sale) {
                 return [
@@ -195,7 +212,7 @@ class CreateReconciliation extends Component
             ->whereHas('model.sale', function ($query) {
                 $query->where('employee_id', $this->employee_id);
             })
-            ->whereDate('payment_date', $today)
+            ->whereDate('payment_date', $selectedDate)
             ->get()
             ->map(function ($payment) {
                 $accountReceivable = $payment->model;
@@ -824,8 +841,9 @@ class CreateReconciliation extends Component
         $this->remaining_products = $assignedProducts->details
             ->map(function ($detail) {
                 $quantityAssigned = $detail->quantity;
-                $quantitySold = $detail->venta_quantity ?? 0;
-                $remaining = $quantityAssigned - $quantitySold;
+                $quantitySold = (int) $detail->sale_quantity ?? 0;
+                $returnedQuantity = (float) $detail->returned_quantity ?? 0;
+                $remaining = $quantityAssigned - $quantitySold - $returnedQuantity;
 
                 return [
                     'id' => $detail->id,
@@ -833,12 +851,13 @@ class CreateReconciliation extends Component
                     'product_code' => $detail->product->code ?? 'N/A',
                     'quantity_assigned' => $quantityAssigned,
                     'quantity_sold' => $quantitySold,
+                    'returned_quantity' => $returnedQuantity,
                     'remaining' => $remaining,
                 ];
             })
             ->filter(function ($item) {
-                // Solo mostrar productos con sobrantes (remaining > 0)
-                return $item['remaining'] > 0;
+                // Mostrar productos que tengan cantidad asignada (para permitir edición de devoluciones)
+                return $item['quantity_assigned'] > 0;
             })
             ->values()
             ->toArray();
@@ -968,6 +987,92 @@ class CreateReconciliation extends Component
         $this->return_product_id = null;
         $this->show_product_dropdown = false;
         $this->filtered_products = [];
+    }
+
+    // Método para actualizar la cantidad retornada de un producto
+    public function updateReturnedQuantity($detailId, $returnedQuantity): void
+    {
+        try {
+            DB::transaction(function () use ($detailId, $returnedQuantity) {
+                $detail = DetailAssignedProduct::find($detailId);
+                
+                if (!$detail) {
+                    throw new \Exception('Producto no encontrado.');
+                }
+
+                // Validar que la cantidad retornada no sea negativa
+                if ($returnedQuantity < 0) {
+                    throw new \Exception('La cantidad retornada no puede ser negativa.');
+                }
+
+                // Validar que la cantidad retornada no exceda la cantidad asignada menos la vendida
+                $maxReturnable = $detail->quantity - $detail->sale_quantity;
+                if ($returnedQuantity > $maxReturnable) {
+                    throw new \Exception('La cantidad retornada no puede exceder la cantidad disponible.');
+                }
+
+                // Si no hay un cuadre inicializado, lo creamos primero
+                if (!$this->current_reconciliation) {
+                    $this->createPendingReconciliation();
+                }
+
+                 // Actualizar la cantidad retornada en el detalle
+                $detail->update(['returned_quantity' => $returnedQuantity]);
+
+                // Crear registro de devolución con la cantidad especificada
+                if ($returnedQuantity > 0) {
+                    $this->createProductReturn($detail, $returnedQuantity);
+                }
+            });
+
+            // Recargar los productos sobrantes para reflejar los cambios
+            $this->loadRemainingProducts();
+            $this->loadReturns();
+
+            session()->flash('message', 'Cantidad retornada registrada correctamente.');
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al registrar la cantidad retornada: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Crear un registro de devolución de producto
+     */
+    private function createProductReturn(DetailAssignedProduct $detail, float $quantity): void
+    {
+        try {
+            // Crear el registro de devolución
+            $productReturn = ProductReturn::create([
+                'product_id' => $detail->product_id,
+                'employee_id' => $this->employee_id,
+                'reconciliation_id' => $this->current_reconciliation->id,
+                'quantity' => $quantity,
+                'type' => ProductReturnTypeEnum::RETURNED,
+                'reason' => 'Registro desde cuadre de caja',
+                'affects_inventory' => true,
+            ]);
+
+            // Registrar el movimiento de inventario
+            $returnService = new ProductReturnService();
+            $returnService->registerInventoryMovement($productReturn);
+            
+            Log::info('Devolución registrada', [
+                'product_return_id' => $productReturn->id,
+                'product_id' => $detail->product_id,
+                'quantity' => $quantity,
+                'employee_id' => $this->employee_id
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error al registrar devolución', [
+                'product_id' => $detail->product_id,
+                'quantity' => $quantity,
+                'employee_id' => $this->employee_id,
+                'error' => $e->getMessage()
+            ]);
+            throw new \Exception('Error al procesar la devolución: ' . $e->getMessage());
+        }
     }
 
     public function render()

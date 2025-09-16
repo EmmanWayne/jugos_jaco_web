@@ -111,12 +111,25 @@
                     Gestión y seguimiento de ventas por empleado
                 </p>
             </div>
-            <div>
-                <div class="fi-badge inline-flex items-center rounded-md px-2 py-1 text-sm font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
-                    📅 Fecha: {{ now()->format('d/m/Y') }}
-                </div>
+            <div class="flex items-center gap-3">
+                <!-- Selector de Fecha -->
+                <div class="fi-fo-field-wrp">
+                    <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-2">
+                        <span class="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                            📅 Fecha de Cuadre:
+                        </span>
+                    </label>
+                    <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 focus-within:ring-2 focus-within:ring-primary-600 dark:focus-within:ring-primary-500">
+                        <input
+                            type="date"
+                            wire:model.live="reconciliation_date"
+                            class="fi-input block w-full border-none bg-transparent py-2 px-3 text-sm text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-gray-500 rounded-lg"
+                            max="{{ now()->format('Y-m-d') }}"
+                        />
                     </div>
                 </div>
+            </div>
+        </div>
 
         <div class="custom-container p-6">
             @if($current_reconciliation && $current_reconciliation->status->value === 'completed')
@@ -596,6 +609,11 @@
                                                         </th>
                                                         <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
                                                             <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Retornado</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
                                                                 <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Sobrante</span>
                                                             </span>
                                                         </th>
@@ -630,6 +648,31 @@
                                                                 <div class="fi-ta-text text-sm leading-6 text-blue-600 dark:text-blue-400 font-semibold">
                                                                     {{ $product['quantity_sold'] }}
                                                                 </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                @if($product['returned_quantity'] > 0)
+                                                                    <!-- Mostrar etiqueta cuando el producto tiene cantidad retornada -->
+                                                                    <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30">
+                                                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                        </svg>
+                                                                        {{ $product['returned_quantity'] }}
+                                                                        <span class="text-xs opacity-75 ml-1">(Registrado)</span>
+                                                                    </div>
+                                                                @else
+                                                                    <!-- Mostrar input editable cuando no hay cantidad retornada -->
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min="0" 
+                                                                        step="0.01"
+                                                                        wire:model.live="remaining_products.{{ $loop->index }}.returned_quantity"
+                                                                        wire:change="updateReturnedQuantity({{ $product['id'] }}, $event.target.value)"
+                                                                        class="fi-input block w-20 mx-auto border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm text-center"
+                                                                        placeholder="0"
+                                                                    />
+                                                                @endif
                                                             </div>
                                                         </td>
                                                         <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
