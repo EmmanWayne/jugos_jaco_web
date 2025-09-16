@@ -208,6 +208,24 @@
             </div>
         </div>
     @endif
+
+    @if (session()->has('info'))
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true"
+            style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+            <div class="toast-header" style="background-color: #d1ecf1; border-bottom: 1px solid #bee5eb;">
+                <div style="display: flex; align-items: center;">
+                    <i class="fas fa-info-circle text-info mr-2"></i>
+                    <strong class="text-info">Información</strong>
+                </div>
+                <button type="button" class="close" aria-label="Close" onclick="closeToast(this)">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="toast-body">
+                {{ session('info') }}
+            </div>
+        </div>
+    @endif
 </div>
 
 <script>

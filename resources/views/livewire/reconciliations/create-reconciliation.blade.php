@@ -579,6 +579,19 @@
                                             {{ count($remaining_products) }} producto(s)
                                         </div>
                                     </div>
+                                    <div class="flex items-center gap-x-2">
+                                        <button type="button" 
+                                            wire:click="returnAllRemainingProducts"
+                                            wire:loading.attr="disabled"
+                                            wire:target="returnAllRemainingProducts"
+                                            class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-success bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-400/10 dark:text-success-400 dark:hover:bg-success-400/20 focus:ring-success-500/50 dark:focus:ring-success-400/50 text-sm py-2 px-3"
+                                            :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                            :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
+                                            <span wire:loading.remove wire:target="returnAllRemainingProducts" class="text-sm">🔄</span>
+                                            <span wire:loading wire:target="returnAllRemainingProducts" class="animate-spin text-sm">⏳</span>
+                                            <span class="text-sm ml-1">Retornar Todos</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 <div class="fi-section-content p-6 pt-0">

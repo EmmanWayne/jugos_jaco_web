@@ -897,7 +897,7 @@ class CreateReconciliation extends Component
 
             $this->resetReturnForm();
             $this->loadReturns();
-            session()->flash('message', 'Devolución registrada exitosamente.');
+            session()->flash('success', 'Devolución registrada exitosamente.');
         } catch (\Exception $e) {
             session()->flash('error', 'Error al registrar la devolución: ' . $e->getMessage());
         }
@@ -918,7 +918,7 @@ class CreateReconciliation extends Component
             });
 
             $this->loadReturns();
-            session()->flash('message', 'Devolución eliminada exitosamente.');
+            session()->flash('success', 'Devolución eliminada exitosamente.');
         } catch (\Exception $e) {
             session()->flash('error', 'Error al eliminar la devolución: ' . $e->getMessage());
         }
@@ -1029,10 +1029,53 @@ class CreateReconciliation extends Component
             $this->loadRemainingProducts();
             $this->loadReturns();
 
-            session()->flash('message', 'Cantidad retornada registrada correctamente.');
+            session()->flash('success', 'Cantidad retornada registrada correctamente.');
 
         } catch (\Exception $e) {
             session()->flash('error', 'Error al registrar la cantidad retornada: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Retornar todos los productos sobrantes que no tengan cantidad retornada
+     */
+    public function returnAllRemainingProducts(): void
+    {
+        try {
+            $processedCount = 0;
+            $errors = [];
+
+            DB::transaction(function () use (&$processedCount, &$errors) {
+                foreach ($this->remaining_products as $product) {
+                    // Solo procesar productos que tengan cantidad sobrante y no tengan cantidad retornada
+                    if ($product['remaining'] > 0 && $product['returned_quantity'] == 0) {
+                        try {
+                            // Usar el método existente updateReturnedQuantity
+                            $this->updateReturnedQuantity($product['id'], $product['remaining']);
+                            $processedCount++;
+                        } catch (\Exception $e) {
+                            $errors[] = "Error con {$product['product_name']}: " . $e->getMessage();
+                        }
+                    }
+                }
+            });
+
+            // Recargar los datos para reflejar los cambios
+            $this->loadRemainingProducts();
+            $this->loadReturns();
+
+            if ($processedCount > 0) {
+                $message = "Se procesaron {$processedCount} productos como retornados exitosamente.";
+                if (!empty($errors)) {
+                    $message .= " Algunos productos tuvieron errores: " . implode(', ', $errors);
+                }
+                session()->flash('success', $message);
+            } else {
+                session()->flash('info', 'No hay productos sobrantes para retornar o todos ya tienen cantidad retornada.');
+            }
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al procesar los productos: ' . $e->getMessage());
         }
     }
 
