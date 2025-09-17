@@ -219,13 +219,12 @@ class CreateReconciliation extends Component
             ->get()
             ->map(function ($payment) {
                 $accountReceivable = $payment->model;
-                Log::info("Payment: " . $payment->payen);
                 return [
                     'id' => $payment->id,
                     'time' => $payment->payment_date->format('H:i'),
                     'client' => $accountReceivable->sale->client->business_name ?? 'Cliente General',
                     'amount' => $payment->amount,
-                    'method' => $payment->payment_method->value,
+                    'method' => $payment->payment_method->getLabel(),
                 ];
             })->toArray();
         
@@ -257,13 +256,12 @@ class CreateReconciliation extends Component
         $this->total_sales = $this->total_cash_sales + $this->total_credit_sales;
         
         // Calcular cobros desglosados por método de pago
-        Log::info("Payments: " . json_encode($this->payments));
         $this->total_cash_collections = collect($this->payments)
-            ->where('method', PaymentTypeEnum::CASH->value)
+            ->where('method', PaymentTypeEnum::CASH->getLabel())
             ->sum('amount');
             
         $this->total_deposit_collections = collect($this->payments)
-            ->where('method', PaymentTypeEnum::DEPOSIT->value)
+            ->where('method', PaymentTypeEnum::DEPOSIT->getLabel())
             ->sum('amount');
             
         $this->total_collections = collect($this->payments)
@@ -283,9 +281,9 @@ class CreateReconciliation extends Component
             
         // Calcular total de gastos
         $this->calculateBillTotals();
-            
+        
         // El efectivo esperado se reduce por los gastos realizados, pero nunca puede ser negativo
-        $this->total_cash_expected = max(0, $cash_only_sales + $this->total_cash_collections - $this->total_bills);
+        $this->total_cash_expected = max(0, $cash_only_sales + $this->total_cash_collections) - $this->total_bills;
         
         // Calcular depósitos esperados (ventas pagadas con depósitos + cobros en depósitos)
         $this->total_deposit_expected = $this->total_deposit_sales + $this->total_deposit_collections;
@@ -427,7 +425,7 @@ class CreateReconciliation extends Component
     protected function calculateCashDifference()
     {
         // Restamos los gastos para reflejarlos en la diferencia de efectivo
-        $this->cash_difference = ($this->cash_received - $this->total_cash_expected) - $this->total_bills;
+        $this->cash_difference = ($this->cash_received - $this->total_cash_expected);
     }
     
     protected function calculateDepositTotals()
