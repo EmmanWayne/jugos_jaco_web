@@ -117,6 +117,9 @@ class CreateReconciliation extends Component
         $this->products = Product::where('is_active', true)->get();
         $this->return_types = ProductReturnTypeEnum::getOptions();
         
+        // Establecer "Producto dañado" como valor predeterminado
+        $this->return_type = ProductReturnTypeEnum::DAMAGED->value;
+        
         if ($employee_id) {
             $this->employee_id = $employee_id;
             $this->loadEmployeeDataOnly();
@@ -314,7 +317,7 @@ class CreateReconciliation extends Component
             return null;
         }
         
-        $today = Carbon::today();
+        $today = $this->reconciliation_date;
         
         // Check if reconciliation already exists for today
         $existing = DailySalesReconciliation::getForEmployeeAndDate($this->employee_id, $today);
@@ -927,7 +930,7 @@ class CreateReconciliation extends Component
     public function resetReturnForm(): void
     {
         $this->return_product_id = null;
-        $this->return_type = null;
+        $this->return_type = ProductReturnTypeEnum::DAMAGED->value;
         $this->return_reason = null;
         $this->return_quantity = 1;
         $this->return_affects_inventory = true;
