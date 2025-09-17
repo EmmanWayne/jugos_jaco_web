@@ -111,12 +111,25 @@
                     Gestión y seguimiento de ventas por empleado
                 </p>
             </div>
-            <div>
-                <div class="fi-badge inline-flex items-center rounded-md px-2 py-1 text-sm font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
-                    📅 Fecha: {{ now()->format('d/m/Y') }}
-                </div>
+            <div class="flex items-center gap-3">
+                <!-- Selector de Fecha -->
+                <div class="fi-fo-field-wrp">
+                    <label class="fi-fo-field-wrp-label inline-flex items-center gap-x-2">
+                        <span class="text-sm font-medium leading-6 text-gray-950 dark:text-white">
+                            📅 Fecha de Cuadre:
+                        </span>
+                    </label>
+                    <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 focus-within:ring-2 focus-within:ring-primary-600 dark:focus-within:ring-primary-500">
+                        <input
+                            type="date"
+                            wire:model.live="reconciliation_date"
+                            class="fi-input block w-full border-none bg-transparent py-2 px-3 text-sm text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-gray-500 rounded-lg"
+                            max="{{ now()->format('Y-m-d') }}"
+                        />
                     </div>
                 </div>
+            </div>
+        </div>
 
         <div class="custom-container p-6">
             @if($current_reconciliation && $current_reconciliation->status->value === 'completed')
@@ -450,9 +463,20 @@
                             </div>
                         </div>
                         @elseif($employee_id && count($sales) === 0)
-                        <div class="text-center py-8">
-                            <div class="text-gray-400 text-4xl mb-2">📋</div>
-                            <p class="text-gray-500">No hay ventas registradas para hoy</p>
+                        <div class="mb-6">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">💰 Ventas del Día</h4>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">💰</div>
+                                        <p class="text-gray-500 text-sm">No hay ventas registradas para hoy</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         @endif
 
@@ -527,15 +551,180 @@
                             </div>
                         </div>
                         @elseif($employee_id && count($payments) === 0)
-                        <div class="text-center py-6">
-                            <div class="text-gray-400 text-3xl mb-2">💰</div>
-                            <p class="text-gray-500 text-sm">No hay cobros registrados para hoy</p>
+                        <div class="mb-6 pt-4">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">💳 Cobros Recibidos</h4>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">💳</div>
+                                        <p class="text-gray-500 text-sm">No hay cobros registrados para hoy</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Remaining Products Section -->
+                        @if($employee_id && count($remaining_products) > 0)
+                        <div class="mb-6 mt-3">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="flex items-center gap-x-3">
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">📦 Productos Sobrantes</h4>
+                                        <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-600/10 dark:bg-amber-400/10 dark:text-amber-400 dark:ring-amber-400/30">
+                                            {{ count($remaining_products) }} producto(s)
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-x-2">
+                                        <button type="button" 
+                                            wire:click="returnAllRemainingProducts"
+                                            wire:loading.attr="disabled"
+                                            wire:target="returnAllRemainingProducts"
+                                            class="fi-btn fi-btn-size-sm relative inline-grid grid-flow-col items-center justify-center gap-1 rounded-md border-0 font-semibold outline-none transition duration-75 focus:ring-1 fi-color-success bg-success-50 text-success-600 hover:bg-success-100 dark:bg-success-400/10 dark:text-success-400 dark:hover:bg-success-400/20 focus:ring-success-500/50 dark:focus:ring-success-400/50 text-sm py-2 px-3"
+                                            :class="{'opacity-50 cursor-not-allowed': $wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'}"
+                                            :disabled="$wire.current_reconciliation && $wire.current_reconciliation.status.value === 'completed'">
+                                            <span wire:loading.remove wire:target="returnAllRemainingProducts" class="text-sm">🔄</span>
+                                            <span wire:loading wire:target="returnAllRemainingProducts" class="animate-spin text-sm">⏳</span>
+                                            <span class="text-sm ml-1">Retornar Todos</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="overflow-hidden">
+                                        <div class="fi-ta-ctn divide-y divide-gray-200 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:divide-white/5 dark:bg-gray-900 dark:ring-white/10">
+                                            <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-start dark:divide-white/5">
+                                                <thead class="fi-ta-header divide-y divide-gray-200 dark:divide-white/5">
+                                                    <tr class="bg-gray-50 dark:bg-white/5">
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Producto</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-start">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-start">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Código</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Asignado</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Vendido</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Retornado</span>
+                                                            </span>
+                                                        </th>
+                                                        <th class="fi-ta-header-cell px-3 py-3.5 sm:first-of-type:ps-6 sm:last-of-type:pe-6 text-center">
+                                                            <span class="group flex w-full items-center gap-x-1 whitespace-nowrap justify-center">
+                                                                <span class="fi-ta-header-cell-label text-sm font-semibold text-gray-950 dark:text-white">Sobrante</span>
+                                                            </span>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="fi-ta-body divide-y divide-gray-200 whitespace-nowrap dark:divide-white/5">
+                                                    @foreach($remaining_products as $product)
+                                                    <tr class="fi-ta-row [@media(hover:hover)]:transition [@media(hover:hover)]:duration-75 hover:bg-gray-50 dark:hover:bg-white/5">
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4">
+                                                                <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white font-medium">
+                                                                    {{ $product['product_name'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4">
+                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20">
+                                                                    {{ $product['product_code'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                <div class="fi-ta-text text-sm leading-6 text-gray-950 dark:text-white font-semibold">
+                                                                    {{ $product['quantity_assigned'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                <div class="fi-ta-text text-sm leading-6 text-blue-600 dark:text-blue-400 font-semibold">
+                                                                    {{ $product['quantity_sold'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                @if($product['returned_quantity'] > 0)
+                                                                    <!-- Mostrar etiqueta cuando el producto tiene cantidad retornada -->
+                                                                    <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30">
+                                                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                        </svg>
+                                                                        {{ $product['returned_quantity'] }}
+                                                                        <span class="text-xs opacity-75 ml-1">(Registrado)</span>
+                                                                    </div>
+                                                                @else
+                                                                    <!-- Mostrar input editable cuando no hay cantidad retornada -->
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min="0" 
+                                                                        step="0.01"
+                                                                        wire:model.live="remaining_products.{{ $loop->index }}.returned_quantity"
+                                                                        wire:change="updateReturnedQuantity({{ $product['id'] }}, $event.target.value)"
+                                                                        class="fi-input block w-20 mx-auto border-gray-300 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 disabled:opacity-70 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500 text-sm text-center"
+                                                                        placeholder="0"
+                                                                    />
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td class="fi-ta-cell p-0 first-of-type:ps-1 last-of-type:pe-1 sm:first-of-type:ps-3 sm:last-of-type:pe-3">
+                                                            <div class="fi-ta-col-wrp px-3 py-4 text-center">
+                                                                <div class="fi-badge inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-sm font-bold ring-1 ring-inset {{ $product['remaining'] > 0 ? 'bg-amber-50 text-amber-700 ring-amber-600/10 dark:bg-amber-400/10 dark:text-amber-400 dark:ring-amber-400/30' : 'bg-green-50 text-green-700 ring-green-600/10 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/30' }}">
+                                                                    {{ $product['remaining'] }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @elseif($employee_id && count($remaining_products) === 0)
+                        <div class="mb-6 mt-3">
+                            <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+                                <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div class="flex items-center gap-x-3">
+                                        <h4 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">📦 Productos Sobrantes</h4>
+                                    </div>
+                                </div>
+                                <div class="fi-section-content p-6 pt-0">
+                                    <div class="text-center py-6">
+                                        <div class="text-gray-400 text-3xl mb-2">✅</div>
+                                        <p class="text-gray-500 text-sm">No hay productos sobrantes - Todo vendido</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         @endif
 
                         <!-- Product Returns Section -->
                         @if($employee_id)
-                        <div class="mb-6">
+                        <div class="mb-6 mt-3">
                             <div class="fi-section-content-ctn rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10" x-data="{ showReturnForm: false }">
                                 <div class="fi-section-header-ctn flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex items-center gap-x-3">

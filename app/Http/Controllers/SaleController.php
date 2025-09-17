@@ -63,7 +63,7 @@ class SaleController extends Controller
                     'client:id,first_name,last_name',
                     'employee:id,first_name,last_name'
                 ])
-                ->orderByDesc()
+                ->orderByDesc('created_at')
                 ->get();
                 
             return $this->successResponse(SaleResource::collection($sales), "Ventas obtenidas con éxito");

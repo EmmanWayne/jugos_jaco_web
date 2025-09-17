@@ -15,12 +15,14 @@ class DetailAssignedProduct extends Model
         'product_id',
         'quantity',
         'sale_quantity',
+        'returned_quantity',
         'assigned_products_id',
     ];
 
     protected $cast = [
         'quantity' => 'decimal:2',
         'sale_quantity' => 'decimal:2',
+        'returned_quantity' => 'decimal:2',
     ];
 
 
@@ -42,7 +44,7 @@ class DetailAssignedProduct extends Model
     protected function stock(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->quantity - $this->sale_quantity,
+            get: fn() => $this->quantity - $this->sale_quantity - $this->returned_quantity,
         );
     }
 }
