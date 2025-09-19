@@ -6,15 +6,13 @@ use App\Enums\PaymentTypeEnum;
 use App\Enums\PaymentTermEnum;
 use App\Enums\SaleStatusEnum;
 use App\Filament\Resources\SaleResource\Pages;
+use App\Models\Employee;
 use App\Models\Sale;
-use DragonCode\Contracts\Cashier\Config\Payment;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class SaleResource extends Resource
 {
@@ -51,11 +49,11 @@ class SaleResource extends Resource
                     ->sortable(),
                 TextColumn::make('client.full_name')
                     ->label('Cliente')
-                    ->searchable()
+                    ->searchable(['clients.first_name', 'clients.last_name'])
                     ->placeholder('Cliente General'),
                 TextColumn::make('employee.full_name')
                     ->label('Empleado')
-                    ->searchable(),
+                    ->searchable(['employees.first_name', 'employees.last_name']),
                 TextColumn::make('details_count')
                     ->counts('details')
                     ->label('Productos')
@@ -87,6 +85,9 @@ class SaleResource extends Resource
             ])
             ->defaultSort('id', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('employee_id')
+                    ->label('Empleado')
+                    ->options(Employee::get()->pluck('full_name', 'id')),
                 Tables\Filters\SelectFilter::make('payment_term')
                     ->label('Término de Pago')
                     ->options(PaymentTermEnum::getOptions()),

@@ -532,7 +532,7 @@ class CreateSale extends Component
                     totalAmount: null,
                     name: null,
                     notes: $this->notes,
-                    dueDate: Carbon::now()->addDays(30),
+                    dueDate: Carbon::now()->addDays(7),
                     amountPaidNow: (float) $this->amount_paid,
                 );
             }

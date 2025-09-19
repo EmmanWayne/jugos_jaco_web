@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('account-receivable')->group(function () {
         Route::get('/', [AccountReceivableController::class, 'getAccountReceivable']);
+        Route::get('/payments', [AccountReceivableController::class, 'getPaymentsToDay']);
         Route::get('/{id}', [AccountReceivableController::class, 'getAccountReceivableById']);
         Route::post('/{id}/payments', [AccountReceivableController::class, 'processPayment']);
     });

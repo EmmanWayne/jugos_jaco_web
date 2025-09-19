@@ -7,16 +7,15 @@ use App\Http\Resources\AccountReceivableDetailResource;
 use App\Http\Resources\AccountReceivableResource;
 use App\Http\Resources\PaymentResource;
 use App\Models\AccountReceivable;
-use App\Services\AccountReceivableService;
+use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use PhpParser\Node\Expr\NullsafeMethodCall;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AccountReceivableController extends Controller
 {
@@ -38,6 +37,13 @@ class AccountReceivableController extends Controller
     {
         try {
             $accountReceivable = AccountReceivable::byEmployee(Auth::user()->employee_id)
+                ->where(function($query) {
+                    $query->whereNull('paid_at')
+                        ->orWhere(function($sub) {
+                            $sub->whereNotNull('paid_at')
+                                ->whereDate('paid_at', '>=', Carbon::now()->subDays(7));
+                        });
+                })
                 ->orderBy('due_date')
                 ->get();
 
@@ -107,6 +113,38 @@ class AccountReceivableController extends Controller
                 $exc,
                 $exc->getCode(),
                 "Ocurrió un error al realizar el pago."
+            );
+        }
+    }
+
+    /**
+     * Get payments to day
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getPaymentsToDay(Request $request): JsonResponse
+    {
+        try {
+            $date = $request->query('date', Carbon::now()->toDateString());
+
+            $accountsWithPayments = AccountReceivable::byEmployee(Auth::user()->employee_id)
+                ->with(['payments' => function($query) use ($date) {
+                    $query->whereDate('payment_date', $date);
+                }])
+                ->get();
+
+            $payments = $accountsWithPayments->pluck('payments')->flatten();
+
+            return $this->successResponse(
+                PaymentResource::collection($payments),
+                "Pagos obtenidos exitosamente."
+            );
+        } catch (Exception $exc) {
+            return $this->errorResponse(
+                $exc,
+                500,
+                "Ocurrió un error al obtener los pagos."
             );
         }
     }
