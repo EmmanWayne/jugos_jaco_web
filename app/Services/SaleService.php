@@ -86,7 +86,7 @@ class SaleService
                 'status' => $status,
                 'branch_id' => $saleData['branch_id'],
                 'due_date' => ($paymentTerm === PaymentTermEnum::CREDIT->value) ? 
-                    ($saleData['due_date'] ?? Carbon::now()->addDays(30)) : null,
+                    ($saleData['due_date'] ?? Carbon::now()->addDays(7)) : null,
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);

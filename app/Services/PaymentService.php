@@ -36,6 +36,7 @@ class PaymentService
                 $accountReceivable->update([
                     'remaining_balance' => max(0, $newBalance),
                     'status' => $newBalance <= 0 ? AccountReceivableStatusEnum::PAID : AccountReceivableStatusEnum::PENDING,
+                    'paid_at' => $newBalance <= 0 ? now() : null,
                 ]);
 
                 return $payment;
@@ -90,6 +91,7 @@ class PaymentService
                 $accountReceivable->update([
                     'remaining_balance' => 0,
                     'status' => AccountReceivableStatusEnum::PAID,
+                    'paid_at' => now(),
                 ]);
 
                 return $payment;
@@ -123,6 +125,7 @@ class PaymentService
             DB::transaction(function () use ($accountReceivable, $cancellationReason) {
                 $accountReceivable->update([
                     'status' => AccountReceivableStatusEnum::CANCELLED,
+                    'cancelled_at' => now(),
                     'notes' => ($accountReceivable->notes ? $accountReceivable->notes . ' | ' : '') . 'Cancelada: ' . $cancellationReason,
                 ]);
             });

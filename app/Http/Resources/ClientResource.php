@@ -29,6 +29,8 @@ class ClientResource extends JsonResource
                 'plus_code' => $this->location?->plus_code,
                 'model_id' => $this->location?->model_id,
             ],
+            'count_account_receivable' => $this->accountReceivable->count(),
+            'total_account_receivable' => $this->accountReceivable->sum('remaining_balance'),
             'profile_image' => $this->profileImage?->path,
             'type_price' => $this->typePrice?->name,
             'visit_days' => $this->visitDays,

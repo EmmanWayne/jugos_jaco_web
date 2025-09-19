@@ -19,6 +19,8 @@ class AccountReceivable extends Model
         'remaining_balance',
         'status',
         'due_date',
+        'cancelled_at',
+        'paid_at',
         'notes',
     ];
 
@@ -27,6 +29,8 @@ class AccountReceivable extends Model
         'remaining_balance' => 'decimal:2',
         'status' => AccountReceivableStatusEnum::class,
         'due_date' => 'date',
+        'cancelled_at' => 'datetime',
+        'paid_at' => 'date',
     ];
 
     public function sale(): BelongsTo
@@ -65,5 +69,10 @@ class AccountReceivable extends Model
         return $query->whereHas('sale', function($q) use ($employeeId){
             $q->where('employee_id', $employeeId);
         });
+    }
+
+    public function scopePaid($query)
+    {
+        return $query->where('status', AccountReceivableStatusEnum::PAID);
     }
 }
