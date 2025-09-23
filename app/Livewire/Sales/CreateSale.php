@@ -4,6 +4,8 @@ namespace App\Livewire\Sales;
 
 use App\Enums\SaleStatusEnum;
 use App\Enums\TypeInventoryManagementEnum;
+use App\Enums\PaymentTermEnum;
+use App\Enums\PaymentTypeEnum;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\FinishedProductInventory;
@@ -35,6 +37,7 @@ class CreateSale extends Component
     // Payment properties
     public bool $showPaymentModal = false;
     public ?string $payment_method = null;
+    public ?string $payment_term = null;
     public $amount_paid = 0.0;
     public ?string $payment_reference = null;
     
@@ -76,6 +79,7 @@ class CreateSale extends Component
         
         // Initialize payment properties
         $this->payment_type = 'cash';
+        $this->payment_term = PaymentTermEnum::CASH->value;
         $this->cash_amount = 0.0;
     }
 
@@ -92,6 +96,13 @@ class CreateSale extends Component
         ];
         
         $this->payment_type = $payment_type_mapping[$this->payment_method] ?? 'cash';
+        
+        // Automatically set payment_term based on payment_method
+        if ($this->payment_method === 'credito') {
+            $this->payment_term = PaymentTermEnum::CREDIT->value;
+        } else {
+            $this->payment_term = PaymentTermEnum::CASH->value;
+        }
     }
 
     /**
@@ -417,6 +428,7 @@ class CreateSale extends Component
     {
         $this->showPaymentModal = false;
         $this->payment_method = null;
+        $this->payment_term = PaymentTermEnum::CASH->value;
         $this->amount_paid = 0.0;
         $this->payment_reference = null;
         
@@ -435,6 +447,7 @@ class CreateSale extends Component
             'employee_id' => 'required|exists:employees,id',
             'sale_date' => 'required|date',
             'payment_method' => 'required|string',
+            'payment_term' => 'required|string|in:' . implode(',', array_column(PaymentTermEnum::cases(), 'value')),
             'amount_paid' => 'required|numeric|min:0',
         ]);
 
@@ -466,15 +479,14 @@ class CreateSale extends Component
                 'sale_date' => $this->sale_date,
                 'subtotal' => $subtotal,
                 'total_amount' => $final_total,
-                'payment_type' => $payment_type,
+                'payment_method' => PaymentTypeEnum::from($payment_type),
+                'payment_term' => PaymentTermEnum::from($this->payment_term),
                 'cash_amount' => $this->amount_paid,
                 'payment_reference' => $this->payment_reference,
                 'notes' => $this->notes,
                 'status' => $this->amount_paid >= $final_total ? SaleStatusEnum::PAID : SaleStatusEnum::PARTIALLY_PAID,
-                'discount' => 0, 
-                'branch_id' => Auth::user()->employee->branch_id ?? null,
-                'due_date' => null, 
-                'reference' => null,
+                'discount_percentage' => 0,
+                'discount_amount' => 0, 
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
@@ -513,14 +525,14 @@ class CreateSale extends Component
                 }
             }
 
-            // Crear cuenta por cobrar si la venta es de tipo crédito
-            if ($payment_type === 'credit') {
+            // Crear cuenta por cobrar si la venta es de término crédito
+            if ($this->payment_term === PaymentTermEnum::CREDIT->value) {
                 $accountReceivableService->create(
                     sale: $sale,
                     totalAmount: null,
                     name: null,
                     notes: $this->notes,
-                    dueDate: Carbon::now()->addDays(30),
+                    dueDate: Carbon::now()->addDays(7),
                     amountPaidNow: (float) $this->amount_paid,
                 );
             }
@@ -566,6 +578,7 @@ class CreateSale extends Component
             'client_id', 
             'notes',
             'payment_method',
+            'payment_term',
             'amount_paid',
             'payment_reference'
         ]);
@@ -575,9 +588,18 @@ class CreateSale extends Component
         
         // Reset computed properties
         $this->payment_type = 'cash';
+        $this->payment_term = PaymentTermEnum::CASH->value;
         $this->cash_amount = 0.0;
         
         $this->updateSaleTotals();
+    }
+
+    /**
+     * Get payment term options for the view
+     */
+    public function getPaymentTermOptionsProperty(): array
+    {
+        return PaymentTermEnum::getOptions();
     }
 
     public function render()

@@ -1,0 +1,231 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\SaleStatusEnum;
+use App\Enums\TypeInventoryManagementEnum;
+use App\Enums\PaymentTypeEnum;
+use App\Enums\PaymentTermEnum;
+use App\Models\AssignedProduct;
+use App\Models\FinishedProductInventory;
+use App\Models\Sale;
+use App\Models\SaleDetail;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class SaleService
+{
+    protected $managementInventoryService;
+    protected $accountReceivableService;
+
+    /**
+     * Constructor del servicio.
+     *
+     * @param ManagementInventoryService $managementInventoryService
+     * @param AccountReceivableService $accountReceivableService
+     */
+    public function __construct(
+        ManagementInventoryService $managementInventoryService,
+        AccountReceivableService $accountReceivableService
+    ) {
+        $this->managementInventoryService = $managementInventoryService;
+        $this->accountReceivableService = $accountReceivableService;
+    }
+
+    /**
+     * Crea una nueva venta con sus detalles asociados.
+     * 
+     * @param array $saleData Datos de la cabecera de la venta
+     * @param array $productsData Datos de los productos/detalles de la venta
+     * @return Sale
+     * @throws Exception
+     */
+    public function createSale(array $saleData, array $productsData): Sale
+    {
+        try {
+            DB::beginTransaction();
+
+            // 1. Calcular totales
+            $calculatedTotals = $this->calculateTotals($productsData);
+            $subtotal = $calculatedTotals['subtotal'];
+            $finalTotal = $calculatedTotals['final_total'];
+
+            // 2. Verificar el tipo de pago basado en el monto pagado vs total
+            $cashAmount = $saleData['cash_amount'] ?? 0;
+            $paymentMethod = $saleData['payment_method'] ?? PaymentTypeEnum::CASH->value;
+            $paymentTerm = $saleData['payment_term'] ?? PaymentTermEnum::CASH->value;
+            
+            // Si el monto pagado es menor al total, se considera venta a crédito
+            if ($cashAmount < $finalTotal && $paymentTerm !== PaymentTermEnum::CREDIT->value) {
+                $paymentTerm = PaymentTermEnum::CREDIT->value;
+            }
+            
+            // 3. Determinar el estado de la venta
+            $status = SaleStatusEnum::CONFIRMED;
+            if ($paymentTerm === PaymentTermEnum::CREDIT->value) {
+                $status = $cashAmount <= 0 ? SaleStatusEnum::CONFIRMED : SaleStatusEnum::PARTIALLY_PAID;
+            } else if ($cashAmount >= $finalTotal) {
+                $status = SaleStatusEnum::PAID;
+            }
+
+            // 4. Crear la venta
+            $sale = Sale::create([
+                'client_id' => $saleData['client_id'],
+                'employee_id' => $saleData['employee_id'],
+                'sale_date' => $saleData['sale_date'],
+                'subtotal' => $subtotal,
+                'total_amount' => $finalTotal,
+                'payment_term' => $paymentTerm,
+                'payment_method' => $paymentMethod,
+                'cash_amount' => $cashAmount,
+                'payment_reference' => $saleData['payment_reference'] ?? null,
+                'notes' => $saleData['notes'] ?? null,
+                'status' => $status,
+                'branch_id' => $saleData['branch_id'],
+                'due_date' => ($paymentTerm === PaymentTermEnum::CREDIT->value) ? 
+                    ($saleData['due_date'] ?? Carbon::now()->addDays(7)) : null,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
+
+            // 5. Crear los detalles de la venta
+            $this->createSaleDetails($sale, $productsData);
+
+            // 6. Crear cuenta por cobrar si es venta a crédito
+            if ($paymentTerm === PaymentTermEnum::CREDIT->value) {
+                $this->accountReceivableService->create(
+                    sale: $sale,
+                    totalAmount: null,
+                    name: null,
+                    notes: $saleData['notes'] ?? null,
+                    dueDate: $sale->due_date,
+                    amountPaidNow: (float) $cashAmount,
+                );
+            }
+
+            DB::commit();
+            return $sale->fresh(['client', 'employee', 'details']);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error en SaleService::createSale: ' . $e->getMessage());
+            throw new Exception('Error al crear la venta: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Crea los detalles de la venta y actualiza el inventario.
+     *
+     * @param Sale $sale
+     * @param array $productsData
+     * @return void
+     */
+    protected function createSaleDetails(Sale $sale, array $productsData): void
+    {
+        foreach ($productsData as $productData) {
+            if (isset($productData['origin']) && $productData['origin'] === 'api') {
+                $productosAsignados = AssignedProduct::where('employee_id', Auth::user()->employee->id)
+                    ->todayAssignments()
+                    ->with(['details' => function ($query) use ($productData) {
+                        $query->select('id', 'product_id', 'sale_quantity', 'assigned_products_id', 'quantity')
+                            ->where('product_id', $productData['product_id']);
+                    }])
+                    ->first();
+
+                if ($productosAsignados && $productosAsignados->details->count() > 0) {
+                    $detail = $productosAsignados->details->first();
+                    
+                    if ($detail->sale_quantity) {
+                        $nSaleQuantity = ($detail->sale_quantity ?? 0) + $productData['quantity'];
+
+                        if ($detail->quantity < $nSaleQuantity) throw new Exception(
+                            "La cantidad a vender del producto {$productData['name']} excede la cantidad asignada");
+
+                        $detail->update([
+                            'sale_quantity' => $nSaleQuantity,
+                        ]);
+                    }
+                }
+            }
+            // 1. Crear detalle de venta
+            SaleDetail::create([
+                'sale_id' => $sale->id,
+                'product_id' => $productData['product_id'],
+                'product_name' => $productData['name'] ?? null,
+                'product_code' => $productData['code'] ?? null,
+                'product_price_id' => $productData['product_price_id'] ?? null,
+                'type_price_id' => $productData['type_price_id'] ?? null,
+                'unit_name' => $productData['unit_name'] ?? null,
+                'unit_abbreviation' => $productData['unit_abbreviation'] ?? null,
+                'product_unit_id' => $productData['product_unit_id'] ?? null,
+                'conversion_factor' => $productData['conversion_factor'] ?? 1,
+                'quantity' => $productData['quantity'],
+                'base_quantity' => $productData['base_quantity'] ?? $productData['quantity'],
+                'unit_price_without_tax' => $productData['unit_price_without_tax'],
+                'unit_tax_amount' => $productData['unit_tax_amount'] ?? 0,
+                'tax_category_id' => $productData['tax_category_id'] ?? null,
+                'tax_category_name' => $productData['tax_category_name'] ?? null,
+                'tax_rate' => $productData['tax_rate'] ?? 0,
+                'price_include_tax' => $productData['price_include_tax'] ?? false,
+                'line_subtotal' => $productData['line_subtotal'] ?? ($productData['quantity'] * $productData['unit_price_without_tax']),
+                'line_tax_amount' => $productData['line_tax_amount'] ?? ($productData['quantity'] * ($productData['unit_tax_amount'] ?? 0)),
+                'line_total' => $productData['line_total'] ?? 
+                    ($productData['quantity'] * $productData['unit_price_without_tax']) + 
+                    ($productData['quantity'] * ($productData['unit_tax_amount'] ?? 0)),
+                'discount_percentage' => $productData['discount_percentage'] ?? 0,
+                'discount_amount' => $productData['discount_amount'] ?? 0,
+            ]);
+
+            // 2. Actualizar inventario si hay ID de inventario - solo vendra de venta creada en el sitio web
+            if (isset($productData['inventory_id'])) {
+                $inventoryModel = FinishedProductInventory::find($productData['inventory_id']);
+                if ($inventoryModel) {
+                    $baseQuantity = $productData['base_quantity'] ?? $productData['quantity'];
+                    
+                    $this->managementInventoryService->processMovement(
+                        $inventoryModel,
+                        $baseQuantity,
+                        TypeInventoryManagementEnum::SALIDA->value,
+                        'Venta de producto: ' . ($productData['name'] ?? 'Producto #' . $productData['product_id']),
+                        $sale->id,
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Calcula los totales para la venta.
+     *
+     * @param array $products
+     * @return array
+     */
+    public function calculateTotals(array $products): array
+    {
+        $subtotal = 0;
+        $totalTaxes = 0;
+
+        foreach ($products as $product) {
+            // Calcular subtotal de línea
+            $lineSubtotal = $product['line_subtotal'] ?? 
+                ($product['quantity'] * $product['unit_price_without_tax']);
+            
+            // Calcular impuesto de línea
+            $lineTaxAmount = $product['line_tax_amount'] ?? 
+                ($product['quantity'] * ($product['unit_tax_amount'] ?? 0));
+            
+            // Acumular totales
+            $subtotal += $lineSubtotal;
+            $totalTaxes += $lineTaxAmount;
+        }
+
+        return [
+            'subtotal' => $subtotal,
+            'total_taxes' => $totalTaxes,
+            'final_total' => $subtotal + $totalTaxes,
+        ];
+    }
+}

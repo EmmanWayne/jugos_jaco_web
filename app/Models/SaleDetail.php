@@ -15,21 +15,25 @@ class SaleDetail extends Model
         'product_id',
         'product_name',
         'product_code',
+        'product_price_id',
         'type_price_id',
         'unit_name',
         'unit_abbreviation',
+        'product_unit_id',
+        'conversion_factor',
         'quantity',
         'base_quantity',
         'unit_price_without_tax',
         'unit_tax_amount',
         'tax_category_id',
         'tax_category_name',
+        'tax_rate',
+        'price_include_tax',
         'line_subtotal',
         'line_tax_amount',
         'line_total',
         'discount_percentage',
         'discount_amount',
-        'product_unit_id',
     ];
 
     protected $casts = [
@@ -42,6 +46,9 @@ class SaleDetail extends Model
         'line_total' => 'decimal:4',
         'discount_percentage' => 'decimal:2',
         'discount_amount' => 'decimal:4',
+        'tax_rate' => 'decimal:2',
+        'conversion_factor' => 'decimal:4',
+        'price_include_tax' => 'boolean',
     ];
 
     public function sale(): BelongsTo
@@ -67,6 +74,11 @@ class SaleDetail extends Model
     public function productUnit(): BelongsTo
     {
         return $this->belongsTo(ProductUnit::class);
+    }
+    
+    public function productPrice(): BelongsTo
+    {
+        return $this->belongsTo(ProductPrice::class);
     }
 
     public function hasDiscount(): bool

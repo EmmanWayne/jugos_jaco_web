@@ -12,7 +12,7 @@ enum PaymentTypeEnum: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::CASH => 'Contado',
+            self::CASH => 'Efectivo',
             self::CREDIT => 'Crédito',
             self::DEPOSIT => 'Depósito',
             self::CARD => 'Tarjeta',

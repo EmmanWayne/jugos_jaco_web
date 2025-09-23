@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AccountReceivableStatusEnum;
 use App\Enums\StoragePath;
 use App\Models\Client;
 use App\Http\Requests\ClientRequest;
@@ -42,7 +43,14 @@ class ClientController extends Controller
     {
         try {
             $day = $request->query('day');
-            $clients = Client::with(['location', 'typePrice', 'profileImage'])
+            $clients = Client::with([
+                    'location',
+                    'typePrice',
+                    'profileImage',
+                    'accountReceivable' => function ($query) {
+                        $query->where('account_receivables.status', AccountReceivableStatusEnum::PENDING);
+                    }
+                ])
                 ->withVisitDaysForDay($day)
                 ->where('employee_id', Auth::user()->employee_id)
                 ->orderByVisitDay($day)

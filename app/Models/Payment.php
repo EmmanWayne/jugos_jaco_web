@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -24,6 +25,7 @@ class Payment extends Model
         'amount' => 'decimal:2',
         'balance_after_payment' => 'decimal:2',
         'payment_date' => 'date',
+        'payment_method' => PaymentTypeEnum::class
     ];
 
     public function model(): MorphTo

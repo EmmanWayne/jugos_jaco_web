@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\AccountReceivableController;
 use App\Http\Controllers\Api\AssignedProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ResourceMediaController;
 use App\Http\Controllers\ClientVisitDayController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
@@ -40,5 +43,19 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::prefix('products')->group(function () {
         Route::get('/assigned', [AssignedProductController::class, 'getProductAssigned']);
+        Route::get('/', [ProductController::class, 'getProducts']);
+    });
+
+    Route::prefix('sales')->group(function () {
+        Route::post('/', [SaleController::class, 'createSale']);
+        Route::get('/', [SaleController::class, 'getSales']);
+        Route::get('/{id}', [SaleController::class, 'getSaleDetailsBySaleId']);
+    });
+
+    Route::prefix('account-receivable')->group(function () {
+        Route::get('/', [AccountReceivableController::class, 'getAccountReceivable']);
+        Route::get('/payments', [AccountReceivableController::class, 'getPaymentsToDay']);
+        Route::get('/{id}', [AccountReceivableController::class, 'getAccountReceivableById']);
+        Route::post('/{id}/payments', [AccountReceivableController::class, 'processPayment']);
     });
 });

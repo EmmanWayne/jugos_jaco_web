@@ -52,8 +52,13 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
                 \App\Filament\Pages\Locations\ClientLocations::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
+                \App\Filament\Widgets\StatsOverview::class,
+                \App\Filament\Widgets\ClientsPerEmployeeWidget::class,
+                \App\Filament\Widgets\StockAlertsWidget::class,
+                \App\Filament\Widgets\SalesRankingWidget::class,
+                \App\Filament\Widgets\AccountsReceivableWidget::class,
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])

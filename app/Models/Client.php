@@ -101,6 +101,23 @@ class Client extends Model
     }
 
     /**
+     * Get the accounts receivable for the client through sales relationship
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function accountReceivable()
+    {
+        return $this->hasManyThrough(
+            AccountReceivable::class,
+            Sale::class,
+            'client_id', // Foreign key on sales table
+            'sales_id',   // Foreign key on account_receivables table
+            'id',        // Local key on clients table
+            'id'         // Local key on sales table
+        );
+    }
+
+    /**
      * Scope a query to only include clients for a especific day.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query

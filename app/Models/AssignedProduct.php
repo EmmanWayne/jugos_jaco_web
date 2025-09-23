@@ -37,4 +37,9 @@ class AssignedProduct extends Model
     {
         return $query->whereDate('date', today());
     }
+
+    public function scopeAssignmentsDate($query, $date)
+    {
+        return $query->whereDate('date', $date);
+    }
 }
