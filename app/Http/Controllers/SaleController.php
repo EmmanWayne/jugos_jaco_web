@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleDetailResource;
 use App\Http\Resources\SaleResource;
+use App\Models\DailySalesReconciliation;
 use App\Models\ProductPrice;
 use App\Models\Sale;
 use App\Models\SaleDetail;
@@ -29,6 +30,19 @@ class SaleController extends Controller
         $this->saleService = new SaleService(new ManagementInventoryService(), new AccountReceivableService());
     }
 
+    private function validateExistingReconciliation(int $employeeId): void
+    {
+        $today = Carbon::now()->toDateString();
+
+        $existingReconciliation = DailySalesReconciliation::where('employee_id', $employeeId)
+            ->whereDate('reconciliation_date', $today)
+            ->exists();
+
+        if ($existingReconciliation) {
+            throw new Exception("No se puede crear una venta porque ya existe un cuadre para el día de hoy.", 422);
+        }
+    }
+
     /**
      * Create a new sale.
      * @param SaleRequest $request
@@ -36,7 +50,12 @@ class SaleController extends Controller
     public function createSale(SaleRequest $request): JsonResponse
     {
         try {
+            $employeeId = Auth::user()->employee_id;
+            
+            $this->validateExistingReconciliation($employeeId);
+            
             $saleData = $this->prepareSaleData(collect($request->validated())->except('products')->toArray());
+            
             $productsSaleData = $this->prepareSaleDetailsData($request['products']);
 
             $sale = $this->saleService->createSale($saleData, $productsSaleData);
