@@ -9,12 +9,26 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Enums\UserRole;
 
 class AccountsReceivableWidget extends BaseWidget
 {
     protected static ?string $heading = '💰 Cartera de Cobranza por Empleado';
     protected static ?int $sort = 4;
     protected int | string | array $columnSpan = 'full';
+    protected static bool $isLazy = true;
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+        return UserRole::canUserViewWidget($user, static::class);
+    }
+    public function mount(): void
+    {
+        if (! UserRole::canUserViewWidget(Auth::user(), static::class)) {
+            abort(403);
+        }
+    }
     
     public function table(Table $table): Table
     {

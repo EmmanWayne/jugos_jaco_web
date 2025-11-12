@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\UnitTypeEnum;
 use App\Filament\Resources\ManagementInventoryResource\RelationManagers\MovementsInventoryRelationManager;
 use App\Filament\Resources\RawMaterialsInventoryResource\Pages;
 use App\Models\RawMaterialsInventory;
@@ -31,13 +32,7 @@ class RawMaterialsInventoryResource extends Resource
                     ->maxLength(255),
                 Forms\Components\Select::make('unit_type')
                     ->label('Unidad')
-                    ->options([
-                        'u' => 'Unidad',
-                        'kg' => 'Kilogramo',
-                        'g' => 'Gramo',
-                        'l' => 'Litro',
-                        'ml' => 'Mililitro',
-                    ])
+                    ->options(UnitTypeEnum::getValues())
                     ->required(),
                 Forms\Components\TextInput::make('stock')
                     ->label('Cantidad')
