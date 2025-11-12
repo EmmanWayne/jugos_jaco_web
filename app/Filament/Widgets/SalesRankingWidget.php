@@ -9,12 +9,26 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Enums\UserRole;
 
 class SalesRankingWidget extends BaseWidget
 {
     protected static ?string $heading = '🏆 Ranking de Vendedores';
     protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 'full';
+    protected static bool $isLazy = true;
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+        return UserRole::canUserViewWidget($user, static::class);
+    }
+    public function mount(): void
+    {
+        if (! UserRole::canUserViewWidget(Auth::user(), static::class)) {
+            abort(403);
+        }
+    }
     
     public function table(Table $table): Table
     {
@@ -22,7 +36,11 @@ class SalesRankingWidget extends BaseWidget
             ->query(
                 Employee::query()
                     ->select([
-                        'employees.*',
+                        'employees.id',
+                        'employees.first_name',
+                        'employees.last_name',
+                        'employees.created_at',
+                        'employees.updated_at',
                         DB::raw('COUNT(sales.id) as total_sales'),
                         DB::raw('COALESCE(SUM(sales.total_amount), 0) as total_amount'),
                         DB::raw('COALESCE(SUM(CASE WHEN sales.payment_method = "cash" THEN sales.total_amount ELSE 0 END), 0) as cash_sales'),

@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\SaleStatusEnum;
 use App\Enums\PaymentTypeEnum;
 use App\Enums\PaymentTermEnum;
-use App\Scopes\CashierSaleScope;
+use App\Models\Scopes\CashierSaleScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,14 +16,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Sale extends Model
 {
     use HasFactory;
-
-    /**
-     * The "booted" method of the model.
-     */
-    protected static function booted(): void
-    {
-        static::addGlobalScope(new CashierSaleScope);
-    }
 
     protected $fillable = [
         'invoice_number',

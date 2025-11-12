@@ -25,6 +25,7 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        
         return $panel
             ->default()
             ->id('admin')
@@ -59,8 +60,8 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\StockAlertsWidget::class,
                 \App\Filament\Widgets\SalesRankingWidget::class,
                 \App\Filament\Widgets\AccountsReceivableWidget::class,
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\AccountWidget::class,
+                \App\Filament\Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
