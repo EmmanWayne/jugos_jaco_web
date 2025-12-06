@@ -21,6 +21,7 @@ enum UserRole: string
                 \App\Filament\Widgets\StatsOverview::class,
                 \App\Filament\Widgets\ClientsPerEmployeeWidget::class,
                 \App\Filament\Widgets\StockAlertsWidget::class,
+                \App\Filament\Widgets\RawMaterialStockAlertsWidget::class,
                 \App\Filament\Widgets\SalesRankingWidget::class,
                 \App\Filament\Widgets\AccountsReceivableWidget::class,
                 \App\Filament\Widgets\AccountWidget::class,
@@ -30,6 +31,7 @@ enum UserRole: string
                 \App\Filament\Widgets\StatsOverview::class,
                 \App\Filament\Widgets\ClientsPerEmployeeWidget::class,
                 \App\Filament\Widgets\StockAlertsWidget::class,
+                \App\Filament\Widgets\RawMaterialStockAlertsWidget::class,
                 \App\Filament\Widgets\SalesRankingWidget::class,
                 \App\Filament\Widgets\AccountsReceivableWidget::class,
                 \App\Filament\Widgets\AccountWidget::class,
@@ -37,6 +39,7 @@ enum UserRole: string
             self::CASHEER->value => [
                 \App\Filament\Widgets\StatsOverview::class,
                 \App\Filament\Widgets\StockAlertsWidget::class,
+                \App\Filament\Widgets\RawMaterialStockAlertsWidget::class,
             ],
         ];
     }

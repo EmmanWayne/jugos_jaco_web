@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\Sale;
 use App\Models\AccountReceivable;
 use App\Models\FinishedProductInventory;
+use App\Models\RawMaterialsInventory;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,10 @@ class StatsOverview extends BaseWidget
 
         // Productos con stock crítico (siempre disponible)
         $criticalStock = FinishedProductInventory::whereColumn('stock', '<=', 'min_stock')
+            ->count();
+            
+        // Materia prima con stock crítico (siempre disponible)
+        $criticalRawMaterialStock = RawMaterialsInventory::whereColumn('stock', '<=', 'min_stock')
             ->count();
 
         // Ventas del mes actual
@@ -68,7 +73,7 @@ class StatsOverview extends BaseWidget
                 ])
                 ->chart([7, 2, 10, 3, 15, 4, 17]),
 
-            Stat::make('Cuentas Vencidas', 'L>' . number_format($overdueAccounts, 0))
+            Stat::make('Cuentas Vencidas', 'L.' . number_format($overdueAccounts, 0))
                 ->description('Monto pendiente de cobro')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->extraAttributes([
@@ -76,10 +81,15 @@ class StatsOverview extends BaseWidget
                 ])
                 ->color($overdueAccounts > 0 ? 'danger' : 'success'),
 
-            Stat::make('Stock Crítico', $criticalStock)
+            Stat::make('Stock Crítico Productos', $criticalStock)
                 ->description('Productos bajo mínimo')
                 ->descriptionIcon('heroicon-m-archive-box-x-mark')
                 ->color($criticalStock > 0 ? 'warning' : 'success'),
+
+            Stat::make('Stock Crítico Insumos', $criticalRawMaterialStock)
+                ->description('Materia prima bajo mínimo')
+                ->descriptionIcon('heroicon-m-beaker')
+                ->color($criticalRawMaterialStock > 0 ? 'danger' : 'success'),
 
             Stat::make('Empleado Destacado', $topEmployee ? $topEmployee->first_name . ' ' . $topEmployee->last_name : 'Sin datos')
                 ->description('Mejor vendedor del mes')
@@ -90,6 +100,10 @@ class StatsOverview extends BaseWidget
                 ->color('info'),
         ];
         
+        // Reordenar stats para mostrar stock al principio para cajeros si se desea, 
+        // o mantener el orden pero ocultando los no permitidos.
+        // En este caso, el orden es fijo pero los hidden no se muestran.
+
         return $stats;
     }
 }
