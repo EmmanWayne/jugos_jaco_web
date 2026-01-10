@@ -72,7 +72,7 @@ class RawMaterialStockAlertsWidget extends BaseWidget
                     ->label('Reabastecer')
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
-                    ->url(fn ($record) => route('filament.admin.resources.raw-materials-inventories.edit', $record)),
+                    ->url(fn ($record) => route('filament.admin.resources.raw-materials-inventories.view', $record)),
             ])
             ->emptyStateHeading('¡Excelente! No hay materia prima con stock crítico')
             ->emptyStateDescription('Todos los insumos tienen stock suficiente según sus niveles mínimos.')
