@@ -79,7 +79,7 @@ class SaleController extends Controller
             $sales = Sale::toDay()
                 ->where('employee_id', Auth::id())
                 ->with([
-                    'client:id,first_name,last_name',
+                    'client:id,first_name,last_name,business_name',
                     'employee:id,first_name,last_name'
                 ])
                 ->orderByDesc('created_at')

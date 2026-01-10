@@ -18,6 +18,7 @@ class SaleResource extends JsonResource
         return [
             'id' => $this->id,
             'client_name' => "{$this->client->first_name} {$this->client->last_name}",
+            'business_name' => $this->client->business_name,
             'employee_name' => "{$this->employee->first_name} {$this->employee->last_name}",
             'sale_date' => Carbon::parse($this->sale_date)->format('Y-m-d'),
             'cash_amount' => $this->cash_amount,
