@@ -33,6 +33,7 @@ class ClientResource extends JsonResource
             'total_account_receivable' => $this->accountReceivable->sum('remaining_balance'),
             'profile_image' => $this->profileImage?->path,
             'type_price' => $this->typePrice?->name,
+            'type_price_id' => $this->type_price_id,
             'visit_days' => $this->visitDays,
             'business_name' => $this->business_name,
         ];
