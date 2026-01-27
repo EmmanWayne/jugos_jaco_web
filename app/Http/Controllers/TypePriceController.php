@@ -15,7 +15,9 @@ class TypePriceController extends Controller
      */
     public function GetTypePrices(): JsonResponse
     {
-        $typePrices = TypePrice::select('id', 'name')->get();
+        $typePrices = TypePrice::select('id', 'name')
+        ->orderBy('name')
+        ->get();
 
         return response()->json($typePrices);
     }
