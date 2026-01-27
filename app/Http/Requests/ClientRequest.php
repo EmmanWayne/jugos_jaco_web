@@ -52,6 +52,7 @@ class ClientRequest extends FormRequest
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'business_name' => 'required|string|max:50',
+            'type_price_id' => 'required|integer|exists:type_prices,id',
         ];
     }
 }

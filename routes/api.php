@@ -9,6 +9,7 @@ use App\Http\Controllers\ResourceMediaController;
 use App\Http\Controllers\ClientVisitDayController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\TypePriceController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
@@ -57,5 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/payments', [AccountReceivableController::class, 'getPaymentsToDay']);
         Route::get('/{id}', [AccountReceivableController::class, 'getAccountReceivableById']);
         Route::post('/{id}/payments', [AccountReceivableController::class, 'processPayment']);
+    });
+
+    Route::prefix('type-prices')->group(function () {
+        Route::get('/', [TypePriceController::class, 'GetTypePrices']);
     });
 });
