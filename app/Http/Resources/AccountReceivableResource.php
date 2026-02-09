@@ -17,8 +17,7 @@ class AccountReceivableResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'client_name' => $this->sale->client->full_name ?? $this->name,
-            'business_name' => $this->sale->client->business_name ?? $this->name,
+            'client_name' => $this->sale->client->business_name ?? $this->name . " (" . $this->sale->client->full_name. ")",
             'total_amount' => (float) $this->total_amount,
             'remaining_balance' => (float) $this->remaining_balance,
             'due_date' => Carbon::parse($this->due_date)->format('Y-m-d'),
