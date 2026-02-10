@@ -114,9 +114,10 @@ class Sale extends Model
         return $query->where('status', SaleStatusEnum::PAID);
     }
 
-    public function scopeToDay($query)
+    public function scopeToDay($query, $date = null)
     {
-        return $query->whereDate('sale_date', Carbon::today());
+        $targetDate = $date ? Carbon::createFromFormat('d-m-Y', $date) : Carbon::today();
+        return $query->whereDate('sale_date', $targetDate);
     }
 
     public function scopeCancelled($query)
