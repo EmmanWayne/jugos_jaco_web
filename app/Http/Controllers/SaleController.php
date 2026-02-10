@@ -6,6 +6,7 @@ use App\Http\Requests\SaleRequest;
 use App\Http\Resources\SaleDetailResource;
 use App\Http\Resources\SaleResource;
 use App\Models\DailySalesReconciliation;
+use Illuminate\Http\Request;
 use App\Models\ProductPrice;
 use App\Models\Sale;
 use App\Models\SaleDetail;
@@ -73,10 +74,12 @@ class SaleController extends Controller
      * Get all sales.
      * @return JsonResponse
      */
-    public function getSales(): JsonResponse
+    public function getSales(Request $request): JsonResponse
     {
         try {
-            $sales = Sale::toDay()
+            $date = $request->query('date');
+            
+            $sales = Sale::toDay($date)
                 ->where('employee_id', Auth::id())
                 ->with([
                     'client:id,first_name,last_name,business_name',
