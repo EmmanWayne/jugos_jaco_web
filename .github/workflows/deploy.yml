@@ -76,6 +76,7 @@ jobs:
             fi
 
             # Entrar al directorio
+            git config --global --add safe.directory \"$TARGET_DIR\"
             cd "$TARGET_DIR"
 
             echo "🚀 Usuario autenticado: $(whoami)"
