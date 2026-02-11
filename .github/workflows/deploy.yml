@@ -40,10 +40,17 @@ jobs:
           TAG_NAME="${{ github.ref_name }}"
 
           echo "🚀 Conectando a ${{ secrets.SSH_IP_SERVER }} usando contraseña..."
+          
+          # Debug: Verificar longitud de variables (sin revelar contenido)
+          echo "Longitud User: $(echo -n "${{ secrets.SSH_USER_NAME }}" | wc -c)"
+          echo "Longitud Pass: $(echo -n "${{ secrets.SSH_SECRET_KEY }}" | wc -c)"
+          echo "Longitud Host: $(echo -n "${{ secrets.SSH_IP_SERVER }}" | wc -c)"
+          echo "Puerto: ${{ secrets.SSH_PORT }}"
 
-          # Ejecutar SSH usando sshpass
-          # SSH_SECRET_KEY debe estar configurado en tus Secrets de GitHub
-          sshpass -p "${{ secrets.SSH_SECRET_KEY }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
+          # Ejecutar SSH usando sshpass con verbose (-v) para ver qué pasa en el handshake
+          # Y exportando la variable SSHPASS para evitar problemas con caracteres especiales en línea de comandos
+          export SSHPASS="${{ secrets.SSH_SECRET_KEY }}"
+          sshpass -e ssh -v -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
             "TARGET_DIR='$TARGET_DIR' BRANCH_NAME='$BRANCH_NAME' TAG_NAME='$TAG_NAME' bash -s" << 'EOF'
             set -e
 
