@@ -27,45 +27,23 @@ jobs:
           echo "BRANCH_NAME=main" >> $GITHUB_ENV
           echo "TAG_NAME=$TAG" >> $GITHUB_ENV
 
-      # 4. Ejecutar comandos SSH (Nativo)
-      - name: Deploy to VM via Native SSH
+      # 4. Ejecutar comandos SSH (Password)
+      - name: Deploy to VM via SSH Password
         run: |
-          # 1. Configurar Llave SSH
-          mkdir -p ~/.ssh/
-          
-          # Escribimos la llave asegurando que tenga un salto de línea final
-          # Si el secreto ya tiene saltos de línea, printf los respetará.
-          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          
-          # Ajuste de permisos crítico
-          chmod 600 ~/.ssh/id_rsa
-          
-          # DEBUG: Verificar estructura del archivo (sin mostrar el contenido privado)
-          echo "🔍 Verificando estructura de la llave..."
-          echo "Primera línea:"
-          head -n 1 ~/.ssh/id_rsa
-          echo "Última línea:"
-          tail -n 1 ~/.ssh/id_rsa
-          echo "Número de líneas:"
-          wc -l ~/.ssh/id_rsa
-          
-          # Validar formato con ssh-keygen
-          if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null; then
-            echo "❌ Error CRÍTICO: La llave SSH sigue siendo inválida."
-            exit 1
-          fi
-          
-          # 2. Definir Variables
+          # Instalar sshpass (necesario para pasar password en modo no interactivo)
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+          # Definir Variables
           TARGET_DIR="${{ secrets.PROJECT_PATH }}"
           BRANCH_NAME="main"
           TAG_NAME="${{ github.ref_name }}"
 
-          echo "🚀 Conectando a ${{ secrets.SSH_IP_SERVER }}..."
+          echo "🚀 Conectando a ${{ secrets.SSH_IP_SERVER }} usando contraseña..."
 
-          # 3. Ejecutar Script Remoto
-          # Al haber configurado la llave en ~/.ssh/id_rsa, ssh la usará automáticamente.
-          # -o StrictHostKeyChecking=no: Evita el prompt de "Are you sure you want to continue connecting?"
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
+          # Ejecutar SSH usando sshpass
+          # SSH_SECRET_KEY debe estar configurado en tus Secrets de GitHub
+          sshpass -p "${{ secrets.SSH_SECRET_KEY }}" ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
             "TARGET_DIR='$TARGET_DIR' BRANCH_NAME='$BRANCH_NAME' TAG_NAME='$TAG_NAME' bash -s" << 'EOF'
             set -e
 
