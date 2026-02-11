@@ -21,7 +21,8 @@ class AccountReceivableResource extends JsonResource
             'total_amount' => (float) $this->total_amount,
             'remaining_balance' => (float) $this->remaining_balance,
             'due_date' => Carbon::parse($this->due_date)->format('Y-m-d'),
-            'status' => $this->status->getLabel()
+            'status' => $this->status->getLabel(),
+            'sales_id' => $this->sales_id,
         ];
     }
 }
