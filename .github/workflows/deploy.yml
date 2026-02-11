@@ -32,16 +32,26 @@ jobs:
         run: |
           # 1. Configurar Llave SSH
           mkdir -p ~/.ssh/
-          # Usamos printf para asegurar que se escriba correctamente con un salto de línea final
+          
+          # Escribimos la llave asegurando que tenga un salto de línea final
+          # Si el secreto ya tiene saltos de línea, printf los respetará.
           printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          
+          # Ajuste de permisos crítico
           chmod 600 ~/.ssh/id_rsa
           
-          # Validar que la llave sea válida (esto fallará si el formato es incorrecto)
-          # No imprimimos la llave, solo verificamos si ssh-keygen puede leerla
+          # DEBUG: Verificar estructura del archivo (sin mostrar el contenido privado)
+          echo "🔍 Verificando estructura de la llave..."
+          echo "Primera línea:"
+          head -n 1 ~/.ssh/id_rsa
+          echo "Última línea:"
+          tail -n 1 ~/.ssh/id_rsa
+          echo "Número de líneas:"
+          wc -l ~/.ssh/id_rsa
+          
+          # Validar formato con ssh-keygen
           if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null; then
-            echo "❌ Error: La llave SSH privada tiene un formato inválido o está corrupta."
-            echo "ℹ️ Asegúrate de copiar TODO el contenido, incluyendo '-----BEGIN...' y '-----END...'."
-            echo "ℹ️ Verifica que el secreto en GitHub no tenga espacios extra al inicio o final."
+            echo "❌ Error CRÍTICO: La llave SSH sigue siendo inválida."
             exit 1
           fi
           
