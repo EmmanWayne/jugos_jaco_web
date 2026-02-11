@@ -50,7 +50,7 @@ jobs:
           # Ejecutar SSH usando sshpass con verbose (-v) para ver qué pasa en el handshake
           # Y exportando la variable SSHPASS para evitar problemas con caracteres especiales en línea de comandos
           export SSHPASS="${{ secrets.SSH_PRIVATE_KEY }}"
-          sshpass -e ssh -v -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
+          sshpass -e ssh -v -o ConnectTimeout=60 -o ServerAliveInterval=60 -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
             "TARGET_DIR='$TARGET_DIR' BRANCH_NAME='$BRANCH_NAME' TAG_NAME='$TAG_NAME' bash -s" << 'EOF'
             set -e
 
