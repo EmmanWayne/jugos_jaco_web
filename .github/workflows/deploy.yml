@@ -1,0 +1,93 @@
+name: Deploy
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1. Determinar Directorio Destino según el Tag
+      - name: Determine Target Directory
+        id: target
+        run: |
+          TAG="${{ github.ref_name }}"
+          echo "Analizando tag: $TAG"
+          
+          echo "TARGET_DIR=${{ secrets.PROJECT_PATH }}" >> $GITHUB_ENV
+          echo "BRANCH_NAME=main" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+
+      # 4. Ejecutar comandos SSH
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@master
+        env:
+          TARGET_DIR: ${{ env.TARGET_DIR }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          TAG_NAME: ${{ env.TAG_NAME }}
+        with:
+          host: ${{ secrets.SSH_IP_SERVER }}
+          username: ${{ secrets.SSH_USER_NAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: TARGET_DIR,BRANCH_NAME,TAG_NAME
+          script: |
+            set -e
+
+            # 1. Validar que la ruta no llegó vacía a la VM
+            if [ -z "$TARGET_DIR" ]; then
+              echo "❌ Error: TARGET_DIR no definido."
+              exit 1
+            fi
+
+            # 3. Entrar al directorio
+            cd "$TARGET_DIR"
+
+            echo "🚀 Usuario autenticado: $(whoami)"
+            echo "📦 Actualizando código con tag: $TAG_NAME"
+            echo "🌿 Rama a usar: $BRANCH_NAME"
+            
+            # 4. Git Checkout Limpio
+            git checkout "$BRANCH_NAME"
+
+            # Limpiar tags locales que no existan
+            git fetch --prune --prune-tags --force
+
+            # 
+            git fetch origin tag "$TAG_NAME"
+            git checkout --force "$TAG_NAME"
+            
+            # 5. Dependencias Backend
+            echo "🔧 Composer Install..."
+            php composer.phar install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+            
+            # 7. Migrar Datos y Caché
+            echo "🗄️ Migrando base de datos..."
+            php artisan migrate --force
+            
+            echo "🧹 Limpieza de caché..."
+            php artisan optimize
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            # Solo si usas Filament
+            if php artisan list | grep -q 'filament:optimize'; then
+              php artisan filament:optimize
+            fi
+
+            # 8. Asegurar permisos para el servidor web
+            sudo chgrp -R www-data storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
+
+            echo "✅ Despliegue completado!"
