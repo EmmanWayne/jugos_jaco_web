@@ -16,7 +16,7 @@ class SaleDetailResource extends JsonResource
     {
         return [
             'header' => (new SaleResource($this))->toArray($request),
-            'details' => $this->saleDetails->map(function ($detail) {
+            'details' => $this->details->map(function ($detail) {
                 return [
                     'id' => $detail->id,
                     'product_id' => $detail->product_id,
