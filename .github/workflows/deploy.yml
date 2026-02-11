@@ -32,8 +32,18 @@ jobs:
         run: |
           # 1. Configurar Llave SSH
           mkdir -p ~/.ssh/
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          # Usamos printf para asegurar que se escriba correctamente con un salto de línea final
+          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          
+          # Validar que la llave sea válida (esto fallará si el formato es incorrecto)
+          # No imprimimos la llave, solo verificamos si ssh-keygen puede leerla
+          if ! ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null; then
+            echo "❌ Error: La llave SSH privada tiene un formato inválido o está corrupta."
+            echo "ℹ️ Asegúrate de copiar TODO el contenido, incluyendo '-----BEGIN...' y '-----END...'."
+            echo "ℹ️ Verifica que el secreto en GitHub no tenga espacios extra al inicio o final."
+            exit 1
+          fi
           
           # 2. Definir Variables
           TARGET_DIR="${{ secrets.PROJECT_PATH }}"
@@ -43,9 +53,9 @@ jobs:
           echo "🚀 Conectando a ${{ secrets.SSH_IP_SERVER }}..."
 
           # 3. Ejecutar Script Remoto
-          # -o StrictHostKeyChecking=no: Evita errores de verificación de host (known_hosts)
-          # Pasamos las variables antes del comando 'bash -s'
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
+          # Al haber configurado la llave en ~/.ssh/id_rsa, ssh la usará automáticamente.
+          # -o StrictHostKeyChecking=no: Evita el prompt de "Are you sure you want to continue connecting?"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER_NAME }}@${{ secrets.SSH_IP_SERVER }} \
             "TARGET_DIR='$TARGET_DIR' BRANCH_NAME='$BRANCH_NAME' TAG_NAME='$TAG_NAME' bash -s" << 'EOF'
             set -e
 
