@@ -109,7 +109,7 @@ class SaleController extends Controller
             $sale = Sale::with([
                 'client:id,first_name,last_name,business_name',
                 'employee:id,first_name,last_name',
-                'saleDetails' // Cargar los detalles de la venta
+                'details' // Cargar los detalles de la venta
             ])->find($id); // Usar find para obtener una sola instancia
 
             if (!$sale) {
