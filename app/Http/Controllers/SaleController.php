@@ -105,14 +105,23 @@ class SaleController extends Controller
      */
     public function getSaleDetailsBySaleId(int $id): JsonResponse
     {
-        try{
-            $saleDetails = SaleDetail::where('sale_id', $id)->get();
-            return $this->successResponse(SaleDetailResource::collection($saleDetails), "Detalles de la venta obtenidos con éxito");
-        }catch(Exception $exc){
+        try {
+            $sale = Sale::with([
+                'client:id,first_name,last_name,business_name',
+                'employee:id,first_name,last_name',
+                'saleDetails' // Cargar los detalles de la venta
+            ])->find($id); // Usar find para obtener una sola instancia
+
+            if (!$sale) {
+                return $this->errorResponse(new Exception("Venta no encontrada", 404), 404, "Venta no encontrada");
+            }
+
+            return $this->successResponse(new SaleDetailResource($sale), "Detalles de la venta obtenidos con éxito");
+        } catch (Exception $exc) {
             return $this->errorResponse(
                 $exc,
-                $exc->getCode(),
-                "Ocurrio un error al obtener el detalle de la venta"
+                $exc->getCode() ?: 500,
+                "Ocurrió un error al obtener el detalle de la venta"
             );
         }
     }
