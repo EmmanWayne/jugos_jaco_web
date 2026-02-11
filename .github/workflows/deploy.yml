@@ -94,9 +94,5 @@ jobs:
               php artisan filament:optimize
             fi
 
-            # Permisos
-            sudo chgrp -R www-data storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
-
             echo "✅ Despliegue completado!"
           EOF
